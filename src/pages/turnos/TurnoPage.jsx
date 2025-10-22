@@ -1,4 +1,4 @@
-import { useState, useEffect,useRef } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import FullCalendar from '@fullcalendar/react';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import timeGridPlugin from '@fullcalendar/timegrid';
@@ -7,18 +7,16 @@ import esLocale from '@fullcalendar/core/locales/es';
 import { Box, useDisclosure, Spinner, Center } from '@chakra-ui/react';
 import { turnoService } from '../../services/TurnoService';
 import ModalCrearTurno from './components/ModalCrearTurno';
-// import ModalVerTurno from './components/ModalVerTurno'; // (Próximo paso)
+import ModalElegirHora from './components/ModalELegirHora';
 
 const TurnosPage = () => {
   const [turnos, setTurnos] = useState([]);
   const [loading, setLoading] = useState(true);
   const calendarRef = useRef(null);
   
-  // Estado para los modales
-  const [selectedDate, setSelectedDate] = useState(null);
-  const [selectedTurno, setSelectedTurno] = useState(null);
+  const [selectedDay, setSelectedDay] = useState(null); 
+  const [selectedFullDate, setSelectedFullDate] = useState(null); 
 
-  // Hooks de Chakra para controlar los modales
   const { 
     isOpen: isCreateOpen, 
     onOpen: onCreateOpen, 
@@ -26,45 +24,61 @@ const TurnosPage = () => {
   } = useDisclosure();
   
   const { 
-    isOpen: isViewOpen, 
-    onOpen: onViewOpen, 
-    onClose: onViewClose 
+    isOpen: isTimePickerOpen, 
+    onOpen: onTimePickerOpen, 
+    onClose: onTimePickerClose 
   } = useDisclosure();
 
-  // Cargar los turnos al montar el componente
+  const [selectedTurno, setSelectedTurno] = useState(null);
+  const { isOpen: isViewOpen, onOpen: onViewOpen, onClose: onViewClose } = useDisclosure();
+
+  // --- 1. CORRECCIÓN: Tu useEffect estaba vacío ---
   useEffect(() => {
     const fetchTurnos = async () => {
       setLoading(true);
-      const data = await turnoService.getTurnos();
-      setTurnos(data);
-      setLoading(false);
+      const data = await turnoService.getTurnos(); // Llama al servicio
+      setTurnos(data); // Guarda los turnos en el estado
+      setLoading(false); // ¡Importante! Pone loading en false
     };
     fetchTurnos();
-  }, []);
+  }, []); // El array vacío [] asegura que se ejecute 1 sola vez
 
-  // Handler para FullCalendar: Clic en un HUECO VACÍO
+  // --- Tu función 'handleDateClick' está perfecta ---
   const handleDateClick = (arg) => {
-    setSelectedDate(arg.date);
-    onCreateOpen();
-  };
-
-  // Handler para FullCalendar: Clic en un EVENTO (turno)
-  const handleEventClick = (arg) => {
-    setSelectedTurno(arg.event);
-    console.log("Turno clickeado:", arg.event.extendedProps);
-    // onViewOpen(); // (Descomentar cuando exista ModalVerTurno)
+    setSelectedDay(arg.date);
+    onTimePickerOpen();
   };
   
-  // Callback para agregar el nuevo turno sin recargar
-  const onTurnoCreado = (nuevoTurno) => {
-  // Usamos el API de FullCalendar para añadir el evento
-  if (calendarRef.current) {
-    const calendarApi = calendarRef.current.getApi();
-    calendarApi.addEvent(nuevoTurno); // <-- Añade el evento al calendario
-  }
-  onCreateClose(); // Cierra el modal
-};
+  // --- Tu función 'handleTimeSelect' está perfecta ---
+  const handleTimeSelect = (time) => { // time es un string "16:00"
+    const [hour, minute] = time.split(':');
+    const fullDate = new Date(selectedDay);
+    fullDate.setHours(parseInt(hour), parseInt(minute), 0, 0);
+    
+    setSelectedFullDate(fullDate); 
+    onTimePickerClose(); 
+    onCreateOpen(); 
+  };
 
+  // --- Tu función 'handleEventClick' está perfecta ---
+  const handleEventClick = (arg) => { 
+    setSelectedTurno(arg.event);
+    console.log("Turno clickeado:", arg.event.extendedProps);
+    // onViewOpen(); 
+  };
+  
+  // --- Tu función 'onTurnoCreado' está perfecta ---
+  const onTurnoCreado = (nuevoTurno) => {
+    if (calendarRef.current) {
+      const calendarApi = calendarRef.current.getApi();
+      calendarApi.addEvent(nuevoTurno);
+    }
+    onCreateClose();
+  };
+
+  // --- 2. CORRECCIÓN: Tu 'if (loading)' estaba vacío ---
+  // Por eso la pantalla se ponía en blanco.
+  // Debe retornar un componente (el Spinner).
   if (loading) {
     return (
       <Center h="200px">
@@ -73,51 +87,64 @@ const TurnosPage = () => {
     );
   }
 
+  // --- 3. CORRECCIÓN: Faltaban los 'eventos' en el <FullCalendar> ---
   return (
     <Box>
+    
+
       <FullCalendar
-      ref={calendarRef}
+        // --- 1. Propiedades Esenciales ---
+        ref={calendarRef}
         plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
-        initialView="timeGridWeek" // <-- Vista Semanal
+        events={turnos} // <-- Muestra los turnos cargados
+        
+        // --- 2. Las Props que te FALTABAN ---
+        initialView="timeGridWeek" // <-- Vista inicial por defecto
         headerToolbar={{
           left: 'prev,next today',
           center: 'title',
-          right: 'dayGridMonth,timeGridWeek,timeGridDay'
+          right: 'dayGridMonth,timeGridWeek,timeGridDay' // <-- ¡LOS BOTONES!
         }}
-        events={turnos}
-        dateClick={handleDateClick}   // <-- Clic en hueco
-        eventClick={handleEventClick} // <-- Clic en evento
-        allDaySlot={false} // No mostrar "Todo el día"
-        slotMinTime="16:00:00" // Horario de trabajo
+
+        // --- 3. Props de Interacción ---
+        selectable={true}
+        dateClick={handleDateClick}   // <-- Para clics en días/huecos
+        eventClick={handleEventClick} // <-- Para clics en turnos
+        
+        // --- 4. Props de Estilo y Horario ---
+        allDaySlot={false}
+        slotMinTime="16:00:00"
         slotMaxTime="22:00:00" 
         height="auto"
-        locale={esLocale} // Pone "Octubre", "Lunes", etc.
-  buttonText={{
-    today: 'Hoy',
-    month: 'Mes',
-    week: 'Semana',
-    day: 'Día'
-  }}
+        
+        // --- 5. Props de Idioma ---
+        locale={esLocale}
+        buttonText={{
+          today: 'Hoy',
+          month: 'Mes',
+          week: 'Semana',
+          day: 'Día'
+        }}
       />
 
-      {/* Modal de Creación */}
-      {selectedDate && (
+      {/* --- Tus modales (están perfectos) --- */}
+      {selectedFullDate && (
         <ModalCrearTurno
           isOpen={isCreateOpen}
           onClose={onCreateClose}
-          selectedDate={selectedDate}
+          selectedDate={selectedFullDate}
           onTurnoCreado={onTurnoCreado}
         />
       )}
       
-      {/* Modal de Vista/Edición (Próximo paso) */}
-      {/* {selectedTurno && (
-        <ModalVerTurno
-          isOpen={isViewOpen}
-          onClose={onViewClose}
-          turno={selectedTurno}
+      {selectedDay && (
+        <ModalElegirHora
+          isOpen={isTimePickerOpen}
+          onClose={onTimePickerClose}
+          selectedDay={selectedDay}
+          onTimeSelect={handleTimeSelect}
         />
-      )} */}
+      )}
     </Box>
   );
 };

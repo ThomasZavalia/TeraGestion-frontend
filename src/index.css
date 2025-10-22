@@ -1,13 +1,21 @@
-/* --- Añade esto a tu /src/index.css --- */
+/* --- Pega esto en /src/index.css --- */
 
-/* Le da al evento (turno) una transición suave */
-.fc-event {
+/* 1. ESTO ES PARA LOS TURNOS QUE YA EXISTEN (LOS EVENTOS) */
+.fc-event:hover {
+  cursor: pointer;                 /* Muestra la "manito" */
+  transform: scale(1.03);          /* Lo hace crecer un 3% */
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3); /* Le da una sombra */
   transition: all 0.2s ease-in-out;
 }
 
-/* Cuando el usuario pasa el mouse por encima */
-.fc-event:hover {
-  cursor: pointer;                 /* 1. Muestra la "manito" */
-  transform: scale(1.03);          /* 2. Lo hace crecer un 3% */
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3); /* 3. Le da una sombra */
+/* 2. ESTO ES PARA LOS HUECOS VACÍOS (LO QUE PEDISTE) */
+.fc-timegrid-slot:hover {
+  cursor: pointer;                 /* Muestra la "manito" */
+  background-color: #f0f9ff;      /* Un color de fondo celeste muy suave */
+  transition: background-color 0.1s ease;
+}
+
+/* 3. (Opcional) Cambia el cursor para todo el calendario */
+.fc-view-harness {
+  cursor: pointer;
 }

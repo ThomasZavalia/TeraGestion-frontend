@@ -1,7 +1,7 @@
 // ... (Importa axiosInstance) ...
 import  axiosInstance  from './axiosInstance';
 export const pacienteService = {
-  // ... (Aquí van las funciones que está haciendo tu compañero)
+
 
   /**
    * Busca pacientes para el combobox asíncrono.
@@ -12,7 +12,7 @@ export const pacienteService = {
     if (!query) return [];
     try {
       // Llama al endpoint que creaste en PacientesController
-      const { data } = await axiosInstance.get(`/Pacientes/buscar?query=${query}`);
+      const { data } = await axiosInstance.get(`/Paciente/buscar?query=${query}`);
       
       // Formateamos los datos para 'chakra-react-select'
       return data.map(paciente => ({
