@@ -7,6 +7,7 @@ import esLocale from '@fullcalendar/core/locales/es';
 import { Box, useDisclosure, Spinner, Center } from '@chakra-ui/react';
 import { turnoService } from '../../services/TurnoService';
 import ModalCrearTurno from './components/ModalCrearTurno';
+import ModalVerTurno from './components/ModalVerTurno'; // <-- 1. Importa el modal
 import ModalElegirHora from './components/ModalELegirHora';
 
 const TurnosPage = () => {
@@ -48,6 +49,20 @@ const TurnosPage = () => {
     setSelectedDay(arg.date);
     onTimePickerOpen();
   };
+
+  const handleTurnoUpdate = (turnoActualizado) => {
+      if (calendarRef.current) {
+          const calendarApi = calendarRef.current.getApi();
+          const eventoExistente = calendarApi.getEventById(turnoActualizado.id.toString());
+          
+          if(eventoExistente) {
+              
+              eventoExistente.setExtendedProp('estado', turnoActualizado.estado);
+              // Cambia el color directamente (o puedes refetchear todo)
+              eventoExistente.setProp('className', turnoActualizado.estado.toLowerCase() === 'pagado' ? 'turno-pagado' : 'turno-pendiente');
+          }
+      }
+  };
   
   // --- Tu función 'handleTimeSelect' está perfecta ---
   const handleTimeSelect = (time) => { // time es un string "16:00"
@@ -64,7 +79,7 @@ const TurnosPage = () => {
   const handleEventClick = (arg) => { 
     setSelectedTurno(arg.event);
     console.log("Turno clickeado:", arg.event.extendedProps);
-    // onViewOpen(); 
+    onViewOpen(); 
   };
   
   // --- Tu función 'onTurnoCreado' está perfecta ---
@@ -97,7 +112,11 @@ const TurnosPage = () => {
         ref={calendarRef}
         plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
         events={turnos} // <-- Muestra los turnos cargados
-        
+        eventDisplay='block' 
+
+      
+        eventColor='#3182CE' 
+        eventTextColor='white' 
         // --- 2. Las Props que te FALTABAN ---
         initialView="timeGridWeek" // <-- Vista inicial por defecto
         headerToolbar={{
@@ -143,6 +162,16 @@ const TurnosPage = () => {
           onClose={onTimePickerClose}
           selectedDay={selectedDay}
           onTimeSelect={handleTimeSelect}
+        />
+      )}
+
+   
+      {selectedTurno && (
+        <ModalVerTurno
+          isOpen={isViewOpen}
+          onClose={onViewClose}
+          turno={selectedTurno}
+          onTurnoUpdate={handleTurnoUpdate} 
         />
       )}
     </Box>

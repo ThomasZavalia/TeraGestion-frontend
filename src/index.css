@@ -1,21 +1,37 @@
 /* --- Pega esto en /src/index.css --- */
 
-/* 1. ESTO ES PARA LOS TURNOS QUE YA EXISTEN (LOS EVENTOS) */
-.fc-event:hover {
-  cursor: pointer;                 /* Muestra la "manito" */
-  transform: scale(1.03);          /* Lo hace crecer un 3% */
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3); /* Le da una sombra */
-  transition: all 0.2s ease-in-out;
+/* Estilo base para todos los turnos (sobrescribe eventColor si es necesario) */
+.fc-event.turno-pendiente {
+  background-color: #3182CE !important; /* Azul (blue.500) */
+  border-color: #3182CE !important;
+  color: white !important;
 }
 
-/* 2. ESTO ES PARA LOS HUECOS VACÍOS (LO QUE PEDISTE) */
+/* Estilo para los turnos PAGADOS */
+.fc-event.turno-pagado {
+  background-color: #48BB78 !important; /* Verde (green.500) */
+  border-color: #48BB78 !important;
+  color: white !important;
+}
+
+
+.fc-daygrid-event .fc-event-title {
+  white-space: normal; 
+}
+
+
+.fc-event:hover {
+  cursor: pointer;
+  transform: scale(1.03);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+  transition: all 0.2s ease-in-out;
+  z-index: 10; /* Asegura que el evento hover esté por encima */
+}
 .fc-timegrid-slot:hover {
-  cursor: pointer;                 /* Muestra la "manito" */
-  background-color: #f0f9ff;      /* Un color de fondo celeste muy suave */
+  cursor: pointer;
+  background-color: #f0f9ff;
   transition: background-color 0.1s ease;
 }
-
-/* 3. (Opcional) Cambia el cursor para todo el calendario */
 .fc-view-harness {
   cursor: pointer;
 }

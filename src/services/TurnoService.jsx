@@ -5,7 +5,7 @@ const formatTurnoForCalendar = (turno) => ({
   id: turno.id.toString(), // ID como string
   title: `${turno.pacienteNombre} ${turno.pacienteApellido}`, 
 start: turno.fecha, 
-
+className: turno.estado.toLowerCase() === 'pagado' ? 'turno-pagado' : 'turno-pendiente',
   extendedProps: { 
     ...turno
   }
@@ -15,7 +15,7 @@ export const turnoService = {
   getTurnos: async () => {
     try {
       const { data } = await axiosInstance.get('/Turno'); 
-      return data.map(formatTurnoForCalendar); // Formateamos para el calendario
+      return data.map(formatTurnoForCalendar); 
     } catch (error) {
       console.error("Error al obtener turnos:", error);
       return [];
@@ -23,7 +23,7 @@ export const turnoService = {
   },
 
   createTurno: async (turnoDto) => {
-    // El turnoDto es el TurnoDtoCreacion
+    
     const { data } = await axiosInstance.post('/Turno', turnoDto);
   
     return formatTurnoForCalendar(data); 
@@ -31,13 +31,25 @@ export const turnoService = {
   
   getDisponibilidad: async (fecha) => {
     try {
-      // Formatea la fecha a YYYY-MM-DD para el query param
+  
       const dateString = fecha.toISOString().split('T')[0];
       const { data } = await axiosInstance.get(`/Turno/disponibilidad?fecha=${dateString}`);
-      return data; // Devuelve el array ej: ["16:00", "19:00"]
+      return data; 
     } catch (error) {
       console.error("Error al obtener disponibilidad:", error);
       return [];
+    }
+  },
+
+  marcarComoPagado: async (turnoId, metodoPago = 'Efectivo') => {
+    try {
+      // Llama al endpoint POST /api/Turno/{id}/pagar
+      // Enviamos el objeto como requiere el backend
+      await axiosInstance.post(`/Turno/${turnoId}/pagar`, { metodoPago });
+      return { success: true };
+    } catch (error) {
+      console.error("Error al marcar como pagado:", error);
+      return { success: false, message: error.response?.data?.error || 'Error desconocido' };
     }
   },
   
