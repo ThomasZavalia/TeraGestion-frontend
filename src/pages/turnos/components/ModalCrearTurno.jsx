@@ -24,6 +24,8 @@ const {
     isLoadingPrecio, 
     loadPacientes,
     handleSubmit,
+    dniError,
+    validateDni,
 
   } = useTurnoForm(config); // <-- Llama con el objeto config
  return (
@@ -96,14 +98,18 @@ const {
       />
     </FormControl>
 
-    <FormControl>
-      <FormLabel>DNI</FormLabel>
-      <Input 
-        value={dni} 
-        onChange={(e) => setDni(e.target.value)} 
-        placeholder="DNI (opcional)" 
-      />
-    </FormControl>
+   <FormControl isInvalid={!!dniError}> 
+          <FormLabel>DNI</FormLabel>
+          <Input 
+            value={dni} 
+            onChange={(e) => setDni(e.target.value)} 
+            placeholder="DNI (sin puntos)"
+           
+            onBlur={(e) => validateDni(e.target.value)} 
+          />
+      
+          {dniError && <FormErrorMessage>{dniError}</FormErrorMessage>}
+        </FormControl>
    
 
   </VStack>

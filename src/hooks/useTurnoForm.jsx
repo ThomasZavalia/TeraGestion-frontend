@@ -23,6 +23,7 @@ export const useTurnoForm = (config) => {
   const [esParticular, setEsParticular] = useState(false);
   const [obraSocialId, setObraSocialId] = useState(null);
   const [precio, setPrecio] = useState(0);
+  const [dniError, setDniError] = useState(null);
 
   // Estados UI
   const [obrasSocialesList, setObrasSocialesList] = useState([]);
@@ -113,9 +114,40 @@ export const useTurnoForm = (config) => {
       return pacienteService.buscarPacientes(inputValue);
   }, []);
 
+  const validateDni = useCallback(async (dniValue) => {
+   
+    if (!dniValue || pacienteTipo !== 'nuevo' || isEditingMode) { 
+        setDniError(null); 
+        return; 
+    }
+
+    try {
+       
+        const exists = await pacienteService.checkDniExists(dniValue); 
+        if (exists) {
+            setDniError('Este DNI ya está registrado. Use "Paciente Existente".');
+        } else {
+            setDniError(null);
+        }
+    } catch (error) {
+        console.error("Error validando DNI:", error);
+        setDniError('No se pudo validar el DNI.'); // Error genérico de red
+    }
+  }, [pacienteTipo, isEditingMode])
+
 
 
   const handleSubmit = async () => {
+if (dniError) {
+        toast({ 
+            title: 'Error en formulario', 
+            description: dniError, 
+            status: 'error', 
+            duration: 4000 
+        });
+        return; 
+    }
+
     setIsSubmitting(true);
     console.log('--- handleSubmit --- Mode:', isEditingMode ? 'EDIT' : 'CREATE'); // <-- Usa isEditingMode
 
@@ -162,12 +194,27 @@ export const useTurnoForm = (config) => {
         onTurnoCreado(nuevoTurno); // Callback
       }
     } catch (error) { 
-      console.error('Error en handleSubmit:', error.response?.data || error.message || error); 
-      toast({ /* ... (manejo de error) ... */ });
-      setIsSubmitting(false); 
-    } 
-  };
+      console.error('Error en handleSubmit:', error.response?.data || error.message || error); 
+      
+      // --- CÓDIGO MEJORADO PARA EL TOAST ---
+      // Intenta obtener el mensaje de error específico de tu backend
+      const errorMessage = error.response?.data?.message || 
+                         error.response?.data?.error ||   
+                         error.response?.data ||          
+                         'Ocurrió un error desconocido.'; // Mensaje genérico
 
+toast({ 
+          title: 'Error al guardar',
+          description: errorMessage, 
+          status: 'error',         
+          duration: 5000,
+          isClosable: true,
+      });
+     
+
+ setIsSubmitting(false); 
+ } 
+ };
  return {
     pacienteTipo, setPacienteTipo,
     pacienteSeleccionado, setPacienteSeleccionado,
@@ -182,6 +229,8 @@ export const useTurnoForm = (config) => {
     isLoadingPrecio, 
     loadPacientes, 
     handleSubmit,
+    dniError,
+    validateDni,
    
   };
 };
