@@ -11,14 +11,14 @@ export const pacienteService = {
   buscarPacientes: async (query) => {
     if (!query) return [];
     try {
-      // Llama al endpoint que creaste en PacientesController
+      
       const { data } = await axiosInstance.get(`/Paciente/buscar?query=${query}`);
       
-      // Formateamos los datos para 'chakra-react-select'
+      
       return data.map(paciente => ({
         value: paciente.id, // El ID del paciente
         label: `${paciente.nombre} ${paciente.apellido} (DNI: ${paciente.dni})`, // El texto a mostrar
-        obraSocialId: paciente.obraSocialId, // ID de la obra social (para autocompletar)
+        obraSocialId: paciente.obraSocialId, 
       }));
     } catch (error) {
       console.error("Error al buscar pacientes:", error);

@@ -56,7 +56,7 @@ const handleMarcarPagado = async () => {
         status: 'success',
         duration: 3000,
       });
-      // Llama a la función del padre para actualizar el color en el calendario
+     
       onTurnoUpdate({ ...turnoData, estado: 'pagado' }); 
       onClose(); // Cierra el modal
     } else {

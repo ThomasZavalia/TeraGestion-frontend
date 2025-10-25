@@ -1,4 +1,5 @@
-import { useState, useEffect, useCallback } from 'react';
+//import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback,useRef } from 'react';
 import { useToast } from '@chakra-ui/react';
 import { turnoService } from '../services/TurnoService';
 import { pacienteService } from '../services/PacienteService';
@@ -10,6 +11,8 @@ export const useTurnoForm = (config) => {
   const { selectedDate, turnoAEditar, onTurnoCreado, onTurnoActualizado, isEditingMode } = config; 
 
   const toast = useToast();
+
+  const isInitialMount = useRef(true);
 
   // --- Estados del formulario ---
   const [pacienteTipo, setPacienteTipo] = useState('existente');
@@ -31,7 +34,7 @@ export const useTurnoForm = (config) => {
     obraSocialService.getObrasSociales().then(setObrasSocialesList);
   }, []);
 
-  // --- 2. Efecto DEDICADO a INICIALIZAR/RESETEAR (usa isEditingMode) ---
+
   useEffect(() => {
     console.log("[useTurnoForm Init/Reset] Running. isEditingMode:", isEditingMode, "Turno:", turnoAEditar); 
     // Usa isEditingMode para decidir si llenar o resetear
@@ -58,46 +61,59 @@ export const useTurnoForm = (config) => {
       setObraSocialId(null);
       setPrecio(0);
     }
-  }, [isEditingMode, turnoAEditar]); // Depende del modo y del turno
+  }, [isEditingMode, turnoAEditar]);
 
-  // --- 3. Autocompletar OS (usa isEditingMode) ---
+  
   useEffect(() => {
-    if (!isEditingMode) { // Solo si estamos creando
+    // Solo si NO estamos editando
+    if (!isEditingMode) { 
       if (pacienteTipo === 'existente' && pacienteSeleccionado) {
-        console.log("[useTurnoForm OS Effect] Autocompleting OS:", pacienteSeleccionado.obraSocialId);
         setObraSocialId(pacienteSeleccionado.obraSocialId || null);
       } else if (pacienteTipo === 'nuevo') {
-         console.log("[useTurnoForm OS Effect] Resetting OS for new patient.");
-        setObraSocialId(null);
+        setObraSocialId(null); 
       }
     }
   }, [pacienteTipo, pacienteSeleccionado, isEditingMode]); 
 
-  // --- 4. Calcular Precio (usa isEditingMode) ---
+  // --- 4. Calcular Precio (solo en CREACIÓN) ---
   const fetchPrecio = useCallback(async () => {
     if (!esParticular && obraSocialId) {
       setIsLoadingPrecio(true);
-      console.log("[useTurnoForm Price Effect] Calculating price for OS:", obraSocialId);
       try {
         const precioCalculado = await obraSocialService.getPrecio(obraSocialId);
         setPrecio(precioCalculado);
-      } catch (error) { console.error("Error calculando precio:", error); setPrecio(0); }
+      } catch (error) { console.error("Error calculando precio:", error); setPrecio(0); } 
       finally { setIsLoadingPrecio(false); }
     } else {
-       console.log("[useTurnoForm Price Effect] Setting price to 0 (Particular or no OS).");
        if (!isEditingMode) setPrecio(0); // Resetea solo si estamos creando
     }
-  }, [esParticular, obraSocialId, isEditingMode]); // Dependencias correctas
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [esParticular, obraSocialId, isEditingMode]); 
+
 
   useEffect(() => {
-    // Solo si estamos creando
-    if (!isEditingMode) { 
-      fetchPrecio();
-    }
-  }, [fetchPrecio, isEditingMode]); 
+    if (!isEditingMode) { 
+      fetchPrecio();
+      return; // Salimos
+    }
+    if (isInitialMount.current) {
+        
+        isInitialMount.current = false;
+        
+    } else {
+        
+        fetchPrecio();
+    }
+  }, [fetchPrecio, isEditingMode]);
 
-  // --- Handlers ---
-  const loadPacientes = useCallback((inputValue) => pacienteService.buscarPacientes(inputValue), []); 
+
+
+  const loadPacientes = useCallback((inputValue) => {
+      console.log("loadPacientes hook llamado con:", inputValue); // <-- Log
+      return pacienteService.buscarPacientes(inputValue);
+  }, []);
+
+
 
   const handleSubmit = async () => {
     setIsSubmitting(true);
@@ -106,9 +122,9 @@ export const useTurnoForm = (config) => {
     // DTO Base
     const turnoDtoBase = {
       esParticular: esParticular,
-      pacienteId: pacienteSeleccionado?.value,
+      pacienteId: pacienteSeleccionado?.value, 
       obraSocialId: !esParticular ? obraSocialId : null,
-      precio: esParticular ? precio : null,
+      precio: esParticular ? precio : null, 
     };
 
     try {
@@ -116,13 +132,13 @@ export const useTurnoForm = (config) => {
       if (isEditingMode) {
         // --- ACTUALIZACIÓN ---
         if (!turnoAEditar?.id) throw new Error("ID del turno a editar no encontrado");
-        // DTO específico para actualizar (SIN FECHA, SIN DATOS NUEVO PACIENTE)
+        // DTO específico para actualizar 
         // *** VERIFICA que coincida con tu TurnoDtoActualizacion.cs ***
         const dtoActualizacion = {
             esParticular: turnoDtoBase.esParticular,
             obraSocialId: turnoDtoBase.obraSocialId,
             precio: turnoDtoBase.precio,
-            // estado: turnoAEditar.estado // Si permites cambiar estado
+            // estado: turnoAEditar.estado // Si lo necesitas
         };
         console.log('Llamando a updateTurno ID:', turnoAEditar.id, 'DTO:', dtoActualizacion); 
         const turnoActualizado = await turnoService.updateTurno(turnoAEditar.id, dtoActualizacion);
@@ -134,8 +150,8 @@ export const useTurnoForm = (config) => {
         if (!selectedDate) throw new Error("No se seleccionó fecha para crear turno");
         // DTO de Creación (TurnoDtoCreacion)
         const dtoCreacion = {
-            ...turnoDtoBase,
-            fecha: selectedDate.toISOString(),
+            ...turnoDtoBase, 
+            fecha: selectedDate.toISOString(), 
             nombrePaciente: pacienteTipo === 'nuevo' ? nombrePaciente : null,
             apellidoPaciente: pacienteTipo === 'nuevo' ? apellidoPaciente : null,
             dni: pacienteTipo === 'nuevo' ? dni : null,
@@ -145,19 +161,14 @@ export const useTurnoForm = (config) => {
         toast({ title: 'Turno Creado', description: `Turno para ${nuevoTurno.title} agendado.`, status: 'success', duration: 3000 });
         onTurnoCreado(nuevoTurno); // Callback
       }
-    } catch (error) {
-      console.error('Error en handleSubmit:', error.response?.data || error.message || error);
-      toast({
-        title: isEditing ? 'Error al actualizar' : 'Error al crear',
-        description: error.response?.data?.error || error.message || 'Error desconocido',
-        status: 'error',
-        duration: 5000
-      });
-      setIsSubmitting(false); // Permite reintentar si hay error
-    }
+    } catch (error) { 
+      console.error('Error en handleSubmit:', error.response?.data || error.message || error); 
+      toast({ /* ... (manejo de error) ... */ });
+      setIsSubmitting(false); 
+    } 
   };
 
-  return {
+ return {
     pacienteTipo, setPacienteTipo,
     pacienteSeleccionado, setPacienteSeleccionado,
     nombrePaciente, setNombrePaciente,
@@ -168,9 +179,9 @@ export const useTurnoForm = (config) => {
     precio, setPrecio,
     obrasSocialesList,
     isSubmitting,
-    isLoadingPrecio,
-    loadPacientes,
+    isLoadingPrecio, 
+    loadPacientes, 
     handleSubmit,
-   // isEditing
+   
   };
 };

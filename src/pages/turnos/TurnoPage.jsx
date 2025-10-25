@@ -11,7 +11,7 @@ import ModalVerTurno from './components/ModalVerTurno';
 import ModalElegirHora from './components/ModalElegirHora'; 
 
 const TurnosPage = () => {
-  // --- Estados (sin cambios en datos) ---
+  // --- Estados ---
   const [calendarEvents, setCalendarEvents] = useState([]); 
   const [loading, setLoading] = useState(true);
   const calendarRef = useRef(null);
@@ -19,10 +19,9 @@ const TurnosPage = () => {
   const [selectedFullDate, setSelectedFullDate] = useState(null); 
   const [selectedTurnoEvent, setSelectedTurnoEvent] = useState(null); 
   const [turnoParaEditar, setTurnoParaEditar] = useState(null);     
+  const [isEditingMode, setIsEditingMode] = useState(false);
 
-const [isEditingMode, setIsEditingMode] = useState(false);
-
-  // Controladores Modales (sin cambios)
+  
   const { isOpen: isCreateOpen, onOpen: onCreateOpen, onClose: onCreateClose } = useDisclosure();
   const { isOpen: isTimePickerOpen, onOpen: onTimePickerOpen, onClose: onTimePickerClose } = useDisclosure();
   const { isOpen: isViewOpen, onOpen: onViewOpen, onClose: onViewClose } = useDisclosure();
@@ -73,23 +72,26 @@ const [isEditingMode, setIsEditingMode] = useState(false);
       onCreateOpen(); // Abre modal creación
   };
 
-  // --- MODIFICADO: handleEditRequest ---
-  const handleEditRequest = (turnoData) => {
-    console.log("[handleEditRequest] Solicitud para editar:", turnoData);
-    // 1. Guarda los datos del turno a editar
-    setTurnoParaEditar(turnoData);
-    // 2. FIJA el modo edición en TRUE
-    setIsEditingMode(true);
-    // 3. Limpia fecha de creación
-    setSelectedFullDate(null);
-    // 4. Cierra el modal de Ver
-    onViewClose();
-    // 5. Abre el modal de Crear/Editar (AHORA con isEditingMode=true)
-    console.log("[handleEditRequest] Abriendo modal en modo edición...");
-    onCreateOpen();
-  };
+ const handleEditRequest = (datosDelTurno) => { 
+  console.log("[handleEditRequest] Solicitud editar con datos:", datosDelTurno);
+  
+  
+  if (!datosDelTurno || !datosDelTurno.id) {
+      console.error("[handleEditRequest] ERROR: Se recibieron datos inválidos.", datosDelTurno);
+      return; 
+  }
 
-  // --- Callbacks Resultado CRUD ---
+ 
+  setTurnoParaEditar(datosDelTurno); 
+  setIsEditingMode(true); 
+
+  setSelectedFullDate(null);
+  
+  onViewClose(); 
+  onCreateOpen(); 
+};
+
+ 
   const onTurnoCreado = (nuevoTurnoEvento) => {
       console.log("onTurnoCreado - Nuevo evento:", nuevoTurnoEvento);
       if (calendarRef.current) {
@@ -119,8 +121,7 @@ const [isEditingMode, setIsEditingMode] = useState(false);
           }
       }
       handleCloseCreateModal();
-      // No necesitamos cerrar ViewModal aquí si ya se cerró en handleEditRequest
-      // handleCloseViewModal(); 
+     
   };
   const handleTurnoDelete = (turnoId) => {
      console.log("handleTurnoDelete - ID:", turnoId);
@@ -138,29 +139,26 @@ const [isEditingMode, setIsEditingMode] = useState(false);
       handleCloseViewModal(); // Cierra y limpia Ver Turno
   };
 
-  // --- Funciones Cierre y Limpieza ---
-  const handleCloseCreateModal = () => {
-      console.log("Cerrando Modal Crear/Editar y limpiando.");
-      onCreateClose();
-      setTurnoParaEditar(null);
-      setSelectedFullDate(null);
-      // Resetea el modo edición al cerrar
-      setIsEditingMode(false);
-  };
+ const handleCloseCreateModal = () => {
+      console.log("Cerrando Modal Crear/Editar."); 
+      onCreateClose(); 
+      
+  };
 
-  const handleCloseViewModal = () => {
-      console.log("Cerrando Modal Ver y limpiando.");
-      onViewClose();
-      setSelectedTurnoEvent(null);
-      setTurnoParaEditar(null);
-      setIsEditingMode(false);
-  };
+ const handleCloseViewModal = () => {
+      console.log("Cerrando Modal Ver y limpiando selectedTurnoEvent.");
+      onViewClose(); 
+      setSelectedTurnoEvent(null); 
+      
+  };
 
-  // --- Renderizado ---
+
   if (loading) { return ( <Center h="200px"> <Spinner size="xl" /> </Center> ); }
 
-  // Determina la fecha a pasar (solo relevante para CREAR)
-  const fechaParaModalCreacion = selectedFullDate;
+const fechaParaModalCreacion = !isEditingMode ? selectedFullDate : null; 
+ 
+  const turnoParaModalEdicion = isEditingMode ? turnoParaEditar : null;
+
 
   console.log("Render TurnosPage - isCreateOpen:", isCreateOpen, "isEditingMode:", isEditingMode, "turnoParaEditar:", turnoParaEditar);
 
@@ -192,23 +190,25 @@ const [isEditingMode, setIsEditingMode] = useState(false);
          buttonText={{ today: 'Hoy', month: 'Mes', week: 'Semana', day: 'Día' }}
       />
 
-      {/* --- Modal Crear/Editar --- */}
-      {/* Renderiza si está abierto */}
+    
       {isCreateOpen && ( 
-    <ModalCrearTurno
-          // Key usa isEditingMode para forzar re-montaje
-          key={isEditingMode ? `edit-${turnoParaEditar?.id || 'new'}` : 'create'} 
+   <ModalCrearTurno
+          // Key usa isEditingMode Y el ID para forzar re-montaje al cambiar TURNO
+          key={isEditingMode ? `edit-${turnoParaModalEdicion?.id || 'new'}` : 'create'} 
           isOpen={isCreateOpen}
           onClose={handleCloseCreateModal} 
-         
+      
           config={{
-              selectedDate: !isEditingMode ? fechaParaModalCreacion : null, 
-              turnoAEditar: isEditingMode ? turnoParaEditar : null, 
+            
+              selectedDate: fechaParaModalCreacion, 
+         
+              turnoAEditar: turnoParaModalEdicion, 
               onTurnoCreado: onTurnoCreado,
               onTurnoActualizado: handleTurnoUpdate,
-              isEditingMode: isEditingMode // <-- Pasa el modo explícito al hook
+         
+              isEditingMode: isEditingMode 
           }}
-          // --- Pasamos isEditingMode también como prop directa al componente Modal ---
+         
           isEditingMode={isEditingMode} 
         />
       )}

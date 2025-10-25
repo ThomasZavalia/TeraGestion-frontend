@@ -42,14 +42,13 @@ export const turnoService = {
   },
 
  updateTurno: async (id, turnoDto) => {
-    // turnoDto debe ser el objeto que espera tu endpoint PUT
-    // Probablemente similar al TurnoDto de salida, sin datos de paciente
+   
     const { data } = await axiosInstance.put(`/Turno/${id}`, turnoDto);
     // Asumimos que el backend devuelve el TurnoCalendarioDto actualizado
     return formatTurnoForCalendar(data); 
   },
 
-  // --- NUEVA FUNCIÓN: Eliminar Turno ---
+  
   deleteTurno: async (id) => {
     try {
       await axiosInstance.delete(`/Turno/${id}`);

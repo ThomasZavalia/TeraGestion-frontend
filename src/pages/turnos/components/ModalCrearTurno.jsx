@@ -74,41 +74,69 @@ const {
               </FormControl>
             )}
             
-            {/* --- Usa isEditingMode para ocultar --- */}
-            {pacienteTipo === 'nuevo' && !isEditingMode && ( 
-              <VStack spacing={4} w="full" as="fieldset" border="1px" borderColor="gray.200" p={4} borderRadius="md">
-                 {/* ... (Formulario Nuevo Paciente sin cambios) ... */}
-              </VStack>
-            )}
+           {pacienteTipo === 'nuevo' && !isEditingMode && ( 
+  <VStack spacing={4} w="full" as="fieldset" border="1px" borderColor="gray.200" p={4} borderRadius="md">
+
+  
+    <FormControl isRequired>
+      <FormLabel>Nombre</FormLabel>
+      <Input 
+        value={nombrePaciente} 
+        onChange={(e) => setNombrePaciente(e.target.value)} 
+        placeholder="Nombre del paciente" 
+      />
+    </FormControl>
+
+    <FormControl isRequired>
+      <FormLabel>Apellido</FormLabel>
+      <Input 
+        value={apellidoPaciente} 
+        onChange={(e) => setApellidoPaciente(e.target.value)} 
+        placeholder="Apellido del paciente" 
+      />
+    </FormControl>
+
+    <FormControl>
+      <FormLabel>DNI</FormLabel>
+      <Input 
+        value={dni} 
+        onChange={(e) => setDni(e.target.value)} 
+        placeholder="DNI (opcional)" 
+      />
+    </FormControl>
+   
+
+  </VStack>
+  )}
 
              {/* --- Tipo de Turno - Usa isEditingMode --- */}
             <FormControl display="flex" alignItems="center" pt={2}>
               <FormLabel htmlFor="es-particular" mb="0"> ¿Es particular? </FormLabel>
               {/* Deshabilitar si editamos Y es paciente existente */}
-              <Switch id="es-particular" isChecked={esParticular} onChange={(e) => setEsParticular(e.target.checked)} isDisabled={isEditingMode && pacienteTipo === 'existente'} /> 
+             <Switch 
+               id="es-particular" 
+               isChecked={esParticular} 
+               onChange={(e) => setEsParticular(e.target.checked)} />
             </FormControl>
             
-            {/* --- Escenario NO particular (Obra Social) - Usa isEditingMode --- */}
+      
             {!esParticular && (
               <VStack spacing={4} w="full">
                 <FormControl isRequired>
                   <FormLabel>Obra Social</FormLabel>
-                  <Select
+                 <Select
                     placeholder="Seleccione una obra social"
                     value={obraSocialId || ''}
-                    onChange={(e) => setObraSocialId(e.target.value ? parseInt(e.target.value) : null)}
-                    // Deshabilitado si editamos Y es paciente existente
-                    isDisabled={isEditingMode && pacienteTipo === 'existente'} 
-                  >
+                    onChange={(e) => setObraSocialId(e.target.value ? parseInt(e.target.value) : null)}>
                     {obrasSocialesList.map(os => ( <option key={os.value} value={os.value}>{os.label}</option> ))}
                   </Select>
                 </FormControl>
                 <FormControl>
-                  {/* Label usa isEditingMode */}
+              
                   <FormLabel>Precio {isEditingMode ? '(Guardado)' : '(Calculado)'}</FormLabel> 
                   <InputGroup>
                     <InputLeftAddon>$</InputLeftAddon>
-                    {/* Deshabilitado si isLoadingPrecio O si NO es particular */}
+                   
                     <Input value={precio} isDisabled={isLoadingPrecio || !esParticular} /> 
                   </InputGroup>
                 </FormControl>
@@ -123,7 +151,7 @@ const {
                   <FormLabel>Precio (Manual)</FormLabel>
                   <InputGroup>
                     <InputLeftAddon>$</InputLeftAddon>
-                    {/* Habilitado siempre si es particular */}
+                   
                     <Input type="number" value={precio} onChange={(e) => setPrecio(parseFloat(e.target.value))} /> 
                   </InputGroup>
                 </FormControl>
