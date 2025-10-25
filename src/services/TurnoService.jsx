@@ -41,10 +41,28 @@ export const turnoService = {
     }
   },
 
+ updateTurno: async (id, turnoDto) => {
+    // turnoDto debe ser el objeto que espera tu endpoint PUT
+    // Probablemente similar al TurnoDto de salida, sin datos de paciente
+    const { data } = await axiosInstance.put(`/Turno/${id}`, turnoDto);
+    // Asumimos que el backend devuelve el TurnoCalendarioDto actualizado
+    return formatTurnoForCalendar(data); 
+  },
+
+  // --- NUEVA FUNCIÓN: Eliminar Turno ---
+  deleteTurno: async (id) => {
+    try {
+      await axiosInstance.delete(`/Turno/${id}`);
+      return { success: true };
+    } catch (error) {
+      console.error("Error al eliminar turno:", error);
+      return { success: false, message: error.response?.data?.error || 'Error desconocido' };
+    }
+  },
+  
+  // --- Función Marcar Pagado (ya la teníamos) ---
   marcarComoPagado: async (turnoId, metodoPago = 'Efectivo') => {
     try {
-      // Llama al endpoint POST /api/Turno/{id}/pagar
-      // Enviamos el objeto como requiere el backend
       await axiosInstance.post(`/Turno/${turnoId}/pagar`, { metodoPago });
       return { success: true };
     } catch (error) {
@@ -52,5 +70,4 @@ export const turnoService = {
       return { success: false, message: error.response?.data?.error || 'Error desconocido' };
     }
   },
-  
 };
