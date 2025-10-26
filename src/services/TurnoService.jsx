@@ -44,7 +44,7 @@ export const turnoService = {
  updateTurno: async (id, turnoDto) => {
    
     const { data } = await axiosInstance.put(`/Turno/${id}`, turnoDto);
-    // Asumimos que el backend devuelve el TurnoCalendarioDto actualizado
+   
     return formatTurnoForCalendar(data); 
   },
 
@@ -69,4 +69,18 @@ export const turnoService = {
       return { success: false, message: error.response?.data?.error || 'Error desconocido' };
     }
   },
+getTurnosDeHoy: async () => {
+    try {
+      // Llama al nuevo endpoint del backend
+      const { data } = await axiosInstance.get('/Turno/hoy'); 
+      // El backend ya devuelve TurnoCalendarioDto, no necesita formateo extra aquí
+      return data; 
+    } catch (error) {
+      console.error("Error al obtener turnos de hoy:", error);
+      return []; // Devuelve array vacío en caso de error
+    }
+  },
+  
+  formatTurnoForCalendar
+
 };

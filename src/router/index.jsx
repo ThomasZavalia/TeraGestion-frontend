@@ -1,7 +1,7 @@
 import React from 'react';
 import { Routes, Route } from 'react-router-dom';
 
-// Importas el Layout y el Protector de Rutas
+
 import DashboardLayout from '../layouts/DashboardLayout';
 import ProtectedRoute from './ProtectedRoute';
 
@@ -10,7 +10,7 @@ import LoginPage from '../pages/LoginPage';
 import HomePage from '../pages/HomePage';
 import PacientesPage from '../pages/pacientes/PacientesPage';
 import TurnosPage from '../pages/turnos/TurnoPage'; // <-- ¡IMPORTA ESTA LÍNEA!
-// ... (importa PagosPage, ReportesPage, ConfiguracionPage)
+import PagosPage from '../pages/pagos/PagosPage';
 
 const AppRouter = () => {
   return (
@@ -28,7 +28,7 @@ const AppRouter = () => {
           {/* --- PASO 2: AÑADE LA RUTA AQUÍ --- */}
           <Route path="/turnos" element={<TurnosPage />} />
           
-          {/* ... (aquí irán las rutas de /pagos, /reportes, /configuracion) ... */}
+        <Route path="/pagos" element={<PagosPage />} />
           
         </Route>
       </Route>
