@@ -6,7 +6,7 @@ import {
 import {EditIcon, ViewIcon} from "@chakra-ui/icons";
 
 
-export const TablaPacientes = ({pacientes}) => {
+export const TablaPacientes = ({pacientes, onEditar}) => {
     return (
         <TableContainer>
             <Table>
@@ -30,13 +30,13 @@ export const TablaPacientes = ({pacientes}) => {
                                 <HStack spacing={2}>
                                     <IconButton icon={<EditIcon />}
                                         aria-label="Editar Paciente"
+                                        onClick={() => onEditar(paciente)}
                                     >
-                                        {/*falta el onclick en los botones */}
                                     </IconButton>
 
                                     <IconButton icon={<ViewIcon />}
                                         aria-label="Ver Detalles del Paciente"
-                                        >
+                                        >{/** falta el onclick */}
 
                                     </IconButton>
                                 </HStack>

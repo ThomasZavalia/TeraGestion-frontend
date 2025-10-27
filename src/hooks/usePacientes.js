@@ -1,4 +1,4 @@
-import { useState, useEffect, use} from "react";
+import { useState, useEffect, use, useCallback} from "react";
 import { pacienteService } from "../services/PacienteService/PacienteService";
 
 
@@ -9,8 +9,8 @@ export const usePacientes = () => {
     const [error, setError] = useState(null);
 
 
-    useEffect(() => {
-        const cargarPacientes = async () => {
+    
+        const cargarPacientes = useCallback (async () => {
             try{
                 setLoading(true);
                 const data = await pacienteService.getPacientes();
@@ -23,12 +23,13 @@ export const usePacientes = () => {
             }finally{
                 setLoading(false);
             }
-        };
-
-        cargarPacientes();
+        }, []);
 
 
-    }, []);
+        useEffect(() => {
+            cargarPacientes();
+        }, [cargarPacientes]);
+    
 
-    return {pacientes, loading, error};
+    return {pacientes, loading, error, recargarPacientes: cargarPacientes};
 }
