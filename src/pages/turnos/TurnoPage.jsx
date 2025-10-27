@@ -172,12 +172,18 @@ const fechaParaModalCreacion = !isEditingMode ? selectedFullDate : null;
          eventDisplay='block' 
          eventColor='#3182CE' 
          eventTextColor='white' 
-         initialView="timeGridWeek" 
-         headerToolbar={{
-            left: 'prev,next today',
-            center: 'title',
-            right: 'dayGridMonth,timeGridWeek,timeGridDay'
-         }}
+        initialView="timeGridWeek" 
+        
+        headerToolbar={{
+          // Izquierda: Solo flechas en móvil, 'today' en escritorio
+          left: 'prev,next today', 
+          // Centro: Título siempre
+          center: 'title',
+         
+          right: 'dayGridMonth,timeGridWeek,timeGridDay' 
+         
+        }}
+        
          selectable={true}
          dateClick={handleDateClick}   
          eventClick={handleEventClick} 
@@ -185,9 +191,12 @@ const fechaParaModalCreacion = !isEditingMode ? selectedFullDate : null;
          slotMinTime="16:00:00"
          slotMaxTime="22:00:00" 
          height="auto"
+         dayMaxEvents={true}
          slotLabelFormat={{ hour: 'numeric', minute: '2-digit', omitZeroMinute: false, hour12: false, meridiem: false, suffix: ' hs' }}
          locale={esLocale}
          buttonText={{ today: 'Hoy', month: 'Mes', week: 'Semana', day: 'Día' }}
+
+         
       />
 
     
