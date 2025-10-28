@@ -15,6 +15,7 @@ export const TablaPacientes = ({pacientes, onEditar}) => {
                         <Th>Nombre</Th>
                         <Th>Dni</Th>
                         <Th>Telefono</Th>
+                        <Th>Fecha de Nacimiento</Th>
                         <Th>Obra Social</Th>
                         <Th>Acciones</Th>
                     </Tr>
@@ -25,7 +26,8 @@ export const TablaPacientes = ({pacientes, onEditar}) => {
                             <Td>{paciente.nombre} {paciente.apellido}</Td>
                             <Td>{paciente.dni}</Td>
                             <Td>{paciente.telefono}</Td>
-                            <Td>{paciente.obraSocialNombre}</Td>
+                            <Td>{paciente.fechaNacimiento? new Date(paciente.fechaNacimiento).toLocaleDateString('es-AR') : 'N/A'}</Td>
+                            <Td>{paciente.obraSocial ? paciente.obraSocial.nombre : "No tiene obra social"}</Td>
                             <Td>
                                 <HStack spacing={2}>
                                     <IconButton icon={<EditIcon />}

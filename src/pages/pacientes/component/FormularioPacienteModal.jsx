@@ -14,6 +14,7 @@ const FormularioInicial = {
   dni: "",
   telefono: "",
   obraSocialId: "", 
+  fechaNacimiento: "",
 };
 
 export const FormularioPacienteModal = ({ isOpen, onClose, onGuardado, pacienteAEditar }) => {
@@ -31,12 +32,16 @@ export const FormularioPacienteModal = ({ isOpen, onClose, onGuardado, pacienteA
   
   useEffect(() => {
     if (manejarCambio && pacienteAEditar) { 
+
+      const fechaParaInput = pacienteAEditar.fechaNacimiento ? pacienteAEditar.fechaNacimiento.split('T')[0] : '';
+
       setFormData({
         nombre: pacienteAEditar.nombre || "",
         apellido: pacienteAEditar.apellido || "",
         dni: pacienteAEditar.dni || "",
         telefono: pacienteAEditar.telefono || "",
-        obraSocialId: pacienteAEditar.obraSocialId || "" 
+        obraSocialId: pacienteAEditar.obraSocialId || "",
+        fechaNacimiento: fechaParaInput,
       });
     } else {
       setFormData(FormularioInicial);
@@ -153,6 +158,12 @@ export const FormularioPacienteModal = ({ isOpen, onClose, onGuardado, pacienteA
 
                         <Input name="telefono" value={formData.telefono} onChange={handleChange}/>
 
+                    </FormControl>
+
+                    <FormControl isRequired>
+                        <FormLabel>Fecha de Nacimiento</FormLabel>
+                        <Input
+                        name="fechaNacimiento" value={formData.fechaNacimiento}  onChange={handleChange} type="date"/>
                     </FormControl>
             <FormControl>
               <FormLabel>Obra Social</FormLabel>
