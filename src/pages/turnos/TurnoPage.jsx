@@ -49,19 +49,36 @@ const TurnosPage = () => {
       setSelectedFullDate(null); // Limpia fecha completa previa
       onTimePickerOpen();
   };
-  const handleEventClick = (arg) => {
+  
+
+const handleEventClick = (arg) => {
       // Asegura resetear el modo edición
       setIsEditingMode(false);
       setTurnoParaEditar(null);
-      setSelectedTurnoEvent(arg.event);
-      setSelectedDay(null); // Limpia día seleccionado
+
+     
+      
+      const eventId = arg.event.id;
+      const eventoDeMiEstado = calendarEvents.find(ev => ev.id === eventId);
+
+      if (eventoDeMiEstado) {
+          console.log("Evento encontrado en React state (fresco):", eventoDeMiEstado);
+          setSelectedTurnoEvent(eventoDeMiEstado); // <--- Usamos el evento de nuestro estado
+      } else {
+          // Fallback por si algo muy raro pasa
+          console.warn("Evento no encontrado en calendarEvents state, usando arg.event (viejo)");
+          setSelectedTurnoEvent(arg.event); 
+      }
+      
+
+      setSelectedDay(null);
       setSelectedFullDate(null);
       onViewOpen();
   };
 
-  // --- Handlers Flujo Modales ---
+  
   const handleTimeSelect = (time) => {
-      // Asegura que estamos en modo CREACIÓN
+      
       setIsEditingMode(false);
       setTurnoParaEditar(null);
       const [hour, minute] = time.split(':');
@@ -97,11 +114,12 @@ const TurnosPage = () => {
       if (calendarRef.current) {
         const calendarApi = calendarRef.current.getApi();
         calendarApi.addEvent(nuevoTurnoEvento);
-        setCalendarEvents(prev => [...prev, nuevoTurnoEvento]); // Actualiza estado local
+        setCalendarEvents(prev => [...prev, nuevoTurnoEvento]); 
       }
       handleCloseCreateModal(); // Cierra y limpia
   };
-  const handleTurnoUpdate = (turnoActualizadoDatos) => {
+  
+  /*const handleTurnoUpdate = (turnoActualizadoDatos) => {
      console.log("handleTurnoUpdate - Datos actualizados:", turnoActualizadoDatos);
       if (calendarRef.current) {
           const calendarApi = calendarRef.current.getApi();
@@ -110,19 +128,71 @@ const TurnosPage = () => {
           if(eventoExistente) {
               console.log("Actualizando evento en calendario ID:", turnoActualizadoDatos.id);
               eventoExistente.remove();
-              // Re-formateamos los DATOS a EVENTO
-              // ¡ASEGÚRATE que turnoService tenga 'formatTurnoForCalendar' exportado si no está en este archivo!
+             
+             
               const eventoFormateado = turnoService.formatTurnoForCalendar ? turnoService.formatTurnoForCalendar(turnoActualizadoDatos) : turnoActualizadoDatos; 
               calendarApi.addEvent(eventoFormateado);
-              // Actualiza estado local filtrando y añadiendo el nuevo
+              
               setCalendarEvents(prev => [...prev.filter(ev => ev.id !== turnoActualizadoDatos.id.toString()), eventoFormateado] ); 
           } else {
               console.warn("Evento a actualizar no encontrado en calendario:", turnoActualizadoDatos.id);
           }
       }
       handleCloseCreateModal();
+      
      
   };
+  */
+const handleTurnoUpdate = (turnoActualizadoDatos) => {
+     console.log("handleTurnoUpdate - Datos actualizados:", turnoActualizadoDatos);
+     if (calendarRef.current) {
+         const calendarApi = calendarRef.current.getApi();
+         // Es crucial que el ID sea string para FullCalendar
+         const eventoIdStr = turnoActualizadoDatos.id.toString();
+         const eventoExistente = calendarApi.getEventById(eventoIdStr);
+
+         if(eventoExistente) {
+             console.log("Actualizando evento en calendario ID:", eventoIdStr);
+
+             // 1. Construimos el NUEVO evento
+             // Usamos los datos del evento existente que NO cambian
+             // y los datos del DTO que SÍ cambiaron.
+             const eventoFormateado = {
+                 id: eventoIdStr,
+                 title: eventoExistente.title, // El paciente (título) no cambió
+                 start: eventoExistente.start, // La fecha/hora no cambió
+                 end: eventoExistente.end,     // La fecha/hora no cambió
+                 
+                 // 2. Combinamos las 'extendedProps' (propiedades extendidas)
+                 // Mantenemos las antiguas y sobrescribimos con las nuevas del DTO
+                 extendedProps: {
+                     ...eventoExistente.extendedProps,
+                     ...turnoActualizadoDatos 
+                     // Esto asume que tu DTO tiene campos como 'obraSocialId', 'precio'
+                 },
+                 
+               
+             };
+
+             // 4. Quitamos el viejo y añadimos el nuevo
+             eventoExistente.remove();
+             calendarApi.addEvent(eventoFormateado);
+             
+             // 5. Actualizamos el estado de React
+             setCalendarEvents(prev => [
+                 ...prev.filter(ev => ev.id !== eventoIdStr),
+                 eventoFormateado
+             ]);
+
+         } else {
+             console.warn("Evento a actualizar no encontrado en calendario:", turnoActualizadoDatos.id);
+             
+         }
+     }
+     handleCloseCreateModal();
+ };
+
+
   const handleTurnoDelete = (turnoId) => {
      console.log("handleTurnoDelete - ID:", turnoId);
       if (calendarRef.current) {
@@ -140,10 +210,10 @@ const TurnosPage = () => {
   };
 
  const handleCloseCreateModal = () => {
-      console.log("Cerrando Modal Crear/Editar."); 
-      onCreateClose(); 
-      
-  };
+console.log("Cerrando Modal Crear/Editar."); 
+ onCreateClose(); 
+ 
+ };
 
  const handleCloseViewModal = () => {
       console.log("Cerrando Modal Ver y limpiando selectedTurnoEvent.");
