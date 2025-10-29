@@ -13,11 +13,11 @@ import {
   useToast,
   Text
 } from '@chakra-ui/react';
-import { FiMenu, FiSearch } from 'react-icons/fi';
+import { FiMenu, FiSearch,FiUser } from 'react-icons/fi';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext'; // Importamos el AuthContext
 
-const Navbar = ({ onToggleSidebar }) => {
+const Navbar = ({ onToggleSidebar,isDesktop }) => {
   const { user, logout } = useAuth(); // Obtenemos el usuario y la función logout
   const navigate = useNavigate();
   const toast = useToast();
@@ -46,15 +46,19 @@ const Navbar = ({ onToggleSidebar }) => {
       h="14" // 56px
     >
       {/* Lado Izquierdo: Botón Hamburguesa */}
-      <IconButton
+     <IconButton
         aria-label="Toggle Sidebar"
         icon={<FiMenu />}
         variant="ghost"
-        onClick={onToggleSidebar} // <-- Llama a la función del padre
+        onClick={onToggleSidebar} 
       />
 
       {/* Centro: Buscador (Solo Diseño) */}
-      <Box w={{ base: 'full', md: 'md' }} mx="4">
+     <Box 
+        w={{ base: 'full', md: 'md' }} 
+        mx="4" 
+        display={{ base: 'none', md: 'block' }} 
+      >
         <InputGroup>
           <InputLeftElement pointerEvents="none">
             <FiSearch color="gray.300" />
@@ -69,20 +73,17 @@ const Navbar = ({ onToggleSidebar }) => {
         </InputGroup>
       </Box>
 
-      {/* Lado Derecho: Menú de Usuario */}
+     
       <Menu>
-        <MenuButton
-          as={Box}
-          cursor="pointer"
-          display="flex"
-          alignItems="center"
-        >
-          <Avatar
-            size={'sm'}
-            name={user?.username || 'Usuario'} // <-- Usa el username del AuthContext
-            mr="2"
-          />
-          <Text fontSize="sm" d={{ base: 'none', md: 'block' }}>
+        <MenuButton as={Box} cursor="pointer">
+           {/* Muestra Avatar siempre */}
+           <Avatar size={'sm'} name={user?.username || '?'} /> 
+           {/* Muestra Nombre solo en Desktop */}
+           <Text 
+               fontSize="sm" 
+               display={{ base: 'none', md: 'inline' }} // <-- Oculta nombre en base
+               ml={2}
+           >
             {user?.username}
           </Text>
         </MenuButton>

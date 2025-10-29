@@ -140,7 +140,7 @@ const HomePage = () => {
       <Heading mb={6}>Inicio</Heading>
 
       
-      <SimpleGrid columns={{ base: 1, md: 3 }} spacing={{ base: 5, lg: 8 }} mb={8}>
+     <SimpleGrid columns={{ base: 1, md: 2, lg: 3 }} spacing={6} mb={8}>
         <StatCard
           title={'Turnos de Hoy'}
           stat={loadingTurnos ? <Spinner size="sm"/> : turnosHoy.length}
@@ -164,7 +164,7 @@ const HomePage = () => {
       <Divider my={8} />
 
   
-      <SimpleGrid columns={{ base: 1, lg: 2 }} spacing={{ base: 5, lg: 8 }}>
+      <SimpleGrid columns={{ base: 1, lg: 2 }} spacing={6}>
       
      <Box bg="gray.50" p={5} borderRadius="lg" shadow="sm" maxH="400px" overflowY="auto">
     <Heading size="md" mb={4} color="gray.700">Próximos Turnos del Día</Heading>

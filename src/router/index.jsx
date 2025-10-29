@@ -11,6 +11,7 @@ import HomePage from '../pages/HomePage';
 import PacientesPage from '../pages/pacientes/PacientesPage';
 import TurnosPage from '../pages/turnos/TurnoPage'; // <-- ¡IMPORTA ESTA LÍNEA!
 import PagosPage from '../pages/pagos/PagosPage';
+import ReportesPage from '../pages/reportes/ReportesPage';
 
 const AppRouter = () => {
   return (
@@ -29,6 +30,7 @@ const AppRouter = () => {
           <Route path="/turnos" element={<TurnosPage />} />
           
         <Route path="/pagos" element={<PagosPage />} />
+        <Route path="/reportes" element={<ReportesPage />} />
           
         </Route>
       </Route>

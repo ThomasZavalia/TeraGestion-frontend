@@ -50,7 +50,7 @@ const NavItem = ({ icon, children, to, isOpen }) => {
 };
 
 // Componente principal del Sidebar
-const Sidebar = ({ width, isOpen }) => {
+const Sidebar = ({ width, isOpen, display }) => {
   return (
     <Box
       as="nav"
@@ -61,8 +61,10 @@ const Sidebar = ({ width, isOpen }) => {
       w={width} // <-- Ancho dinámico
       bg="gray.800"
       color="white"
-      transition="width 0.2s ease-in-out" // <-- Animación suave
+      display={display} 
+      transition="width 0.2s ease-in-out" 
       zIndex="sticky"
+      overflowY="auto" // Permite scroll si hay muchos items
     >
       <VStack align="stretch" h="full">
         {/* Logo */}
