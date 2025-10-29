@@ -5,8 +5,16 @@ import {
 
 import {EditIcon, ViewIcon, DeleteIcon} from "@chakra-ui/icons";
 
+import { useNavigate } from "react-router-dom";
+
 
 export const TablaPacientes = ({pacientes, onEditar, onEliminar}) => {
+
+
+    const navigate = useNavigate();
+
+
+
     return (
         <TableContainer>
             <Table>
@@ -42,6 +50,7 @@ export const TablaPacientes = ({pacientes, onEditar, onEliminar}) => {
                                     <Tooltip label="Ver Detalles del Paciente" aria-label="Ver Detalles del Paciente">
                                         <IconButton icon={<ViewIcon />}
                                             aria-label="Ver Detalles del Paciente"
+                                            onClick={() => navigate(`/pacientes/${paciente.id}`)}
                                             >{/** falta el onclick */}
                                         </IconButton>
                                     </Tooltip>

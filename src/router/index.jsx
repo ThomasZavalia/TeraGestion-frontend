@@ -7,6 +7,9 @@ import PacientesPage from '../pages/pacientes/PacientesPage';
 // ... tus otras páginas
 import ProtectedRoute from './ProtectedRoute'; // <-- Importas el protector
 
+
+import { PacienteDetallePage } from '../pages/pacientes/PacienteDetallePage';
+
 const AppRouter = () => {
   return (
     <Routes>
@@ -18,6 +21,8 @@ const AppRouter = () => {
         <Route element={<DashboardLayout />}> 
           <Route path="/" element={<HomePage />} />
           <Route path="/pacientes" element={<PacientesPage />} />
+
+          <Route path="/pacientes/:id" element={<PacienteDetallePage />} />
         
         </Route>
       </Route>
