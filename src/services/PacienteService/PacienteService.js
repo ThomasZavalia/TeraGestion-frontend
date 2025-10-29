@@ -86,5 +86,16 @@ export const pacienteService = {
       console.log("Error al obtener los detalles del paciente:", error);
       throw error;
     }
+  },
+
+
+  eliminarPaciente: async (id) => {
+    try{
+      const {data} = await axiosInstance.delete(`${API_URL}/${id}`);
+      return data;
+    }catch (error){
+      console.log("Error al eliminar el paciente:", error);
+      throw error;
+    }
   }
 };

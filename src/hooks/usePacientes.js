@@ -29,7 +29,17 @@ export const usePacientes = () => {
         useEffect(() => {
             cargarPacientes();
         }, [cargarPacientes]);
+
+        const eliminarPaciente = async (id) => {
+            try{
+                await pacienteService.eliminarPaciente(id);
+                cargarPacientes();
+            }catch (err){
+                console.error("Error al eliminar el paciente:", err);
+                throw err;
+            }
+        }
     
 
-    return {pacientes, loading, error, recargarPacientes: cargarPacientes};
+    return {pacientes, loading, error, recargarPacientes: cargarPacientes, eliminarPaciente};
 }

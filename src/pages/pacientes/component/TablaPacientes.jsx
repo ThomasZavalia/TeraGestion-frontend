@@ -1,12 +1,12 @@
 import React from "react";
 import {
     Table, Thead, Tbody, Tr, Th, Td, 
-    TableContainer, IconButton, HStack,} from "@chakra-ui/react";
+    TableContainer, IconButton, HStack, Tooltip} from "@chakra-ui/react";
 
-import {EditIcon, ViewIcon} from "@chakra-ui/icons";
+import {EditIcon, ViewIcon, DeleteIcon} from "@chakra-ui/icons";
 
 
-export const TablaPacientes = ({pacientes, onEditar}) => {
+export const TablaPacientes = ({pacientes, onEditar, onEliminar}) => {
     return (
         <TableContainer>
             <Table>
@@ -30,17 +30,29 @@ export const TablaPacientes = ({pacientes, onEditar}) => {
                             <Td>{paciente.obraSocial ? paciente.obraSocial.nombre : "No tiene obra social"}</Td>
                             <Td>
                                 <HStack spacing={2}>
-                                    <IconButton icon={<EditIcon />}
-                                        aria-label="Editar Paciente"
-                                        onClick={() => onEditar(paciente)}
-                                    >
-                                    </IconButton>
 
-                                    <IconButton icon={<ViewIcon />}
-                                        aria-label="Ver Detalles del Paciente"
-                                        >{/** falta el onclick */}
+                                    <Tooltip label="Editar Paciente" aria-label="Editar Paciente">
+                                        <IconButton icon={<EditIcon />}
+                                            aria-label="Editar Paciente"
+                                            onClick={() => onEditar(paciente)}
+                                        >
+                                        </IconButton>
+                                    </Tooltip>
 
-                                    </IconButton>
+                                    <Tooltip label="Ver Detalles del Paciente" aria-label="Ver Detalles del Paciente">
+                                        <IconButton icon={<ViewIcon />}
+                                            aria-label="Ver Detalles del Paciente"
+                                            >{/** falta el onclick */}
+                                        </IconButton>
+                                    </Tooltip>
+
+                                    <Tooltip label="Eliminar Paciente" aria-label="Eliminar Paciente">
+                                        <IconButton icon={<DeleteIcon />}
+                                            aria-label="Eliminar Paciente"
+                                            onClick={() => onEliminar(paciente)}
+                                        >
+                                        </IconButton>
+                                    </Tooltip>
                                 </HStack>
                             </Td>
                         </Tr>

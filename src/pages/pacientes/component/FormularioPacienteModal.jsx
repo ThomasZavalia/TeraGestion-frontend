@@ -29,6 +29,8 @@ export const FormularioPacienteModal = ({ isOpen, onClose, onGuardado, pacienteA
 
   const manejarCambio = !!pacienteAEditar; 
 
+  const today = new Date().toISOString().split('T')[0];
+
   
   useEffect(() => {
     if (manejarCambio && pacienteAEditar) { 
@@ -163,7 +165,7 @@ export const FormularioPacienteModal = ({ isOpen, onClose, onGuardado, pacienteA
                     <FormControl isRequired>
                         <FormLabel>Fecha de Nacimiento</FormLabel>
                         <Input
-                        name="fechaNacimiento" value={formData.fechaNacimiento}  onChange={handleChange} type="date"/>
+                        name="fechaNacimiento" value={formData.fechaNacimiento}  onChange={handleChange} type="date" max={today}/>
                     </FormControl>
             <FormControl>
               <FormLabel>Obra Social</FormLabel>
