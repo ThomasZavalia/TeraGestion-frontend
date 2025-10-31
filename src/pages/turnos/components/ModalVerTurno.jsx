@@ -3,7 +3,7 @@ import {
   Button, Text, VStack, HStack, Tag, useToast, Box, Divider, IconButton,
   Heading, 
   AlertDialog, AlertDialogBody, AlertDialogFooter, AlertDialogHeader, AlertDialogContent, AlertDialogOverlay, useDisclosure, Select, FormControl,
-   FormLabel,  ButtonGroup,Flex,Tooltip,
+   FormLabel,  ButtonGroup,Flex,Tooltip,Spinner,Center,
 } from '@chakra-ui/react';
 import { useState,useRef,useEffect } from 'react';
 import { format, parseISO,isFuture } from 'date-fns';
@@ -14,71 +14,89 @@ import { sesionService } from '../../../services/SesionService';
 
 const ModalVerTurno = ({ isOpen, onClose, turno, onTurnoUpdate, onEdit, onDelete }) => { 
   const toast = useToast();
+
+const [detalle, setDetalle] = useState(null); 
+  const [isLoading, setIsLoading] = useState(true);
+
   const [isPaying, setIsPaying] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   
   const [isSavingAsistencia, setIsSavingAsistencia] = useState(false); 
-  const [asistenciaRegistrada, setAsistenciaRegistrada] = useState(null); 
+  //const [asistenciaRegistrada, setAsistenciaRegistrada] = useState(null); 
 
   const [metodoPago, setMetodoPago] = useState('Efectivo'); 
 
  
  const { isOpen: isAlertOpen, onOpen: onAlertOpen, onClose: onAlertClose } = useDisclosure();
   const cancelRef = useRef(); 
+
+  useEffect(() => {
+    
+    if (isOpen && turno) {
+      const fetchDetalle = async () => {
+        setIsLoading(true);
+        try {
+          
+          const turnoId = turno.extendedProps.id;
+          // 2. Llamamos al nuevo servicio
+          const data = await turnoService.getTurnoDetalle(turnoId);
+          
+          setDetalle(data); 
+        } catch (error) {
+          console.error("Error al cargar detalle del turno", error);
+          toast({ title: 'Error', description: 'No se pudo cargar el detalle del turno.', status: 'error' });
+          setDetalle(null); 
+        } finally {
+          setIsLoading(false);
+        }
+      };
+      
+      fetchDetalle();
+    }
+  }, [isOpen, turno, toast]);
  
 const turnoData = turno?.extendedProps;
 const turnoFecha = turno?.start;
 
-  let fechaFormateada = 'Fecha inválida'; 
-  if (turnoData && turnoData.fecha) { 
-    try {
-     
-      const fechaTurno = parseISO(turnoData.fecha); 
 
-      
-      if (fechaTurno && !isNaN(fechaTurno.getTime())) { 
-        fechaFormateada = format(fechaTurno, "eeee dd 'de' MMMM, yyyy 'a las' HH:mm 'hs'", { locale: es });
-      } else {
-         console.error('parseISO devolvió una fecha inválida para:', turnoData.fecha);
-      }
+
+let fechaFormateada = 'Fecha inválida'; 
+  if (detalle && detalle.fechaHora) { 
+    try {
+      const fechaTurno = parseISO(detalle.fechaHora); 
+      fechaFormateada = format(fechaTurno, "eeee dd 'de' MMMM, yyyy 'a las' HH:mm 'hs'", { locale: es });
     } catch (error) {
        console.error('Error al parsear/formatear la fecha:', error);
     }
   }
 
- const esTurnoFuturo = turnoFecha ? isFuture(turnoFecha) : false;
+
+
+ const esTurnoFuturo = detalle ? isFuture(parseISO(detalle.fechaHora)) : false;
 
 
 const handleMarcarPagado = async () => {
-    if (!turnoData) return;
-    setIsPaying(true);
-    
-    const result = await turnoService.marcarComoPagado(turnoData.id, metodoPago); 
-    setIsPaying(false);
+if (!detalle) return;
+setIsPaying(true);
 
- 
-    if (result.success) {
-      toast({
-        title: 'Turno Pagado',
-        status: 'success',
-        duration: 3000,
-      });
-     
-      onTurnoUpdate({ ...turnoData, estado: 'pagado' }); 
-      onClose(); // Cierra el modal
-    } else {
-      toast({
-        title: 'Error al pagar',
-        description: result.message,
-        status: 'error',
-        duration: 5000,
-      });
-    }
-  };
- const handleEditar = () => {
-    if (turnoData) {
-      onEdit(turnoData); 
-      //onClose(); 
+const result = await turnoService.marcarComoPagado(detalle.id, metodoPago); 
+
+ if (result.success) {
+   toast({ title: 'Turno Pagado', status: 'success' });
+
+ const datosFrescos = await turnoService.getTurnoDetalle(detalle.id);
+
+   onTurnoUpdate(turnoService.formatTurnoForCalendar(datosFrescos)); 
+   onClose(); // Cierra el modal
+   } else {
+toast({ title: 'Error al pagar', description: result.message, status: 'error' });
+  setIsPaying(false); }
+};
+
+  const handleEditar = () => {
+    if (detalle) {
+      
+      onEdit(detalle); 
     }
   };
 
@@ -100,37 +118,62 @@ const handleMarcarPagado = async () => {
   };
 
 const handleAsistencia = async (estadoAsistencia) => {
-    if (!turnoData) return;
+    if (!detalle) return;
     setIsSavingAsistencia(true);
-    const result = await sesionService.createSesion(turnoData.id, estadoAsistencia);
-    setIsSavingAsistencia(false);
-
+    
+    
+    const result = await sesionService.registrarAsistencia(detalle.id, estadoAsistencia);
+    
     if (result.success) {
-      setAsistenciaRegistrada(estadoAsistencia); 
       toast({
-        title: `Asistencia registrada como ${estadoAsistencia}`,
+        title: `Asistencia registrada`,
         status: 'success',
         duration: 3000,
       });
-     
-    } else {
       
-       if (result.alreadyExists) {
-           setAsistenciaRegistrada(estadoAsistencia); 
-       }
-       toast({
-        title: 'Error al registrar asistencia',
+      
+      const datosFrescos = await turnoService.getTurnoDetalle(detalle.id);
+      
+    
+     onTurnoUpdate(turnoService.formatTurnoForCalendar(datosFrescos));
+      onClose(); 
+    } else {
+      toast({
+        title: 'Error al registrar',
         description: result.message,
         status: result.alreadyExists ? 'warning' : 'error', 
-        duration: 5000,
       });
     }
+    setIsSavingAsistencia(false);
+  }
+
+
+
+
+  
+  const renderAsistencia = () => {
+    // Si el turno es futuro, no se puede tomar asistencia
+    if (esTurnoFuturo) {
+      return <Text fontSize="sm" color="gray.500">(La asistencia se registra el día del turno)</Text>;
+    }
+    
+    
+    switch (detalle.asistencia) {
+      case 'Presente':
+        return <Tag colorScheme='green' size="md"><FiCheckCircle />&nbsp; Asistencia Confirmada</Tag>;
+      case 'Ausente':
+        return <Tag colorScheme='orange' size="md"><FiX />&nbsp; Ausencia Registrada</Tag>;
+      case null: 
+      default:
+        return (
+          <ButtonGroup spacing="3" w="full">
+            <Button leftIcon={<FiCheck />} colorScheme="green" variant="outline" size="sm" onClick={() => handleAsistencia('Presente')} isLoading={isSavingAsistencia} loadingText="Guardando" flex="1"> Confirmar Asistencia </Button>
+            <Button leftIcon={<FiX />} colorScheme="orange" variant="outline" size="sm" onClick={() => handleAsistencia('Ausente')} isLoading={isSavingAsistencia} loadingText="Guardando" flex="1"> Marcar Ausente </Button>
+          </ButtonGroup>
+        );
+    }
   };
-
-
-
-  if (!turnoData) return null;
-const showAsistenciaButtons = !asistenciaRegistrada && !esTurnoFuturo;
+  if (!isOpen) return null;
  return (
     <>
    
@@ -172,67 +215,61 @@ const showAsistenciaButtons = !asistenciaRegistrada && !esTurnoFuturo;
          <ModalCloseButton isDisabled={isPaying || isDeleting || isSavingAsistencia} top={4} right={4}/>
           
         
-          <ModalBody py={6}> 
-            <VStack align="start" spacing={4}> {/* Más spacing */}
-              {/* --- Datos Principales --- */}
-              <Box>
-                <Heading size="sm" color="gray.700">{`${turnoData.pacienteNombre} ${turnoData.pacienteApellido}`}</Heading>
-                <Text fontSize="sm" color="gray.500"> {fechaFormateada} </Text>
-              </Box>
-              <HStack> 
-                  <Text fontWeight="medium">Estado Turno:</Text> 
-                  <Tag colorScheme={turnoData.estado?.toLowerCase() === 'pagado' ? 'green' : 'blue'}> {turnoData.estado} </Tag> 
-              </HStack>
-              <HStack> 
-                  <Text fontWeight="medium">Precio:</Text> 
-                  <Text>${turnoData.precio?.toLocaleString('es-AR') || 'N/A'}</Text> 
-              </HStack>
-              
-              <Divider pt={3}/>
+         <ModalBody py={6}> 
 
-              {/* --- SECCIÓN ASISTENCIA --- */}
-              <Box w="full" pt={3}>
-                 <Heading size="xs" mb={3} color="gray.600">Registro de Asistencia</Heading>
-                 {showAsistenciaButtons ? (
-                     <ButtonGroup spacing="3" w="full">
-                         <Button leftIcon={<FiCheck />} colorScheme="green" variant="outline" size="sm" onClick={() => handleAsistencia('Presente')} isLoading={isSavingAsistencia} loadingText="Guardando" flex="1"> Confirmar Asistencia </Button>
-                         <Button leftIcon={<FiX />} colorScheme="orange" variant="outline" size="sm" onClick={() => handleAsistencia('Ausente')} isLoading={isSavingAsistencia} loadingText="Guardando" flex="1"> Marcar Ausente </Button>
-                     </ButtonGroup>
-                 ) : (
-                    <HStack>
-                        <Text fontWeight="medium">Asistencia:</Text>
-                        {asistenciaRegistrada ? ( <Tag colorScheme={asistenciaRegistrada === 'Presente' ? 'green' : 'orange'}> {asistenciaRegistrada} </Tag> ) 
-                         : ( <Text fontSize="sm" color="gray.500">(Aún no disponible o turno futuro)</Text> )}
-                    </HStack>
-                 )}
-              </Box>
-              
-              {/* --- SECCIÓN PAGO (SI CORRESPONDE) --- */}
-              {/* Solo se muestra si el turno NO está pagado */}
-              {turnoData.estado?.toLowerCase() !== 'pagado' && ( 
-                 <Box w="full" pt={4} borderTopWidth="1px" borderColor="gray.200" mt={4}>
-                     <Heading size="xs" mb={3} color="gray.600">Registrar Pago</Heading>
-                     <VStack align="stretch" spacing={3}> 
-                        <FormControl id="metodo-pago-ver"> {/* Añadir ID único */}
-                            <FormLabel fontSize="sm" mb={1}>Método de Pago</FormLabel>
-                            <Select size="sm" value={metodoPago} onChange={(e) => setMetodoPago(e.target.value)} isDisabled={isPaying}>
-                                <option value="Efectivo">Efectivo</option>
-                                <option value="Transferencia">Transferencia</option>
-                                <option value="MercadoPago">MercadoPago</option>
-                                {/* ... más opciones */}
-                            </Select>
-                        </FormControl>
-                        <Button leftIcon={<FiCheckCircle />} colorScheme="green" onClick={handleMarcarPagado} isLoading={isPaying} loadingText="Pagando..." w="full" size="sm">
-                            Marcar como Pagado
-                        </Button>
-                     </VStack>
-                 </Box>
-             )}
+ {isLoading ? (
+ <Center h="200px"><Spinner size="xl" /></Center>
+ ) : !detalle ? (
+ <Center h="200px"><Text color="red.500">Error al cargar datos.</Text></Center>
+ ) : (
 
-            </VStack>
-          </ModalBody>
+ <VStack align="start" spacing={4}>
+ <Box>
+ <Heading size="sm" color="gray.700">{detalle.pacienteNombre}</Heading>
+ <Text fontSize="sm" color="gray.500"> {fechaFormateada} </Text>
+ </Box>
+ <HStack> 
+ <Text fontWeight="medium">Estado Turno:</Text> 
+ <Tag colorScheme={detalle.estado?.toLowerCase() === 'pagado' ? 'green' : 'blue'}> {detalle.estado} </Tag> 
+ </HStack>
+ <HStack> 
+<Text fontWeight="medium">Precio:</Text> 
+ <Text>${detalle.precio?.toLocaleString('es-AR') || 'N/A'}</Text> 
+</HStack>
+
+ <Divider pt={3}/>
+
+
+<Box w="full" pt={3}>
+<Heading size="xs" mb={3} color="gray.600">Registro de Asistencia</Heading>
+{renderAsistencia()}
+ </Box>
+
+
+{detalle.estado?.toLowerCase() !== 'pagado' && ( 
+ <Box w="full" pt={4} borderTopWidth="1px" borderColor="gray.200" mt={4}>
+<Heading size="xs" mb={3} color="gray.600">Registrar Pago</Heading>
+<VStack align="stretch" spacing={3}> 
+<FormControl id="metodo-pago-ver">
+ <FormLabel fontSize="sm" mb={1}>Método de Pago</FormLabel>
+<Select size="sm" value={metodoPago} onChange={(e) => setMetodoPago(e.target.value)} isDisabled={isPaying}>
+<option value="Efectivo">Efectivo</option>
+ <option value="Transferencia">Transferencia</option>
+ <option value="MercadoPago">MercadoPago</option>
+ </Select>
+ </FormControl>
+ <Button leftIcon={<FiCheckCircle />} colorScheme="green" onClick={handleMarcarPagado} isLoading={isPaying} loadingText="Pagando..." w="full" size="sm">
+Marcar como Pagado
+ </Button>
+</VStack>
+ </Box>
+ )}
+
+</VStack>
+ )}
+</ModalBody>
           
-          {/* --- FOOTER SIMPLIFICADO --- */}
+          
           <ModalFooter borderTopWidth="1px" borderColor="gray.200">
              <Button variant="ghost" onClick={onClose} ml="auto" isDisabled={isPaying || isDeleting || isSavingAsistencia}> 
                  Cerrar
@@ -241,7 +278,7 @@ const showAsistenciaButtons = !asistenciaRegistrada && !esTurnoFuturo;
         </ModalContent>
       </Modal>
       
-      {/* --- AlertDialog (Sin cambios) --- */}
+   
       <AlertDialog
         isOpen={isAlertOpen}
         leastDestructiveRef={cancelRef}

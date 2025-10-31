@@ -118,67 +118,58 @@ const handleEventClick = (arg) => {
       }
       handleCloseCreateModal(); // Cierra y limpia
   };
-  
-  /*const handleTurnoUpdate = (turnoActualizadoDatos) => {
-     console.log("handleTurnoUpdate - Datos actualizados:", turnoActualizadoDatos);
-      if (calendarRef.current) {
-          const calendarApi = calendarRef.current.getApi();
-          const eventoExistente = calendarApi.getEventById(turnoActualizadoDatos.id.toString());
 
-          if(eventoExistente) {
-              console.log("Actualizando evento en calendario ID:", turnoActualizadoDatos.id);
-              eventoExistente.remove();
-             
-             
-              const eventoFormateado = turnoService.formatTurnoForCalendar ? turnoService.formatTurnoForCalendar(turnoActualizadoDatos) : turnoActualizadoDatos; 
-              calendarApi.addEvent(eventoFormateado);
-              
-              setCalendarEvents(prev => [...prev.filter(ev => ev.id !== turnoActualizadoDatos.id.toString()), eventoFormateado] ); 
-          } else {
-              console.warn("Evento a actualizar no encontrado en calendario:", turnoActualizadoDatos.id);
-          }
-      }
-      handleCloseCreateModal();
-      
-     
-  };
-  */
+const getColorForTurno = (turnoProps) => {
+    if (!turnoProps) return '#3182CE'; 
+
+    if (turnoProps.estado?.toLowerCase() === 'pagado') {
+        return '#48BB78'; // Verde (Pagado)
+    }
+    if (turnoProps.asistencia === 'Ausente') {
+        return '#ED8936'; // Naranja (Ausente)
+    }
+    
+    
+    return '#3182CE'; }
+
+
+
+
+
+/*
 const handleTurnoUpdate = (turnoActualizadoDatos) => {
      console.log("handleTurnoUpdate - Datos actualizados:", turnoActualizadoDatos);
      if (calendarRef.current) {
          const calendarApi = calendarRef.current.getApi();
-         // Es crucial que el ID sea string para FullCalendar
+         
          const eventoIdStr = turnoActualizadoDatos.id.toString();
          const eventoExistente = calendarApi.getEventById(eventoIdStr);
 
          if(eventoExistente) {
              console.log("Actualizando evento en calendario ID:", eventoIdStr);
 
-             // 1. Construimos el NUEVO evento
-             // Usamos los datos del evento existente que NO cambian
-             // y los datos del DTO que SÍ cambiaron.
+            
              const eventoFormateado = {
                  id: eventoIdStr,
-                 title: eventoExistente.title, // El paciente (título) no cambió
-                 start: eventoExistente.start, // La fecha/hora no cambió
-                 end: eventoExistente.end,     // La fecha/hora no cambió
+                 title: eventoExistente.title, 
+                 start: eventoExistente.start, 
+                 end: eventoExistente.end,     
                  
-                 // 2. Combinamos las 'extendedProps' (propiedades extendidas)
-                 // Mantenemos las antiguas y sobrescribimos con las nuevas del DTO
+               
                  extendedProps: {
                      ...eventoExistente.extendedProps,
                      ...turnoActualizadoDatos 
-                     // Esto asume que tu DTO tiene campos como 'obraSocialId', 'precio'
+                     
                  },
                  
                
              };
 
-             // 4. Quitamos el viejo y añadimos el nuevo
+           
              eventoExistente.remove();
              calendarApi.addEvent(eventoFormateado);
              
-             // 5. Actualizamos el estado de React
+             
              setCalendarEvents(prev => [
                  ...prev.filter(ev => ev.id !== eventoIdStr),
                  eventoFormateado
@@ -190,7 +181,79 @@ const handleTurnoUpdate = (turnoActualizadoDatos) => {
          }
      }
      handleCloseCreateModal();
- };
+ };*/
+
+
+
+const handleTurnoUpdate = (turnoActualizadoDatos) => {
+    console.log("handleTurnoUpdate - Datos recibidos:", turnoActualizadoDatos);
+    
+    if (!calendarRef.current || !turnoActualizadoDatos || !turnoActualizadoDatos.id) {
+        console.error("handleTurnoUpdate cancelado: faltan datos o ID.");
+        return;
+    }
+
+    const calendarApi = calendarRef.current.getApi();
+    const eventoIdStr = turnoActualizadoDatos.id.toString();
+    const eventoExistente = calendarApi.getEventById(eventoIdStr);
+
+    if (!eventoExistente) {
+        console.warn("Evento a actualizar no encontrado en calendario:", eventoIdStr);
+        return;
+    }
+
+    let eventoFormateado;
+
+   
+    if (turnoActualizadoDatos.title && turnoActualizadoDatos.start) {
+        console.log("Actualizando con EVENTO COMPLETO.");
+       eventoFormateado = {
+            ...turnoActualizadoDatos, 
+            
+         
+            title: eventoExistente.title, 
+            start: eventoExistente.start, 
+            end: eventoExistente.end,    
+            
+           
+            color: getColorForTurno(turnoActualizadoDatos.extendedProps)
+        };
+    
+    } else { 
+        console.log("Actualizando con DTO PARCIAL.");
+        
+        const nuevasProps = {
+            ...eventoExistente.extendedProps,
+            ...turnoActualizadoDatos
+        };
+
+        eventoFormateado = {
+            id: eventoIdStr,
+            title: eventoExistente.title, 
+            start: eventoExistente.start, 
+            end: eventoExistente.end,     
+            extendedProps: nuevasProps,     
+            color: getColorForTurno(nuevasProps) 
+        };
+    }
+
+    console.log("Evento final formateado:", eventoFormateado);
+
+    // 4. Reemplazamos el evento en la UI
+    eventoExistente.remove();
+    calendarApi.addEvent(eventoFormateado);
+    
+    // 5. Actualizamos el estado de React
+    setCalendarEvents(prev => [
+        ...prev.filter(ev => ev.id !== eventoIdStr),
+        eventoFormateado
+    ]);
+
+   
+    handleCloseCreateModal();
+};
+
+
 
 
   const handleTurnoDelete = (turnoId) => {
@@ -206,7 +269,7 @@ const handleTurnoUpdate = (turnoActualizadoDatos) => {
                console.warn("Evento a eliminar no encontrado en calendario:", turnoId);
           }
       }
-      handleCloseViewModal(); // Cierra y limpia Ver Turno
+      handleCloseViewModal(); 
   };
 
  const handleCloseCreateModal = () => {
@@ -216,11 +279,11 @@ console.log("Cerrando Modal Crear/Editar.");
  };
 
  const handleCloseViewModal = () => {
-      console.log("Cerrando Modal Ver y limpiando selectedTurnoEvent.");
-      onViewClose(); 
-      setSelectedTurnoEvent(null); 
+console.log("Cerrando Modal Ver y limpiando selectedTurnoEvent.");
+onViewClose(); 
+setSelectedTurnoEvent(null); 
       
-  };
+};
 
 
   if (loading) { return ( <Center h="200px"> <Spinner size="xl" /> </Center> ); }

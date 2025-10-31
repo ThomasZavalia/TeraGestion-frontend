@@ -3,8 +3,8 @@ import  axiosInstance  from './axiosInstance';
 
 const formatTurnoForCalendar = (turno) => ({
   id: turno.id.toString(), // ID como string
-  title: `${turno.pacienteNombre} ${turno.pacienteApellido}`, 
-start: turno.fecha, 
+  title: `${turno.pacienteNombre} ${turno.pacienteApellido}`.trim(), 
+start: turno.fecha|| turno.fechaHora, 
 className: turno.estado.toLowerCase() === 'pagado' ? 'turno-pagado' : 'turno-pendiente',
   extendedProps: { 
     ...turno
@@ -12,6 +12,14 @@ className: turno.estado.toLowerCase() === 'pagado' ? 'turno-pagado' : 'turno-pen
 });
 
 export const turnoService = {
+
+
+
+
+
+
+
+  
   getTurnos: async () => {
     try {
       const { data } = await axiosInstance.get('/Turno'); 
@@ -19,6 +27,23 @@ export const turnoService = {
     } catch (error) {
       console.error("Error al obtener turnos:", error);
       return [];
+    }
+  },
+
+
+  /**
+  
+   
+   * @param {string|number} id El ID del turno
+   * @returns {Promise<object>} El TurnoDetalleDto
+   */
+  getTurnoDetalle: async (id) => {
+    try {
+      const { data } = await axiosInstance.get(`/Turno/${id}/detalle`);
+      return data; 
+    } catch (error) {
+      console.error("Error al obtener detalle del turno:", error);
+      throw error;
     }
   },
 
@@ -80,6 +105,8 @@ getTurnosDeHoy: async () => {
       return []; // Devuelve array vacío en caso de error
     }
   },
+
+ 
   
   formatTurnoForCalendar
 
