@@ -2,7 +2,7 @@ import  axiosInstance  from './axiosInstance';
 
 
 const formatTurnoForCalendar = (turno) => ({
-  id: turno.id.toString(), // ID como string
+  id: turno.id.toString(), 
   title: `${turno.pacienteNombre} ${turno.pacienteApellido}`.trim(), 
 start: turno.fecha|| turno.fechaHora, 
 className: turno.estado.toLowerCase() === 'pagado' ? 'turno-pagado' : 'turno-pendiente',
@@ -12,9 +12,6 @@ className: turno.estado.toLowerCase() === 'pagado' ? 'turno-pagado' : 'turno-pen
 });
 
 export const turnoService = {
-
-
-
 
 
 
@@ -34,8 +31,8 @@ export const turnoService = {
   /**
   
    
-   * @param {string|number} id El ID del turno
-   * @returns {Promise<object>} El TurnoDetalleDto
+   * @param {string|number} id 
+   * @returns {Promise<object>}
    */
   getTurnoDetalle: async (id) => {
     try {
@@ -84,7 +81,6 @@ export const turnoService = {
     }
   },
   
-  // --- Función Marcar Pagado (ya la teníamos) ---
   marcarComoPagado: async (turnoId, metodoPago = 'Efectivo') => {
     try {
       await axiosInstance.post(`/Turno/${turnoId}/pagar`, { metodoPago });
@@ -96,13 +92,13 @@ export const turnoService = {
   },
 getTurnosDeHoy: async () => {
     try {
-      // Llama al nuevo endpoint del backend
+     
       const { data } = await axiosInstance.get('/Turno/hoy'); 
-      // El backend ya devuelve TurnoCalendarioDto, no necesita formateo extra aquí
+      
       return data; 
     } catch (error) {
       console.error("Error al obtener turnos de hoy:", error);
-      return []; // Devuelve array vacío en caso de error
+      return []; 
     }
   },
 

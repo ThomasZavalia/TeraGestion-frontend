@@ -86,31 +86,32 @@ export const useTurnoForm = (config) => {
       } catch (error) { console.error("Error calculando precio:", error); setPrecio(0); } 
       finally { setIsLoadingPrecio(false); }
     } else {
-       if (!isEditingMode) setPrecio(0); // Resetea solo si estamos creando
+       if (!isEditingMode) setPrecio(0); 
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+ 
   }, [esParticular, obraSocialId, isEditingMode]); 
 
 
   useEffect(() => {
-    if (!isEditingMode) { 
-      fetchPrecio();
-      return; // Salimos
-    }
+    
+    if (!isEditingMode) { 
+   fetchPrecio();
+      return; 
+ }
     if (isInitialMount.current) {
         
         isInitialMount.current = false;
         
     } else {
         
-        fetchPrecio();
-    }
-  }, [fetchPrecio, isEditingMode]);
+       fetchPrecio();
+ }
+  }, [fetchPrecio, isEditingMode]);
 
 
 
   const loadPacientes = useCallback((inputValue) => {
-      console.log("loadPacientes hook llamado con:", inputValue); // <-- Log
+      console.log("loadPacientes hook llamado con:", inputValue); 
       return pacienteService.buscarPacientes(inputValue);
   }, []);
 
@@ -131,7 +132,7 @@ export const useTurnoForm = (config) => {
         }
     } catch (error) {
         console.error("Error validando DNI:", error);
-        setDniError('No se pudo validar el DNI.'); // Error genérico de red
+        setDniError('No se pudo validar el DNI.'); 
     }
   }, [pacienteTipo, isEditingMode])
 
@@ -149,7 +150,7 @@ if (dniError) {
     }
 
     setIsSubmitting(true);
-    console.log('--- handleSubmit --- Mode:', isEditingMode ? 'EDIT' : 'CREATE'); // <-- Usa isEditingMode
+    console.log('--- handleSubmit --- Mode:', isEditingMode ? 'EDIT' : 'CREATE'); 
 
     // DTO Base
     const turnoDtoBase = {
@@ -187,11 +188,11 @@ precio: precio,
         };
 
        
-onTurnoActualizado(datosCompletosParaUI); // Callback
+onTurnoActualizado(datosCompletosParaUI); 
 } else {
-        // --- CREACIÓN ---
+       
         if (!selectedDate) throw new Error("No se seleccionó fecha para crear turno");
-        // DTO de Creación (TurnoDtoCreacion)
+        
         const dtoCreacion = {
             ...turnoDtoBase, 
             fecha: selectedDate.toISOString(), 

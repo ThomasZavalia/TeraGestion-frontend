@@ -38,7 +38,7 @@ const [detalle, setDetalle] = useState(null);
         try {
           
           const turnoId = turno.extendedProps.id;
-          // 2. Llamamos al nuevo servicio
+          
           const data = await turnoService.getTurnoDetalle(turnoId);
           
           setDetalle(data); 
@@ -87,7 +87,7 @@ const result = await turnoService.marcarComoPagado(detalle.id, metodoPago);
  const datosFrescos = await turnoService.getTurnoDetalle(detalle.id);
 
    onTurnoUpdate(turnoService.formatTurnoForCalendar(datosFrescos)); 
-   onClose(); // Cierra el modal
+   onClose(); 
    } else {
 toast({ title: 'Error al pagar', description: result.message, status: 'error' });
   setIsPaying(false); }
@@ -152,7 +152,7 @@ const handleAsistencia = async (estadoAsistencia) => {
 
   
   const renderAsistencia = () => {
-    // Si el turno es futuro, no se puede tomar asistencia
+   
     if (esTurnoFuturo) {
       return <Text fontSize="sm" color="gray.500">(La asistencia se registra el día del turno)</Text>;
     }

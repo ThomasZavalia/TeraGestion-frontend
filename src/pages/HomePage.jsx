@@ -20,7 +20,7 @@ import {
   HStack, 
 } from '@chakra-ui/react';
 import { FiCalendar, FiClock, FiDollarSign, FiPlusCircle, FiUserPlus } from 'react-icons/fi';
-import { useNavigate } from 'react-router-dom'; // Para navegar
+import { useNavigate } from 'react-router-dom'; 
 import { turnoService } from '../services/TurnoService'; 
 
 import { format } from 'date-fns';
@@ -52,13 +52,12 @@ const StatCard = ({ title, stat, helpText, icon }) => (
   </Stat>
 );
 
-// --- Componente Lista de Turnos de Hoy (Puedes moverlo a /pages/home/components) ---
 const TurnosHoyLista = ({ turnos }) => {
   if (turnos.length === 0) {
     return <Text color="gray.500" fontSize="sm">No hay turnos programados para hoy.</Text>;
   }
 
-  // Ordena por hora
+  
   const turnosOrdenados = [...turnos].sort((a, b) => new Date(a.fecha) - new Date(b.fecha)); // Usa 'fecha'
 
   return (
@@ -78,7 +77,7 @@ const TurnosHoyLista = ({ turnos }) => {
               <Text fontWeight="bold" fontSize="sm">{`${turno.pacienteNombre} ${turno.pacienteApellido}`}</Text>
               <Text fontSize="xs" color="gray.600">
                 <ListIcon as={FiClock} color="gray.500" />
-                {format(new Date(turno.fecha), 'HH:mm', { locale: es })} hs {/* Usa 'fecha' */}
+                {format(new Date(turno.fecha), 'HH:mm', { locale: es })} hs 
               </Text>
             </Box>
             <Text fontSize="xs" color={turno.estado?.toLowerCase() === 'pagado' ? 'green.500' : 'gray.500'} fontWeight="medium">
@@ -96,8 +95,8 @@ const HomePage = () => {
   const [turnosHoy, setTurnosHoy] = useState([]);
   const [stats, setStats] = useState({ 
       ingresosHoy: 0, 
-      totalPacientes: '...', // Placeholder
-      turnosMesActual: '...' // Placeholder
+      totalPacientes: '...', 
+      turnosMesActual: '...' 
   }); 
   const [loadingTurnos, setLoadingTurnos] = useState(true);
   const [loadingStats, setLoadingStats] = useState(true); 
@@ -109,19 +108,19 @@ const HomePage = () => {
       setLoadingStats(true); 
 
       try {
-        // --- USA LA NUEVA FUNCIÓN ---
+       
         const turnos = await turnoService.getTurnosDeHoy(); 
         setTurnosHoy(turnos);
 
-        // --- Carga/Calcula otras estadísticas ---
+        
         const ingresos = turnos
             .filter(t => t.estado?.toLowerCase() === 'pagado')
             .reduce((sum, t) => sum + (t.precio || 0), 0);
       
         setStats({ 
             ingresosHoy: ingresos, 
-            totalPacientes: 'N/A', // Reemplazar con totalPac
-            turnosMesActual: 'N/A' // Reemplazar con turnosMes
+            totalPacientes: 'N/A', 
+            turnosMesActual: 'N/A' 
         });
 
       } catch (error) {
@@ -157,7 +156,7 @@ const HomePage = () => {
           title={'Turnos Completados (?)'} 
           stat={loadingStats ? <Spinner size="sm"/> : stats.turnosCompletadosHoy}
           helpText="Estado 'Completado'"
-          // icon={FiCheckCircle} // Necesitarías importar este ícono
+          // icon={FiCheckCircle}
         />
       </SimpleGrid>
 
@@ -183,7 +182,7 @@ const HomePage = () => {
                 leftIcon={<FiCalendar />}
                 colorScheme="blue"
                 variant="solid"
-                onClick={() => navigate('/turnos')} // Navega a la página de turnos
+                onClick={() => navigate('/turnos')} 
                 size="lg"
               >
                 Ver Agenda Completa
@@ -192,7 +191,7 @@ const HomePage = () => {
                 leftIcon={<FiPlusCircle />}
                 colorScheme="teal"
                 variant="outline"
-                onClick={() => navigate('/turnos')} // Podrías abrir el modal directamente? (más complejo)
+                onClick={() => navigate('/turnos')} 
                 size="lg"
                >
                  Nuevo Turno
@@ -201,7 +200,7 @@ const HomePage = () => {
                  leftIcon={<FiUserPlus />}
                  colorScheme="purple"
                  variant="outline"
-                 onClick={() => navigate('/pacientes')} // Navega a pacientes
+                 onClick={() => navigate('/pacientes')} 
                  size="lg"
                >
                  Nuevo Paciente

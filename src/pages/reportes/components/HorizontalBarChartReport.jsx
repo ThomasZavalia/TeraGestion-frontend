@@ -23,12 +23,12 @@ const HorizontalBarChartReport = ({ title, data, dataLabel, labelField, valueFie
    const isEmpty = !data || data.length === 0;
 
   const chartData = {
-    labels: data?.map(item => item[labelField]) || [], // Pacientes en eje Y
+    labels: data?.map(item => item[labelField]) || [], 
     datasets: [
       {
         label: dataLabel,
-        data: data?.map(item => item[valueField]) || [], // Turnos en eje X
-        backgroundColor: 'rgba(75, 192, 192, 0.6)', // Verde azulado
+        data: data?.map(item => item[valueField]) || [], 
+        backgroundColor: 'rgba(75, 192, 192, 0.6)',
         borderColor: 'rgba(75, 192, 192, 1)',
         borderWidth: 1,
       },
@@ -36,7 +36,7 @@ const HorizontalBarChartReport = ({ title, data, dataLabel, labelField, valueFie
   };
 
   const options = {
-    indexAxis: 'y', // <-- ESTO LO HACE HORIZONTAL
+    indexAxis: 'y', 
     responsive: true,
     maintainAspectRatio: false,
     plugins: {
@@ -44,10 +44,10 @@ const HorizontalBarChartReport = ({ title, data, dataLabel, labelField, valueFie
       title: { display: false },
     },
     scales: {
-      x: { // Eje X (Turnos)
+      x: { 
         beginAtZero: true,
         ticks: {
-          precision: 0 // No mostrar decimales para cantidad de turnos
+          precision: 0 
         }
       },
     },

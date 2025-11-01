@@ -8,7 +8,7 @@ import {
   Tooltip,
   Legend,
 } from 'chart.js';
-import ChartCard from './ChartCard'; // Importa el contenedor
+import ChartCard from './ChartCard'; 
 
 ChartJS.register(
   CategoryScale,
@@ -37,10 +37,10 @@ const BarChartReport = ({ title, data, dataLabel, labelField = 'mes', valueField
 
   const options = {
     responsive: true,
-    maintainAspectRatio: false, // Permite ajustar altura
+    maintainAspectRatio: false, 
     plugins: {
-      legend: { display: false }, // Oculta leyenda si solo hay 1 dataset
-      title: { display: false }, // Usamos el título del Card
+      legend: { display: false }, 
+      title: { display: false }, 
       tooltip: {
          callbacks: {
              label: function(context) {

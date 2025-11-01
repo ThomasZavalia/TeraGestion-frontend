@@ -45,7 +45,7 @@ const Navbar = ({ onToggleSidebar,isDesktop }) => {
       borderColor="gray.200"
       h="14" // 56px
     >
-      {/* Lado Izquierdo: Botón Hamburguesa */}
+      
      <IconButton
         aria-label="Toggle Sidebar"
         icon={<FiMenu />}
@@ -53,7 +53,6 @@ const Navbar = ({ onToggleSidebar,isDesktop }) => {
         onClick={onToggleSidebar} 
       />
 
-      {/* Centro: Buscador (Solo Diseño) */}
      <Box 
         w={{ base: 'full', md: 'md' }} 
         mx="4" 
