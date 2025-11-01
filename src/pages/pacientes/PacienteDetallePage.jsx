@@ -33,15 +33,15 @@ export const PacienteDetallePage = () => {
     }
 
 
-    const paciente = detalles?.paciente;
+    const paciente = detalles;
 
 
     return(
-        <Box p={4} maxWidth="1200px" mx="auto">
-            <button leftIcon={<ArrowBackIcon />} onClick={() => navigate('/pacientes')} mb={4}>
+        <Box p={4}>
+            <Button leftIcon={<ArrowBackIcon />} onClick={() => navigate('/pacientes')} mb={4}>
                 Volver a la lista de pacientes
-            </button>
-
+            </Button>
+            <Box maxWidth="1200px" mx="auto">
             <Heading mb={4}>{paciente?.nombre} {paciente?.apellido}</Heading>
 
             <Tabs colorScheme="teal">
@@ -65,6 +65,8 @@ export const PacienteDetallePage = () => {
                     </TabPanel>
                 </TabPanels>
             </Tabs>
+            </Box>
+
         </Box>
     )
 }

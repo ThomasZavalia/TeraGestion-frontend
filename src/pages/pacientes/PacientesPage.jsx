@@ -94,8 +94,8 @@ const PacientesPage = () => {
   };
 
   return (
-    <Box>
-      <HStack>
+    <Box p={4}>
+      <HStack justifyContent="space-between" mb={10}>
         <Heading>Pacientes</Heading>
         <Tooltip label="Agregar Paciente" aria-label="Agregar Paciente">
           <Button leftIcon={<AddIcon />} colorScheme='teal' onClick={handleNuevo}>
