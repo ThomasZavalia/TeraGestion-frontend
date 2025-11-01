@@ -7,11 +7,11 @@ import {
   Button,
   useToast,
   FormErrorMessage,
-  InputGroup, InputRightElement, IconButton, // Para mostrar/ocultar
+  InputGroup, InputRightElement, IconButton, 
 } from '@chakra-ui/react';
-import { useForm} from 'react-hook-form'; // Importa 'watch'
+import { useForm } from 'react-hook-form'; 
 import { AiOutlineEye, AiOutlineEyeInvisible } from 'react-icons/ai';
-import { usuarioService } from '../../../services/UsuarioService'; // Ajusta ruta
+import { usuarioService } from '../../../services/UsuarioService'; 
 
 const ContrasenaForm = () => {
   const {
@@ -26,12 +26,12 @@ const ContrasenaForm = () => {
   const [showNew, setShowNew] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
 
-  // Observa el valor de la nueva contraseña para la validación de confirmación
+
   const newPassword = watch("contraseñaNueva", ""); 
 
   const onSubmit = async (data) => {
     try {
-      // El DTO del backend espera contraseñaActual, contraseñaNueva, confirmarContraseñaNueva
+    
       const result = await usuarioService.changePassword({
           contraseñaActual: data.contraseñaActual,
           contraseñaNueva: data.contraseñaNueva,
@@ -39,11 +39,11 @@ const ContrasenaForm = () => {
       });
       if (result.success) {
           toast({ title: result.message || "Contraseña actualizada", status: "success", duration: 3000 });
-          reset(); // Limpia el formulario
+          reset();
       } else {
            toast({ title: "Error", description: result.message, status: "error", duration: 5000 });
       }
-    } catch (error) { // Error inesperado (ej. 500)
+    } catch (error) { 
       toast({ title: "Error", description: "No se pudo cambiar la contraseña.", status: "error", duration: 5000 });
     }
   };

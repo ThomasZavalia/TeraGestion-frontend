@@ -10,20 +10,21 @@ import {
   Spinner,
   Center,
   useToast,
-  VStack, // Para espaciar forms
+  VStack,
 } from '@chakra-ui/react';
-import { usuarioService } from '../../services/UsuarioService'; // Ajusta ruta
-// Importa los componentes de formulario
+import { usuarioService } from '../../services/UsuarioService'; 
+
 import PerfilForm from './components/PerfilForm';
 import ContrasenaForm from './components/ContraseñaForm';
 import DisponibilidadForm from './components/DisponibilidadForm';
+import ObrasSocialesCRUD from './components/ObrasSocialesCrud';
 
 const PerfilPage = () => {
   const [userData, setUserData] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const toast = useToast();
 
-  // Carga los datos del perfil al montar
+
   useEffect(() => {
     const loadProfile = async () => {
       setIsLoading(true);
@@ -47,41 +48,40 @@ const PerfilPage = () => {
     <Box>
       <Heading mb={6}>Configuración</Heading>
 
-      <Tabs isLazy colorScheme='blue'> {/* isLazy carga el contenido de la pestaña solo cuando se activa */}
+      <Tabs isLazy colorScheme='blue'> 
         <TabList>
           <Tab>Mi Perfil</Tab>
           <Tab>Cambiar Contraseña</Tab>
           <Tab>Disponibilidad Horaria</Tab>
-          {/* Puedes añadir más pestañas aquí (ej. Obras Sociales CRUD) */}
+           <Tab>Obras Sociales</Tab> 
         </TabList>
 
         <TabPanels>
-          {/* Pestaña: Mi Perfil */}
+          
           <TabPanel>
-            <Box maxW="lg"> {/* Limita el ancho del formulario */}
+            <Box maxW="lg">
               <PerfilForm initialData={userData} />
             </Box>
           </TabPanel>
 
-          {/* Pestaña: Cambiar Contraseña */}
+        
           <TabPanel>
              <Box maxW="lg">
                <ContrasenaForm />
              </Box>
           </TabPanel>
 
-          {/* Pestaña: Disponibilidad */}
+        
           <TabPanel>
-             <Box maxW="xl"> {/* Ancho un poco mayor para disponibilidad */}
+             <Box maxW="xl"> 
                <DisponibilidadForm />
              </Box>
           </TabPanel>
           
-           {/* Pestaña: Obras Sociales (Ejemplo) */}
-           {/* <TabPanel>
-                <Heading size="md" mb={4}>Gestionar Obras Sociales</Heading>
-                {/* Aquí iría una tabla CRUD para Obras Sociales *}
-           </TabPanel> */}
+          <TabPanel>
+               
+                <ObrasSocialesCRUD />
+           </TabPanel>
 
         </TabPanels>
       </Tabs>

@@ -9,20 +9,20 @@ import {
   FormErrorMessage,
 } from '@chakra-ui/react';
 import { useForm } from 'react-hook-form'; 
-import { usuarioService } from '../../../services/UsuarioService'; // Ajusta la ruta
+import { usuarioService } from '../../../services/UsuarioService'; 
 
 const PerfilForm = ({ initialData }) => {
   const {
     register,
     handleSubmit,
-    reset, // Para resetear el form con datos iniciales
-    formState: { errors, isSubmitting, isDirty }, // isDirty sabe si se modificó algo
+    reset, 
+    formState: { errors, isSubmitting, isDirty }, 
   } = useForm({
     defaultValues: initialData || { username: '', email: '' } 
   });
   const toast = useToast();
 
-  // Resetea el formulario si los datos iniciales cambian (cuando cargan)
+  
   useEffect(() => {
     if (initialData) {
       reset(initialData);
@@ -33,7 +33,7 @@ const PerfilForm = ({ initialData }) => {
     try {
       await usuarioService.updateMyProfile(data);
       toast({ title: "Perfil actualizado", status: "success", duration: 3000 });
-      reset(data); // Marca el formulario como "no sucio" después de guardar
+      reset(data);
     } catch (error) {
       toast({ 
         title: "Error al actualizar", 
