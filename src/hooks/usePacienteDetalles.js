@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import {useParams} from "react-router-dom";
 import {pacienteService} from "../services/PacienteService/PacienteService";
 
@@ -10,27 +10,31 @@ export const usePacienteDetalles = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
+
+  const cargarDetalles = useCallback(async () => {
+    if (!id) return;
+    setLoading(true);
+    try {
+      const data = await pacienteService.getPacienteDetalles(id);
+      setDetalles(data);
+      setError(null);
+    } catch (err) {
+      console.error("Error en usePacienteDetalles:", err);
+      setError(err);
+    } finally {
+      setLoading(false);
+    }
+  }, [id]); 
+
+  //El useEffect llama a la función cargarDetalles()
   useEffect(() => {
-    const cargarDetalles = async () => {
-      if (!id) return; 
-
-      setLoading(true);
-      try {
-        // 2. Llama a la función del servicio
-        const data = await pacienteService.getPacienteDetalles(id);
-        setDetalles(data);
-        setError(null);
-      } catch (err) {
-        console.error("Error en usePacienteDetalles:", err);
-        setError(err);
-      } finally {
-        setLoading(false);
-      }
-    };
-
     cargarDetalles();
-  }, [id]); // 3. Se ejecuta cada vez que el 'id' de la URL cambia
+  }, [cargarDetalles]); // Se ejecuta 1 vez cuando cargarDetalles se crea
 
-  // 4. Devuelve los datos y los estados
-  return { detalles, loading, error };
+  return {
+    detalles,
+    loading,
+    error,
+    recargarDetalles: cargarDetalles,
+  };
 };

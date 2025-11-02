@@ -7,12 +7,13 @@ import { useNavigate } from "react-router-dom";
 import { usePacienteDetalles } from "../../hooks/usePacienteDetalles";
 import { TabDatosPersonales } from "./component/TabDatosPersonales";
 import { TabHistorialPagos } from "./component/TabHistorialPagos";
+import { TabHistorialSesiones } from "./component/TabHistorialSesiones";
 
 
 export const PacienteDetallePage = () => {
 
     const navigate = useNavigate();
-    const { detalles, loading, error } = usePacienteDetalles();
+    const { detalles, loading, error, recargarDetalles } = usePacienteDetalles();
 
     if(loading){
         return(
@@ -57,7 +58,7 @@ export const PacienteDetallePage = () => {
                     </TabPanel>
 
                     <TabPanel>
-                        {/** aca va el de sesiones */}
+                        <TabHistorialSesiones sesiones={paciente?.sesiones} onRecargar={recargarDetalles}/>
                     </TabPanel>
 
                     <TabPanel>

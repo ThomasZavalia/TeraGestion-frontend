@@ -1,6 +1,6 @@
 import React  from "react";
 import {Box, Table, Thead, Tbody, Tr, Th, Td, 
-    TableContainer, Alert, AlertIcon
+    TableContainer, Alert, AlertIcon,
 } from "@chakra-ui/react";
 
 
@@ -17,7 +17,7 @@ export const TabHistorialPagos = ({pagos}) => {
 
     const formatFecha = (fechaISO) => {
         return new Date(fechaISO).toLocaleDateString('es-AR', 
-        { year: 'numeric', month: '2-digit', day: '2-digit' }
+        { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hour12: false }
         );
     }
 

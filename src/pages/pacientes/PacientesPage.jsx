@@ -120,11 +120,17 @@ const PacientesPage = () => {
       <ComfirmarEliminarModal
         isOpen={isAlertOpen}
         onClose={onAlertClose}
-        onConfirmar={confirmarEliminar}
-        paciente={pacienteAEliminar}
+        onConfirm={confirmarEliminar}
         isLoading={isEliminando}
         leastDestructiveRef={cancelRef} 
-      />
+        title="Eliminar Paciente" 
+      >
+
+                ¿Estás seguro? Se eliminará a <strong> {pacienteAEliminar?.nombre} {pacienteAEliminar?.apellido}</strong>.
+
+      
+      </ComfirmarEliminarModal>
+
     </Box>
   );
 };
