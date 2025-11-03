@@ -2,12 +2,11 @@ import React, { useRef } from "react";
 import { AlertDialog, AlertDialogBody, AlertDialogFooter, 
 AlertDialogHeader, AlertDialogContent, AlertDialogOverlay, Button } from "@chakra-ui/react";
 
-// --- ARREGLO 1: Cambiamos las props ---
-// Sacamos 'paciente' y agregamos 'title' y 'children'
+
 export const ComfirmarEliminarModal = ({ 
   isOpen, 
   onClose, 
-  onConfirm, // (Me aseguré de usar 'onConfirm' sin 'a')
+  onConfirm, 
   isLoading, 
   title, 
   children,
@@ -24,13 +23,12 @@ export const ComfirmarEliminarModal = ({
       <AlertDialogOverlay>
         <AlertDialogContent>
           <AlertDialogHeader fontSize="lg" fontWeight="bold">
-            {/* --- ARREGLO 2: Usamos la prop 'title' --- */}
+           
             {title}
           </AlertDialogHeader>
 
           <AlertDialogBody>
-            {/* --- ARREGLO 3: Usamos 'children' --- */}
-            {/* 'children' es el texto que le pasamos desde la página */}
+           
             {children}
           </AlertDialogBody>
 

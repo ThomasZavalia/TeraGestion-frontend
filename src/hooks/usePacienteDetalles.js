@@ -3,7 +3,7 @@ import {useParams} from "react-router-dom";
 import {pacienteService} from "../services/PacienteService/PacienteService";
 
 export const usePacienteDetalles = () => {
-  // 1. useParams() lee los parámetros de la URL (ej: /pacientes/:id)
+  
   const { id } = useParams(); 
 
   const [detalles, setDetalles] = useState(null);
@@ -26,10 +26,10 @@ export const usePacienteDetalles = () => {
     }
   }, [id]); 
 
-  //El useEffect llama a la función cargarDetalles()
+ 
   useEffect(() => {
     cargarDetalles();
-  }, [cargarDetalles]); // Se ejecuta 1 vez cuando cargarDetalles se crea
+  }, [cargarDetalles]);
 
   return {
     detalles,

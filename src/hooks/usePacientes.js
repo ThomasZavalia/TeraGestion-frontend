@@ -10,36 +10,37 @@ export const usePacientes = () => {
 
 
     
-        const cargarPacientes = useCallback (async () => {
-            try{
-                setLoading(true);
-                const data = await pacienteService.getPacientes();
-                setPacientes(data);
-                setError(null);
-            }catch (err){
-                console.error("Error al cargar pacientes:", err);
-                setError(err);
-                setPacientes([]);
-            }finally{
-                setLoading(false);
-            }
-        }, []);
-
-
-        useEffect(() => {
-            cargarPacientes();
-        }, [cargarPacientes]);
-
-        const eliminarPaciente = async (id) => {
-            try{
-                await pacienteService.eliminarPaciente(id);
-                cargarPacientes();
-            }catch (err){
-                console.error("Error al eliminar el paciente:", err);
-                throw err;
-            }
+      const cargarPacientes = useCallback(async (filtros = {}) => {
+        try {
+            setLoading(true);
+        
+            const data = await pacienteService.getPacientes(filtros); 
+            setPacientes(data);
+            setError(null);
+        } catch (err) {
+            console.error("Error al cargar pacientes:", err);
+            setError(err);
+            setPacientes([]);
+        } finally {
+            setLoading(false);
         }
-    
+    }, []); 
 
-    return {pacientes, loading, error, recargarPacientes: cargarPacientes, eliminarPaciente};
+    useEffect(() => {
+        
+        cargarPacientes({}); 
+    }, [cargarPacientes]);
+
+    const eliminarPaciente = async (id) => {
+        try {
+            await pacienteService.eliminarPaciente(id);
+            cargarPacientes({}); 
+        } catch (err) {
+            console.error("Error al eliminar el paciente:", err);
+            throw err;
+        }
+    };
+    
+    
+    return { pacientes, loading, error, recargarPacientes: cargarPacientes, eliminarPaciente };
 }

@@ -1,12 +1,12 @@
 import axiosInstance from '../axiosInstance';
 
-// (Asumo que tu endpoint en la API es /api/ObrasSociales)
+
 const API_URL = '/ObraSocial'; 
 
 export const obraSocialService = {
 
   /**
-   * Obtiene la lista completa de obras sociales para un <select>
+   
    */
   getAll: async () => {
     try {

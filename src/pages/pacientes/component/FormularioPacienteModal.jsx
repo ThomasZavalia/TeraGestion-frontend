@@ -81,14 +81,26 @@ export const FormularioPacienteModal = ({ isOpen, onClose, onGuardado, pacienteA
     }));
   };
 
-  const handleSubmit = async () => {
+ const handleSubmit = async () => {
     setSaving(true);
 
+    
     const datosParaEnviar = {
       ...formData,
 
-      obraSocialId: formData.obraSocialId ? parseInt(formData.obraSocialId, 10) : null
+     
+      obraSocialId: formData.obraSocialId ? parseInt(formData.obraSocialId, 10) : null,
+      
+    
+      fechaNacimiento: formData.fechaNacimiento || null, 
+      
+      
+      telefono: formData.telefono || null,
+      
+     
+      email: formData.email || null,
     };
+  
 
     console.log("Datos que se van a enviar:", datosParaEnviar); 
 
@@ -107,12 +119,14 @@ export const FormularioPacienteModal = ({ isOpen, onClose, onGuardado, pacienteA
         isClosable: true,
       });
 
-      onGuardado();
-      onClose();
+      onGuardado(); 
+      onClose(); 
     } catch (error) {
+     
+      const errorMsg = error.response?.data?.title || error.response?.data?.message || error.message;
       toast({
         title: 'Error',
-        description: error.message,
+        description: `No se pudo guardar el paciente: ${errorMsg}`,
         status: 'error',
         duration: 5000,
         isClosable: true,
@@ -121,7 +135,6 @@ export const FormularioPacienteModal = ({ isOpen, onClose, onGuardado, pacienteA
       setSaving(false);
     }
   };
-
   return (
     <Modal isOpen={isOpen} onClose={onClose} isCentered>
       <ModalOverlay />

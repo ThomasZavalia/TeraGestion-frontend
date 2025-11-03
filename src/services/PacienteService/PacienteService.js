@@ -6,9 +6,9 @@ export const pacienteService = {
 
 
    /**
-   * Busca pacientes para el combobox asíncrono.
-   * @param {string} query - El texto de búsqueda
-   * @returns {Promise<Array>} - Una lista de pacientes formateada
+   
+   * @param {string} query 
+   * @returns {Promise<Array>} 
    */
   buscarPacientes: async (query) => {
     if (!query) return [];
@@ -31,12 +31,32 @@ export const pacienteService = {
 
 
 
+  getPacientes: async (filtros = {}) => {
+    try {
+      
+      const params = new URLSearchParams();
+      
+      
+      if (filtros.obraSocialId && parseInt(filtros.obraSocialId, 10) > 0) {
+        params.append('obraSocialId', filtros.obraSocialId);
+      }
+      
+     
+      if (filtros.activo !== undefined && filtros.activo !== '') {
+        params.append('activo', filtros.activo);
+      }
 
-  getPacientes: async () => {
-    try{
-      const {data} = await axiosInstance.get(API_URL);
+      if (filtros.tienePagosPendientes !== undefined && filtros.tienePagosPendientes !== '') {
+        params.append('tienePagosPendientes', filtros.tienePagosPendientes);
+      }
+
+      console.log("Enviando filtros a la API:", Object.fromEntries(params)); 
+
+     
+      const { data } = await axiosInstance.get(API_URL, { params });
       return data;
-    }catch(error){
+
+    } catch (error) {
       console.error("Error al obtener pacientes:", error);
       throw error;
     }
