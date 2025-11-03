@@ -7,7 +7,7 @@ export const pagoService = {
    * @param {string} filtros.fechaDesde 
    * @param {string} filtros.fechaHasta 
    * @param {number} filtros.pacienteId ll
-   * @returns {Promise<Array>} - Lista de objetos PagoDto
+   * @returns {Promise<Array>} 
    */
   getPagos: async (filtros = {}) => {
     try {
@@ -17,9 +17,9 @@ export const pagoService = {
       if (filtros.fechaHasta) params.append('fechaHasta', filtros.fechaHasta);
       if (filtros.pacienteId) params.append('pacienteId', filtros.pacienteId);
 
-      // Realiza la llamada GET a /api/Pagos con los parámetros
+      
       const { data } = await axiosInstance.get('/Pago/pagos-filtrados', { params }); 
-      return data; // Devuelve la lista de pagos
+      return data; 
     } catch (error) {
       console.error("Error al obtener pagos:", error);
       

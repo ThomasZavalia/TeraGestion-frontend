@@ -9,10 +9,17 @@ import {
   FiBarChart2,
 } from 'react-icons/fi';
 
-// Componente interno para cada item de navegación
-const NavItem = ({ icon, children, to, isOpen }) => {
+const NavItem = ({ icon, children, to, isOpen, onClose, isDesktop }) => {
   const location = useLocation();
   const isActive = location.pathname === to;
+
+  const handleClick = () => {
+   
+    if (!isDesktop && isOpen) {
+      onClose(); 
+    }
+    
+  };
 
   return (
     <Link
@@ -20,6 +27,7 @@ const NavItem = ({ icon, children, to, isOpen }) => {
       to={to}
       _hover={{ textDecoration: 'none' }}
       w="full"
+      onClick={handleClick}
     >
       <Box
         display="flex"
@@ -35,10 +43,10 @@ const NavItem = ({ icon, children, to, isOpen }) => {
         }}
         transition="background 0.2s ease"
       >
-        {/* El ícono */}
+     
         <Box as={icon} fontSize="20" />
         
-        {/* El texto (solo si está abierto) */}
+       
         {isOpen && (
           <Text ml="4" fontSize="sm" fontWeight="medium">
             {children}
@@ -49,8 +57,8 @@ const NavItem = ({ icon, children, to, isOpen }) => {
   );
 };
 
-// Componente principal del Sidebar
-const Sidebar = ({ width, isOpen, display }) => {
+
+const Sidebar = ({ width, isOpen, display, onClose, isDesktop }) => {
   return (
     <Box
       as="nav"
@@ -58,16 +66,16 @@ const Sidebar = ({ width, isOpen, display }) => {
       top="0"
       left="0"
       h="100vh"
-      w={width} // <-- Ancho dinámico
+      w={width}
       bg="gray.800"
       color="white"
       display={display} 
       transition="width 0.2s ease-in-out" 
-      zIndex="sticky"
-      overflowY="auto" // Permite scroll si hay muchos items
+      zIndex="sticky" 
+      overflowY="auto"
     >
       <VStack align="stretch" h="full">
-        {/* Logo */}
+       
         <Heading
           size="md"
           textAlign="center"
@@ -78,28 +86,27 @@ const Sidebar = ({ width, isOpen, display }) => {
           {isOpen ? 'TeraGestión' : 'TG'}
         </Heading>
 
-        {/* Links Principales */}
-        <VStack spacing="2" align="stretch" mt="4" as="nav" flex="1">
-          <NavItem to="/" icon={FiHome} isOpen={isOpen}>
+       <VStack spacing="2" align="stretch" mt="4" as="nav" flex="1">
+          <NavItem to="/" icon={FiHome} isOpen={isOpen} onClose={onClose} isDesktop={isDesktop}>
             Dashboard
           </NavItem>
-          <NavItem to="/turnos" icon={FiCalendar} isOpen={isOpen}>
+          <NavItem to="/turnos" icon={FiCalendar} isOpen={isOpen} onClose={onClose} isDesktop={isDesktop}>
             Turnos
           </NavItem>
-          <NavItem to="/pacientes" icon={FiUsers} isOpen={isOpen}>
+          <NavItem to="/pacientes" icon={FiUsers} isOpen={isOpen} onClose={onClose} isDesktop={isDesktop}>
             Pacientes
           </NavItem>
-          <NavItem to="/pagos" icon={FiDollarSign} isOpen={isOpen}>
+          <NavItem to="/pagos" icon={FiDollarSign} isOpen={isOpen} onClose={onClose} isDesktop={isDesktop}>
             Pagos
           </NavItem>
-          <NavItem to="/reportes" icon={FiBarChart2} isOpen={isOpen}>
+          <NavItem to="/reportes" icon={FiBarChart2} isOpen={isOpen} onClose={onClose} isDesktop={isDesktop}>
             Reportes
           </NavItem>
         </VStack>
 
-        {/* Link de Configuración (al final) */}
-        <VStack spacing="2" align="stretch" mb="4" as="nav">
-          <NavItem to="/configuracion" icon={FiSettings} isOpen={isOpen}>
+     
+       <VStack spacing="2" align="stretch" mb="4" as="nav">
+          <NavItem to="/configuracion" icon={FiSettings} isOpen={isOpen} onClose={onClose} isDesktop={isDesktop}>
             Configuración
           </NavItem>
         </VStack>

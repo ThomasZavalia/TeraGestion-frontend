@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Box, useBreakpointValue } from '@chakra-ui/react';
 import { Outlet } from 'react-router-dom';
-import Sidebar from './Sidebar';
+import Sidebar from './SideBar';
 import Navbar from './Navbar';
 
 const DashboardLayout = () => {
@@ -20,25 +20,31 @@ useEffect(() => {
     setSidebarOpen(!isSidebarOpen);
   };
 
+  const onSidebarClose = () => {
+    setSidebarOpen(false);
+  };
+
   return (
-    <Box>
-      {/* 1. El Sidebar */}
-     <Sidebar 
+   <Box>
+      <Sidebar 
         width={sidebarWidth} 
         isOpen={isSidebarOpen} 
-        // Prop para ocultar/mostrar basado en breakpoints
         display={{ base: isSidebarOpen ? 'block' : 'none', md: 'block' }} 
+        
+        onClose={onSidebarClose} 
+        isDesktop={isDesktop} 
+       
       />
       
    <Box
-        // Aplica margen solo en pantallas 'md' o mayores
+      
         ml={{ base: 0, md: marginLeft }} 
         transition="margin-left 0.2s ease-in-out" 
       >
-        {/* Navbar recibe 'isDesktop' para saber si mostrar siempre el botón hamburguesa */}
+
         <Navbar onToggleSidebar={toggleSidebar} isDesktop={isDesktop} />
         
-        <Box p={{ base: 2, md: 4 }}> {/* Menos padding en mobile */}
+        <Box p={{ base: 2, md: 4 }}> 
           <Outlet />
         </Box>
       </Box>

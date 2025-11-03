@@ -3,13 +3,13 @@ import {
   Button, FormControl, FormLabel, Radio, RadioGroup, Stack, Input, Switch, Select,
   InputGroup, InputLeftAddon, VStack, Heading, Text
 } from '@chakra-ui/react';
-import { AsyncSelect } from 'chakra-react-select'; // El buscador
-import { format } from 'date-fns'; // Para formatear la fecha
-import { es } from 'date-fns/locale'; // Para español
+import { AsyncSelect } from 'chakra-react-select'; 
+import { format } from 'date-fns'; 
+import { es } from 'date-fns/locale'; 
 import { useTurnoForm } from '../../../hooks/useTurnoForm';
 
 const ModalCrearTurno = ({ isOpen, onClose, config, isEditingMode }) => {
- // --- LLAMA AL HOOK PASANDO EL OBJETO 'config' ---
+
 const {
     pacienteTipo, setPacienteTipo,
     pacienteSeleccionado, setPacienteSeleccionado,
@@ -27,15 +27,15 @@ const {
     dniError,
     validateDni,
 
-  } = useTurnoForm(config); // <-- Llama con el objeto config
+  } = useTurnoForm(config); 
  return (
     <Modal isOpen={isOpen} onClose={onClose} size="xl" isCentered>
       <ModalOverlay />
       <ModalContent as="form" onSubmit={(e) => { e.preventDefault(); handleSubmit(); }}>
         <ModalHeader>
-          {/* --- Usa isEditingMode --- */}
+        
           <Heading size="md">{isEditingMode ? 'Editar Turno' : 'Crear Nuevo Turno'}</Heading>
-          {/* Muestra fecha solo si estamos creando y existe config.selectedDate */}
+        
           {!isEditingMode && config.selectedDate && ( 
              <Text fontSize="sm" color="gray.500" fontWeight="normal">
                {format(config.selectedDate, "eeee dd 'de' MMMM, yyyy 'a las' HH:mm 'hs'", { locale: es })}
@@ -46,24 +46,24 @@ const {
         
         <ModalBody>
           <VStack spacing={4}>
-            {/* --- Usa isEditingMode para deshabilitar --- */}
+           
             <FormControl isDisabled={isEditingMode}> 
               <FormLabel>Paciente</FormLabel>
               <RadioGroup value={pacienteTipo} onChange={setPacienteTipo}>
                 <Stack direction="row" spacing={5}>
                   <Radio value="existente">Paciente Existente</Radio>
-                  {/* --- Usa isEditingMode para ocultar --- */}
+                
                   {!isEditingMode && <Radio value="nuevo">Paciente Nuevo</Radio>} 
                 </Stack>
               </RadioGroup>
             </FormControl>
 
-            {/* --- Usa isEditingMode para deshabilitar --- */}
+            
             {pacienteTipo === 'existente' && (
               <FormControl isRequired isDisabled={isEditingMode}> 
                 <FormLabel>Paciente</FormLabel> 
                 <AsyncSelect
-                  key={isEditingMode ? `edit-${pacienteSeleccionado?.value}` : 'create-select'} // Key actualizada
+                  key={isEditingMode ? `edit-${pacienteSeleccionado?.value}` : 'create-select'} 
                   value={pacienteSeleccionado} 
                   placeholder={isEditingMode ? (pacienteSeleccionado?.label || 'Cargando...') : "Escribe un nombre..."} 
                   loadOptions={loadPacientes}
@@ -71,7 +71,7 @@ const {
                   isClearable={!isEditingMode} 
                   cacheOptions={!isEditingMode} 
                   defaultOptions={!isEditingMode} 
-                  isDisabled={isEditingMode} // Doble seguridad
+                  isDisabled={isEditingMode} 
                 />
               </FormControl>
             )}
@@ -115,10 +115,10 @@ const {
   </VStack>
   )}
 
-             {/* --- Tipo de Turno - Usa isEditingMode --- */}
+             
             <FormControl display="flex" alignItems="center" pt={2}>
               <FormLabel htmlFor="es-particular" mb="0"> ¿Es particular? </FormLabel>
-              {/* Deshabilitar si editamos Y es paciente existente */}
+          
              <Switch 
                id="es-particular" 
                isChecked={esParticular} 
@@ -149,7 +149,7 @@ const {
               </VStack>
             )}
             
-            {/* --- Escenario SÍ es particular (Manual) --- */}
+           
             {esParticular && (
               <VStack spacing={4} w="full">
                 <FormControl> <FormLabel>Obra Social</FormLabel> <Select placeholder="N/A" isDisabled /> </FormControl>

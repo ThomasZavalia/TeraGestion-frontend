@@ -1,20 +1,20 @@
-//import { useState, useEffect, useCallback } from 'react';
+
 import { useState, useEffect, useCallback,useRef } from 'react';
 import { useToast } from '@chakra-ui/react';
 import { turnoService } from '../services/TurnoService';
 import { pacienteService } from '../services/PacienteService';
 import { obraSocialService } from '../services/ObraSocialService';
 
-// Recibe 'isEditingMode' explícitamente en el objeto config
+
 export const useTurnoForm = (config) => {
-  // Desestructuramos las props desde config
+  
   const { selectedDate, turnoAEditar, onTurnoCreado, onTurnoActualizado, isEditingMode } = config; 
 
   const toast = useToast();
 
   const isInitialMount = useRef(true);
 
-  // --- Estados del formulario ---
+  
   const [pacienteTipo, setPacienteTipo] = useState('existente');
   const [pacienteSeleccionado, setPacienteSeleccionado] = useState(null);
   const [nombrePaciente, setNombrePaciente] = useState('');
@@ -25,12 +25,12 @@ export const useTurnoForm = (config) => {
   const [precio, setPrecio] = useState(0);
   const [dniError, setDniError] = useState(null);
 
-  // Estados UI
+  
   const [obrasSocialesList, setObrasSocialesList] = useState([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoadingPrecio, setIsLoadingPrecio] = useState(false);
 
-  // --- 1. Cargar Obras Sociales ---
+  
   useEffect(() => {
     obraSocialService.getObrasSociales().then(setObrasSocialesList);
   }, []);
@@ -38,7 +38,7 @@ export const useTurnoForm = (config) => {
 
   useEffect(() => {
     console.log("[useTurnoForm Init/Reset] Running. isEditingMode:", isEditingMode, "Turno:", turnoAEditar); 
-    // Usa isEditingMode para decidir si llenar o resetear
+    
     if (isEditingMode && turnoAEditar) {
       console.log("[useTurnoForm Init/Reset] Initializing for EDIT..."); 
       setPacienteTipo('existente');
@@ -53,7 +53,7 @@ export const useTurnoForm = (config) => {
       setPrecio(turnoAEditar.precio || 0);
       setNombrePaciente(''); setApellidoPaciente(''); setDni('');
       console.log("[useTurnoForm Init/Reset] State SET for edit."); 
-    } else if (!isEditingMode) { // Solo resetea si NO estamos en modo edición
+    } else if (!isEditingMode) { 
       console.log("[useTurnoForm Init/Reset] Resetting for CREATE..."); 
       setPacienteTipo('existente');
       setPacienteSeleccionado(null);
@@ -66,7 +66,7 @@ export const useTurnoForm = (config) => {
 
   
   useEffect(() => {
-    // Solo si NO estamos editando
+   
     if (!isEditingMode) { 
       if (pacienteTipo === 'existente' && pacienteSeleccionado) {
         setObraSocialId(pacienteSeleccionado.obraSocialId || null);
@@ -76,7 +76,7 @@ export const useTurnoForm = (config) => {
     }
   }, [pacienteTipo, pacienteSeleccionado, isEditingMode]); 
 
-  // --- 4. Calcular Precio (solo en CREACIÓN) ---
+  
   const fetchPrecio = useCallback(async () => {
     if (!esParticular && obraSocialId) {
       setIsLoadingPrecio(true);
@@ -86,31 +86,32 @@ export const useTurnoForm = (config) => {
       } catch (error) { console.error("Error calculando precio:", error); setPrecio(0); } 
       finally { setIsLoadingPrecio(false); }
     } else {
-       if (!isEditingMode) setPrecio(0); // Resetea solo si estamos creando
+       if (!isEditingMode) setPrecio(0); 
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+ 
   }, [esParticular, obraSocialId, isEditingMode]); 
 
 
   useEffect(() => {
-    if (!isEditingMode) { 
-      fetchPrecio();
-      return; // Salimos
-    }
+    
+    if (!isEditingMode) { 
+   fetchPrecio();
+      return; 
+ }
     if (isInitialMount.current) {
         
         isInitialMount.current = false;
         
     } else {
         
-        fetchPrecio();
-    }
-  }, [fetchPrecio, isEditingMode]);
+       fetchPrecio();
+ }
+  }, [fetchPrecio, isEditingMode]);
 
 
 
   const loadPacientes = useCallback((inputValue) => {
-      console.log("loadPacientes hook llamado con:", inputValue); // <-- Log
+      console.log("loadPacientes hook llamado con:", inputValue); 
       return pacienteService.buscarPacientes(inputValue);
   }, []);
 
@@ -131,7 +132,7 @@ export const useTurnoForm = (config) => {
         }
     } catch (error) {
         console.error("Error validando DNI:", error);
-        setDniError('No se pudo validar el DNI.'); // Error genérico de red
+        setDniError('No se pudo validar el DNI.'); 
     }
   }, [pacienteTipo, isEditingMode])
 
@@ -149,7 +150,7 @@ if (dniError) {
     }
 
     setIsSubmitting(true);
-    console.log('--- handleSubmit --- Mode:', isEditingMode ? 'EDIT' : 'CREATE'); // <-- Usa isEditingMode
+    console.log('--- handleSubmit --- Mode:', isEditingMode ? 'EDIT' : 'CREATE'); 
 
     // DTO Base
     const turnoDtoBase = {
@@ -160,27 +161,38 @@ if (dniError) {
     };
 
     try {
-      // Usa isEditingMode para la lógica
-      if (isEditingMode) {
-        // --- ACTUALIZACIÓN ---
-        if (!turnoAEditar?.id) throw new Error("ID del turno a editar no encontrado");
-        // DTO específico para actualizar 
-        // *** VERIFICA que coincida con tu TurnoDtoActualizacion.cs ***
-        const dtoActualizacion = {
-            esParticular: turnoDtoBase.esParticular,
-            obraSocialId: turnoDtoBase.obraSocialId,
-            precio: turnoDtoBase.precio,
-            // estado: turnoAEditar.estado // Si lo necesitas
-        };
-        console.log('Llamando a updateTurno ID:', turnoAEditar.id, 'DTO:', dtoActualizacion); 
-        const turnoActualizado = await turnoService.updateTurno(turnoAEditar.id, dtoActualizacion);
-        toast({ title: 'Turno Actualizado', status: 'success', duration: 3000 });
-        onTurnoActualizado(turnoActualizado); // Callback
+      
+     if (isEditingMode) {
 
-      } else {
-        // --- CREACIÓN ---
+if (!turnoAEditar?.id) throw new Error("ID del turno a editar no encontrado");
+
+
+ const dtoActualizacion = {
+esParticular: turnoDtoBase.esParticular,
+obraSocialId: turnoDtoBase.obraSocialId,
+precio: precio, 
+ };
+
+ console.log('Llamando a updateTurno ID:', turnoAEditar.id, 'DTO:', dtoActualizacion); 
+
+        
+ const turnoActualizadoResponse = await turnoService.updateTurno(turnoAEditar.id, dtoActualizacion);
+
+        toast({ title: 'Turno Actualizado', status: 'success', duration: 3000 });
+
+       
+        const datosCompletosParaUI = {
+            ...turnoActualizadoResponse, 
+            ...dtoActualizacion,         
+            id: turnoAEditar.id          
+        };
+
+       
+onTurnoActualizado(datosCompletosParaUI); 
+} else {
+       
         if (!selectedDate) throw new Error("No se seleccionó fecha para crear turno");
-        // DTO de Creación (TurnoDtoCreacion)
+        
         const dtoCreacion = {
             ...turnoDtoBase, 
             fecha: selectedDate.toISOString(), 
@@ -194,14 +206,13 @@ if (dniError) {
         onTurnoCreado(nuevoTurno); // Callback
       }
     } catch (error) { 
-      console.error('Error en handleSubmit:', error.response?.data || error.message || error); 
+ console.error('Error en handleSubmit:', error.response?.data || error.message || error); 
       
-      // --- CÓDIGO MEJORADO PARA EL TOAST ---
-      // Intenta obtener el mensaje de error específico de tu backend
+     
       const errorMessage = error.response?.data?.message || 
                          error.response?.data?.error ||   
                          error.response?.data ||          
-                         'Ocurrió un error desconocido.'; // Mensaje genérico
+                         'Ocurrió un error desconocido.'; 
 
 toast({ 
           title: 'Error al guardar',

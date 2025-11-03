@@ -1,15 +1,13 @@
-/* --- Pega esto en /src/index.css --- */
 
-/* Estilo base para todos los turnos (sobrescribe eventColor si es necesario) */
 .fc-event.turno-pendiente {
-  background-color: #3182CE !important; /* Azul (blue.500) */
+  background-color: #3182CE !important; 
   border-color: #3182CE !important;
   color: white !important;
 }
 
-/* Estilo para los turnos PAGADOS */
+
 .fc-event.turno-pagado {
-  background-color: #48BB78 !important; /* Verde (green.500) */
+  background-color: #48BB78 !important; 
   border-color: #48BB78 !important;
   color: white !important;
 }
@@ -25,7 +23,7 @@
   transform: scale(1.03);
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
   transition: all 0.2s ease-in-out;
-  z-index: 10; /* Asegura que el evento hover esté por encima */
+  z-index: 10;
 }
 .fc-timegrid-slot:hover {
   cursor: pointer;

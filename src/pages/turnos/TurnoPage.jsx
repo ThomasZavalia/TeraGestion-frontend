@@ -8,10 +8,10 @@ import { Box, useDisclosure, Spinner, Center } from '@chakra-ui/react';
 import { turnoService } from '../../services/TurnoService';
 import ModalCrearTurno from './components/ModalCrearTurno';
 import ModalVerTurno from './components/ModalVerTurno'; 
-import ModalElegirHora from './components/ModalElegirHora'; 
+import ModalElegirHora from './components/ModalELegirHora'; 
 
 const TurnosPage = () => {
-  // --- Estados ---
+  
   const [calendarEvents, setCalendarEvents] = useState([]); 
   const [loading, setLoading] = useState(true);
   const calendarRef = useRef(null);
@@ -26,7 +26,7 @@ const TurnosPage = () => {
   const { isOpen: isTimePickerOpen, onOpen: onTimePickerOpen, onClose: onTimePickerClose } = useDisclosure();
   const { isOpen: isViewOpen, onOpen: onViewOpen, onClose: onViewClose } = useDisclosure();
 
-  // Carga Inicial
+  
   useEffect(() => {
     const fetchTurnos = async () => {
       setLoading(true);
@@ -40,28 +40,45 @@ const TurnosPage = () => {
     fetchTurnos();
   }, []);
 
-  // --- Handlers Interacción Calendario ---
+  
   const handleDateClick = (arg) => {
-      // Asegura resetear el modo edición
+      
       setIsEditingMode(false);
       setTurnoParaEditar(null);
       setSelectedDay(arg.date);
-      setSelectedFullDate(null); // Limpia fecha completa previa
+      setSelectedFullDate(null); 
       onTimePickerOpen();
   };
-  const handleEventClick = (arg) => {
-      // Asegura resetear el modo edición
+  
+
+const handleEventClick = (arg) => {
+    
       setIsEditingMode(false);
       setTurnoParaEditar(null);
-      setSelectedTurnoEvent(arg.event);
-      setSelectedDay(null); // Limpia día seleccionado
+
+     
+      
+      const eventId = arg.event.id;
+      const eventoDeMiEstado = calendarEvents.find(ev => ev.id === eventId);
+
+      if (eventoDeMiEstado) {
+          console.log("Evento encontrado en React state (fresco):", eventoDeMiEstado);
+          setSelectedTurnoEvent(eventoDeMiEstado); 
+      } else {
+          
+          console.warn("Evento no encontrado en calendarEvents state, usando arg.event (viejo)");
+          setSelectedTurnoEvent(arg.event); 
+      }
+      
+
+      setSelectedDay(null);
       setSelectedFullDate(null);
       onViewOpen();
   };
 
-  // --- Handlers Flujo Modales ---
+  
   const handleTimeSelect = (time) => {
-      // Asegura que estamos en modo CREACIÓN
+      
       setIsEditingMode(false);
       setTurnoParaEditar(null);
       const [hour, minute] = time.split(':');
@@ -69,7 +86,7 @@ const TurnosPage = () => {
       fullDate.setHours(parseInt(hour), parseInt(minute), 0, 0);
       setSelectedFullDate(fullDate);
       onTimePickerClose();
-      onCreateOpen(); // Abre modal creación
+      onCreateOpen(); 
   };
 
  const handleEditRequest = (datosDelTurno) => { 
@@ -97,32 +114,98 @@ const TurnosPage = () => {
       if (calendarRef.current) {
         const calendarApi = calendarRef.current.getApi();
         calendarApi.addEvent(nuevoTurnoEvento);
-        setCalendarEvents(prev => [...prev, nuevoTurnoEvento]); // Actualiza estado local
+        setCalendarEvents(prev => [...prev, nuevoTurnoEvento]); 
       }
-      handleCloseCreateModal(); // Cierra y limpia
+      handleCloseCreateModal(); 
   };
-  const handleTurnoUpdate = (turnoActualizadoDatos) => {
-     console.log("handleTurnoUpdate - Datos actualizados:", turnoActualizadoDatos);
-      if (calendarRef.current) {
-          const calendarApi = calendarRef.current.getApi();
-          const eventoExistente = calendarApi.getEventById(turnoActualizadoDatos.id.toString());
 
-          if(eventoExistente) {
-              console.log("Actualizando evento en calendario ID:", turnoActualizadoDatos.id);
-              eventoExistente.remove();
-              // Re-formateamos los DATOS a EVENTO
-              // ¡ASEGÚRATE que turnoService tenga 'formatTurnoForCalendar' exportado si no está en este archivo!
-              const eventoFormateado = turnoService.formatTurnoForCalendar ? turnoService.formatTurnoForCalendar(turnoActualizadoDatos) : turnoActualizadoDatos; 
-              calendarApi.addEvent(eventoFormateado);
-              // Actualiza estado local filtrando y añadiendo el nuevo
-              setCalendarEvents(prev => [...prev.filter(ev => ev.id !== turnoActualizadoDatos.id.toString()), eventoFormateado] ); 
-          } else {
-              console.warn("Evento a actualizar no encontrado en calendario:", turnoActualizadoDatos.id);
-          }
-      }
-      handleCloseCreateModal();
-     
-  };
+const getColorForTurno = (turnoProps) => {
+    if (!turnoProps) return '#3182CE'; 
+
+    if (turnoProps.estado?.toLowerCase() === 'pagado') {
+        return '#48BB78'; 
+    }
+    if (turnoProps.asistencia === 'Ausente') {
+        return '#ED8936'; 
+    }
+    
+    
+    return '#3182CE'; }
+
+
+
+
+const handleTurnoUpdate = (turnoActualizadoDatos) => {
+    console.log("handleTurnoUpdate - Datos recibidos:", turnoActualizadoDatos);
+    
+    if (!calendarRef.current || !turnoActualizadoDatos || !turnoActualizadoDatos.id) {
+        console.error("handleTurnoUpdate cancelado: faltan datos o ID.");
+        return;
+    }
+
+    const calendarApi = calendarRef.current.getApi();
+    const eventoIdStr = turnoActualizadoDatos.id.toString();
+    const eventoExistente = calendarApi.getEventById(eventoIdStr);
+
+    if (!eventoExistente) {
+        console.warn("Evento a actualizar no encontrado en calendario:", eventoIdStr);
+        return;
+    }
+
+    let eventoFormateado;
+
+   
+    if (turnoActualizadoDatos.title && turnoActualizadoDatos.start) {
+        console.log("Actualizando con EVENTO COMPLETO.");
+       eventoFormateado = {
+            ...turnoActualizadoDatos, 
+            
+         
+            title: eventoExistente.title, 
+            start: eventoExistente.start, 
+            end: eventoExistente.end,    
+            
+           
+            color: getColorForTurno(turnoActualizadoDatos.extendedProps)
+        };
+    
+    } else { 
+        console.log("Actualizando con DTO PARCIAL.");
+        
+        const nuevasProps = {
+            ...eventoExistente.extendedProps,
+            ...turnoActualizadoDatos
+        };
+
+        eventoFormateado = {
+            id: eventoIdStr,
+            title: eventoExistente.title, 
+            start: eventoExistente.start, 
+            end: eventoExistente.end,     
+            extendedProps: nuevasProps,     
+            color: getColorForTurno(nuevasProps) 
+        };
+    }
+
+    console.log("Evento final formateado:", eventoFormateado);
+
+  
+    eventoExistente.remove();
+    calendarApi.addEvent(eventoFormateado);
+    
+   
+    setCalendarEvents(prev => [
+        ...prev.filter(ev => ev.id !== eventoIdStr),
+        eventoFormateado
+    ]);
+
+   
+    handleCloseCreateModal();
+};
+
+
+
+
   const handleTurnoDelete = (turnoId) => {
      console.log("handleTurnoDelete - ID:", turnoId);
       if (calendarRef.current) {
@@ -136,21 +219,21 @@ const TurnosPage = () => {
                console.warn("Evento a eliminar no encontrado en calendario:", turnoId);
           }
       }
-      handleCloseViewModal(); // Cierra y limpia Ver Turno
+      handleCloseViewModal(); 
   };
 
  const handleCloseCreateModal = () => {
-      console.log("Cerrando Modal Crear/Editar."); 
-      onCreateClose(); 
-      
-  };
+console.log("Cerrando Modal Crear/Editar."); 
+ onCreateClose(); 
+ 
+ };
 
  const handleCloseViewModal = () => {
-      console.log("Cerrando Modal Ver y limpiando selectedTurnoEvent.");
-      onViewClose(); 
-      setSelectedTurnoEvent(null); 
+console.log("Cerrando Modal Ver y limpiando selectedTurnoEvent.");
+onViewClose(); 
+setSelectedTurnoEvent(null); 
       
-  };
+};
 
 
   if (loading) { return ( <Center h="200px"> <Spinner size="xl" /> </Center> ); }
@@ -167,7 +250,7 @@ const fechaParaModalCreacion = !isEditingMode ? selectedFullDate : null;
       <FullCalendar 
          ref={calendarRef}
          plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
-         // Pasa los eventos formateados al calendario
+       
          events={calendarEvents} 
          eventDisplay='block' 
          eventColor='#3182CE' 
@@ -175,9 +258,9 @@ const fechaParaModalCreacion = !isEditingMode ? selectedFullDate : null;
         initialView="timeGridWeek" 
         
         headerToolbar={{
-          // Izquierda: Solo flechas en móvil, 'today' en escritorio
+          
           left: 'prev,next today', 
-          // Centro: Título siempre
+          
           center: 'title',
          
           right: 'dayGridMonth,timeGridWeek,timeGridDay' 
@@ -202,7 +285,7 @@ const fechaParaModalCreacion = !isEditingMode ? selectedFullDate : null;
     
       {isCreateOpen && ( 
    <ModalCrearTurno
-          // Key usa isEditingMode Y el ID para forzar re-montaje al cambiar TURNO
+          
           key={isEditingMode ? `edit-${turnoParaModalEdicion?.id || 'new'}` : 'create'} 
           isOpen={isCreateOpen}
           onClose={handleCloseCreateModal} 
@@ -222,7 +305,7 @@ const fechaParaModalCreacion = !isEditingMode ? selectedFullDate : null;
         />
       )}
       
-      {/* --- Modal Elegir Hora --- */}
+    
       {isTimePickerOpen && selectedDay && (
         <ModalElegirHora
           isOpen={isTimePickerOpen}
@@ -232,15 +315,15 @@ const fechaParaModalCreacion = !isEditingMode ? selectedFullDate : null;
         />
       )}
 
-      {/* --- Modal Ver Turno --- */}
+     
       {isViewOpen && selectedTurnoEvent && (
         <ModalVerTurno
           isOpen={isViewOpen}
           onClose={handleCloseViewModal} 
-          turno={selectedTurnoEvent} // Pasamos el EVENTO FC 
-          onTurnoUpdate={handleTurnoUpdate} // Para 'Marcar Pagado'
-          onEdit={handleEditRequest} // Para iniciar edición
-          onDelete={handleTurnoDelete} // Para eliminar
+          turno={selectedTurnoEvent} 
+          onTurnoUpdate={handleTurnoUpdate} 
+          onEdit={handleEditRequest}
+          onDelete={handleTurnoDelete} 
         />
       )}
     </Box>

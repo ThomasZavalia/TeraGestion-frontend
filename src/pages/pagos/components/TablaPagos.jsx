@@ -7,9 +7,9 @@ import {
   Td,
   TableContainer,
   Text,
-  Center, // Para mensaje si no hay datos
+  Center, 
 } from '@chakra-ui/react';
-import { format, parseISO } from 'date-fns'; // Para formatear fecha
+import { format, parseISO } from 'date-fns'; 
 import { es } from 'date-fns/locale';
 
 const TablaPagos = ({ pagos }) => {
@@ -23,7 +23,7 @@ const TablaPagos = ({ pagos }) => {
 
   const formatFecha = (fechaString) => {
       try {
-          const fecha = parseISO(fechaString); // Parsea fecha ISO
+          const fecha = parseISO(fechaString); 
           return format(fecha, 'dd/MM/yyyy HH:mm', { locale: es });
       } catch (e) {
           return 'Fecha inválida';
@@ -39,7 +39,7 @@ const TablaPagos = ({ pagos }) => {
             <Th>Paciente</Th>
             <Th isNumeric>Monto</Th>
             <Th>Método de Pago</Th>
-            {/* <Th>Acciones</Th> */}
+            
           </Tr>
         </Thead>
         <Tbody>
@@ -49,7 +49,7 @@ const TablaPagos = ({ pagos }) => {
               <Td>{`${pago.pacienteNombre} ${pago.pacienteApellido}`}</Td>
               <Td isNumeric>${pago.monto?.toLocaleString('es-AR') || '-'}</Td>
               <Td>{pago.metodoPago}</Td>
-              {/* <Td> Aquí irían los botones de acción </Td> */}
+             
             </Tr>
           ))}
         </Tbody>

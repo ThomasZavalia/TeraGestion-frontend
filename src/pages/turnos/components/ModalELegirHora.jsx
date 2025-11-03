@@ -24,8 +24,8 @@ const ModalElegirHora = ({ isOpen, onClose, selectedDay, onTimeSelect }) => {
   }, [selectedDay]);
 
   const handleTimeClick = (time) => {
-    onTimeSelect(time); // Llama al padre
-    onClose(); // Cierra este modal
+    onTimeSelect(time); 
+    onClose();
   };
 
   return (

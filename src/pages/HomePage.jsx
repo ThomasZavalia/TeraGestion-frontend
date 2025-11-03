@@ -19,8 +19,8 @@ import {
   Button, 
   HStack, 
 } from '@chakra-ui/react';
-import { FiCalendar, FiClock, FiDollarSign, FiPlusCircle, FiUserPlus } from 'react-icons/fi';
-import { useNavigate } from 'react-router-dom'; // Para navegar
+import { FiCalendar, FiClock, FiDollarSign, FiPlusCircle, FiUserPlus, FiAlertCircle } from 'react-icons/fi';
+import { useNavigate } from 'react-router-dom'; 
 import { turnoService } from '../services/TurnoService'; 
 
 import { format } from 'date-fns';
@@ -52,14 +52,20 @@ const StatCard = ({ title, stat, helpText, icon }) => (
   </Stat>
 );
 
-// --- Componente Lista de Turnos de Hoy (Puedes moverlo a /pages/home/components) ---
 const TurnosHoyLista = ({ turnos }) => {
+  const navigate = useNavigate();
+
   if (turnos.length === 0) {
     return <Text color="gray.500" fontSize="sm">No hay turnos programados para hoy.</Text>;
   }
+  
+  const turnosOrdenados = [...turnos].sort((a, b) => new Date(a.fecha) - new Date(b.fecha));
 
-  // Ordena por hora
-  const turnosOrdenados = [...turnos].sort((a, b) => new Date(a.fecha) - new Date(b.fecha)); // Usa 'fecha'
+
+  const handleTurnoClick = (turno) => {
+   
+    navigate('/turnos'); 
+  };
 
   return (
     <List spacing={3}>
@@ -72,13 +78,18 @@ const TurnosHoyLista = ({ turnos }) => {
           borderRadius="md"
           borderLeft="4px solid"
           borderColor={turno.estado?.toLowerCase() === 'pagado' ? 'green.400' : 'blue.400'}
+          onClick={() => handleTurnoClick(turno)}
+          cursor="pointer"
+          _hover={{ bg: 'gray.100', shadow: 'md' }}
+          transition="all 0.2s ease"
+
         >
           <Box display="flex" justifyContent="space-between" alignItems="center">
             <Box>
               <Text fontWeight="bold" fontSize="sm">{`${turno.pacienteNombre} ${turno.pacienteApellido}`}</Text>
               <Text fontSize="xs" color="gray.600">
                 <ListIcon as={FiClock} color="gray.500" />
-                {format(new Date(turno.fecha), 'HH:mm', { locale: es })} hs {/* Usa 'fecha' */}
+                {format(new Date(turno.fecha), 'HH:mm', { locale: es })} hs 
               </Text>
             </Box>
             <Text fontSize="xs" color={turno.estado?.toLowerCase() === 'pagado' ? 'green.500' : 'gray.500'} fontWeight="medium">
@@ -96,8 +107,8 @@ const HomePage = () => {
   const [turnosHoy, setTurnosHoy] = useState([]);
   const [stats, setStats] = useState({ 
       ingresosHoy: 0, 
-      totalPacientes: '...', // Placeholder
-      turnosMesActual: '...' // Placeholder
+     // totalPacientes: '...', 
+     turnosPendientesHoy: 0,
   }); 
   const [loadingTurnos, setLoadingTurnos] = useState(true);
   const [loadingStats, setLoadingStats] = useState(true); 
@@ -109,21 +120,25 @@ const HomePage = () => {
       setLoadingStats(true); 
 
       try {
-        // --- USA LA NUEVA FUNCIÓN ---
+       
         const turnos = await turnoService.getTurnosDeHoy(); 
         setTurnosHoy(turnos);
 
-        // --- Carga/Calcula otras estadísticas ---
-        const ingresos = turnos
+        
+      const ingresos = turnos
             .filter(t => t.estado?.toLowerCase() === 'pagado')
             .reduce((sum, t) => sum + (t.precio || 0), 0);
+            
+       
+        const pendientes = turnos
+            .filter(t => t.estado?.toLowerCase() === 'pendiente')
+            .length;
       
-        setStats({ 
+      setStats({ 
             ingresosHoy: ingresos, 
-            totalPacientes: 'N/A', // Reemplazar con totalPac
-            turnosMesActual: 'N/A' // Reemplazar con turnosMes
+            turnosPendientesHoy: pendientes,
+            // totalPacientes: totalPac || 'N/A', 
         });
-
       } catch (error) {
         console.error("Error cargando datos del dashboard:", error);
       } finally {
@@ -153,11 +168,11 @@ const HomePage = () => {
           helpText="Solo turnos pagados hoy"
           icon={FiDollarSign}
         />
-         <StatCard 
-          title={'Turnos Completados (?)'} 
-          stat={loadingStats ? <Spinner size="sm"/> : stats.turnosCompletadosHoy}
-          helpText="Estado 'Completado'"
-          // icon={FiCheckCircle} // Necesitarías importar este ícono
+        <StatCard 
+          title={'Turnos Pendientes (Hoy)'} 
+          stat={loadingStats ? <Spinner size="sm"/> : stats.turnosPendientesHoy}
+          helpText="Turnos por cobrar hoy"
+          icon={FiAlertCircle} 
         />
       </SimpleGrid>
 
@@ -166,8 +181,9 @@ const HomePage = () => {
   
       <SimpleGrid columns={{ base: 1, lg: 2 }} spacing={6}>
       
-     <Box bg="gray.50" p={5} borderRadius="lg" shadow="sm" maxH="400px" overflowY="auto">
-    <Heading size="md" mb={4} color="gray.700">Próximos Turnos del Día</Heading>
+   
+        <Box bg="gray.50" p={5} borderRadius="lg" shadow="sm" maxH="400px" overflowY="auto">
+          <Heading size="md" mb={4} color="gray.700">Próximos Turnos del Día</Heading>
           {loadingTurnos ? (
             <Center h="150px"><Spinner /></Center>
           ) : (
@@ -183,7 +199,7 @@ const HomePage = () => {
                 leftIcon={<FiCalendar />}
                 colorScheme="blue"
                 variant="solid"
-                onClick={() => navigate('/turnos')} // Navega a la página de turnos
+                onClick={() => navigate('/turnos')} 
                 size="lg"
               >
                 Ver Agenda Completa
@@ -192,7 +208,7 @@ const HomePage = () => {
                 leftIcon={<FiPlusCircle />}
                 colorScheme="teal"
                 variant="outline"
-                onClick={() => navigate('/turnos')} // Podrías abrir el modal directamente? (más complejo)
+                onClick={() => navigate('/turnos')} 
                 size="lg"
                >
                  Nuevo Turno
@@ -201,7 +217,7 @@ const HomePage = () => {
                  leftIcon={<FiUserPlus />}
                  colorScheme="purple"
                  variant="outline"
-                 onClick={() => navigate('/pacientes')} // Navega a pacientes
+                 onClick={() => navigate('/pacientes')} 
                  size="lg"
                >
                  Nuevo Paciente

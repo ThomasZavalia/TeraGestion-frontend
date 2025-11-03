@@ -2,80 +2,105 @@ import {
   Modal, ModalOverlay, ModalContent, ModalHeader, ModalFooter, ModalBody, ModalCloseButton,
   Button, Text, VStack, HStack, Tag, useToast, Box, Divider, IconButton,
   Heading, 
-  AlertDialog, AlertDialogBody, AlertDialogFooter, AlertDialogHeader, AlertDialogContent, AlertDialogOverlay, useDisclosure, Select, FormControl, FormLabel // <-- AÑADE ESTOS
+  AlertDialog, AlertDialogBody, AlertDialogFooter, AlertDialogHeader, AlertDialogContent, AlertDialogOverlay, useDisclosure, Select, FormControl,
+   FormLabel,  ButtonGroup,Flex,Tooltip,Spinner,Center,
 } from '@chakra-ui/react';
-import { useState,useRef } from 'react';
-import { format, parseISO } from 'date-fns';
+import { useState,useRef,useEffect } from 'react';
+import { format, parseISO,isFuture } from 'date-fns';
 import { es } from 'date-fns/locale';
-import { FiEdit, FiTrash2, FiCheckCircle } from 'react-icons/fi';
+import { FiEdit, FiTrash2, FiCheckCircle, FiCheck, FiX } from 'react-icons/fi';
 import { turnoService } from '../../../services/TurnoService';
+import { sesionService } from '../../../services/SesionService';
 
 const ModalVerTurno = ({ isOpen, onClose, turno, onTurnoUpdate, onEdit, onDelete }) => { 
   const toast = useToast();
+
+const [detalle, setDetalle] = useState(null); 
+  const [isLoading, setIsLoading] = useState(true);
+
   const [isPaying, setIsPaying] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  
+  const [isSavingAsistencia, setIsSavingAsistencia] = useState(false); 
+  //const [asistenciaRegistrada, setAsistenciaRegistrada] = useState(null); 
 
-  const [metodoPago, setMetodoPago] = useState('Efectivo'); // Valor por defecto
+  const [metodoPago, setMetodoPago] = useState('Efectivo'); 
 
  
  const { isOpen: isAlertOpen, onOpen: onAlertOpen, onClose: onAlertClose } = useDisclosure();
-  const cancelRef = useRef(); // <-- Y esto también
-  // ------------------------------------------------
+  const cancelRef = useRef(); 
+
+  useEffect(() => {
+    
+    if (isOpen && turno) {
+      const fetchDetalle = async () => {
+        setIsLoading(true);
+        try {
+          
+          const turnoId = turno.extendedProps.id;
+          
+          const data = await turnoService.getTurnoDetalle(turnoId);
+          
+          setDetalle(data); 
+        } catch (error) {
+          console.error("Error al cargar detalle del turno", error);
+          toast({ title: 'Error', description: 'No se pudo cargar el detalle del turno.', status: 'error' });
+          setDetalle(null); 
+        } finally {
+          setIsLoading(false);
+        }
+      };
+      
+      fetchDetalle();
+    }
+  }, [isOpen, turno, toast]);
+ 
 const turnoData = turno?.extendedProps;
+const turnoFecha = turno?.start;
 
-  let fechaFormateada = 'Fecha inválida'; 
-  if (turnoData && turnoData.fecha) { 
+
+
+let fechaFormateada = 'Fecha inválida'; 
+  if (detalle && detalle.fechaHora) { 
     try {
-      // Usamos parseISO en lugar de new Date()
-      const fechaTurno = parseISO(turnoData.fecha); 
-
-      // Verificamos si el parseo fue exitoso
-      if (fechaTurno && !isNaN(fechaTurno.getTime())) { 
-        fechaFormateada = format(fechaTurno, "eeee dd 'de' MMMM, yyyy 'a las' HH:mm 'hs'", { locale: es });
-      } else {
-         console.error('parseISO devolvió una fecha inválida para:', turnoData.fecha);
-      }
+      const fechaTurno = parseISO(detalle.fechaHora); 
+      fechaFormateada = format(fechaTurno, "eeee dd 'de' MMMM, yyyy 'a las' HH:mm 'hs'", { locale: es });
     } catch (error) {
        console.error('Error al parsear/formatear la fecha:', error);
     }
   }
-  // --- FIN DE LA CORRECCIÓN ---
+
+
+
+ const esTurnoFuturo = detalle ? isFuture(parseISO(detalle.fechaHora)) : false;
 
 
 const handleMarcarPagado = async () => {
-    if (!turnoData) return;
-    setIsPaying(true);
-    // Pasamos el método de pago seleccionado
-    const result = await turnoService.marcarComoPagado(turnoData.id, metodoPago); 
-    setIsPaying(false);
+if (!detalle) return;
+setIsPaying(true);
 
-    // 5. Muestra feedback y actualiza
-    if (result.success) {
-      toast({
-        title: 'Turno Pagado',
-        status: 'success',
-        duration: 3000,
-      });
-     
-      onTurnoUpdate({ ...turnoData, estado: 'pagado' }); 
-      onClose(); // Cierra el modal
-    } else {
-      toast({
-        title: 'Error al pagar',
-        description: result.message,
-        status: 'error',
-        duration: 5000,
-      });
-    }
-  };
- const handleEditar = () => {
-    if (turnoData) {
-      onEdit(turnoData); // Llama al padre pasándole los datos del turno
-      onClose(); // Cierra este modal
+const result = await turnoService.marcarComoPagado(detalle.id, metodoPago); 
+
+ if (result.success) {
+   toast({ title: 'Turno Pagado', status: 'success' });
+
+ const datosFrescos = await turnoService.getTurnoDetalle(detalle.id);
+
+   onTurnoUpdate(turnoService.formatTurnoForCalendar(datosFrescos)); 
+   onClose(); 
+   } else {
+toast({ title: 'Error al pagar', description: result.message, status: 'error' });
+  setIsPaying(false); }
+};
+
+  const handleEditar = () => {
+    if (detalle) {
+      
+      onEdit(detalle); 
     }
   };
 
- // --- NUEVO: Handler para Confirmar Eliminación ---
+ 
   const handleConfirmarEliminar = async () => {
     if (!turnoData) return;
     setIsDeleting(true);
@@ -86,101 +111,175 @@ const handleMarcarPagado = async () => {
     if (result.success) {
       toast({ title: 'Turno Eliminado', status: 'success', duration: 3000 });
       onDelete(turnoData.id); 
-      onClose(); // Cierra el modal principal
+      onClose(); 
     } else {
       toast({ title: 'Error al eliminar', description: result.message, status: 'error', duration: 5000 });
     }
   };
 
-  if (!turnoData) return null;
+const handleAsistencia = async (estadoAsistencia) => {
+    if (!detalle) return;
+    setIsSavingAsistencia(true);
+    
+    
+    const result = await sesionService.registrarAsistencia(detalle.id, estadoAsistencia);
+    
+    if (result.success) {
+      toast({
+        title: `Asistencia registrada`,
+        status: 'success',
+        duration: 3000,
+      });
+      
+      
+      const datosFrescos = await turnoService.getTurnoDetalle(detalle.id);
+      
+    
+     onTurnoUpdate(turnoService.formatTurnoForCalendar(datosFrescos));
+      onClose(); 
+    } else {
+      toast({
+        title: 'Error al registrar',
+        description: result.message,
+        status: result.alreadyExists ? 'warning' : 'error', 
+      });
+    }
+    setIsSavingAsistencia(false);
+  }
 
-  return (
+
+
+
+  
+  const renderAsistencia = () => {
+   
+    if (esTurnoFuturo) {
+      return <Text fontSize="sm" color="gray.500">(La asistencia se registra el día del turno)</Text>;
+    }
+    
+    
+    switch (detalle.asistencia) {
+      case 'Presente':
+        return <Tag colorScheme='green' size="md"><FiCheckCircle />&nbsp; Asistencia Confirmada</Tag>;
+      case 'Ausente':
+        return <Tag colorScheme='orange' size="md"><FiX />&nbsp; Ausencia Registrada</Tag>;
+      case null: 
+      default:
+        return (
+          <ButtonGroup spacing="3" w="full">
+            <Button leftIcon={<FiCheck />} colorScheme="green" variant="outline" size="sm" onClick={() => handleAsistencia('Presente')} isLoading={isSavingAsistencia} loadingText="Guardando" flex="1"> Confirmar Asistencia </Button>
+            <Button leftIcon={<FiX />} colorScheme="orange" variant="outline" size="sm" onClick={() => handleAsistencia('Ausente')} isLoading={isSavingAsistencia} loadingText="Guardando" flex="1"> Marcar Ausente </Button>
+          </ButtonGroup>
+        );
+    }
+  };
+  if (!isOpen) return null;
+ return (
     <>
-    <Modal isOpen={isOpen} onClose={onClose} isCentered>
-      <ModalOverlay />
-      <ModalContent>
-        <ModalHeader pb={2}>Detalles del Turno</ModalHeader>
-        <ModalCloseButton />
-        <ModalBody>
-          <VStack align="start" spacing={3}>
-            <Heading size="md">{`${turnoData.pacienteNombre} ${turnoData.pacienteApellido}`}</Heading>
-            
-            {/* --- 2. USAMOS LA VARIABLE FORMATEADA --- */}
-            <Text fontSize="sm" color="gray.600">
-              {fechaFormateada} 
-            </Text>
-            {/* --- FIN DEL CAMBIO --- */}
-
-            <HStack>
-              <Text fontWeight="medium">Estado:</Text>
-              
-              <Tag colorScheme={turnoData.estado?.toLowerCase() === 'pagado' ? 'green' : 'blue'}>
-                {turnoData.estado}
-              </Tag>
-            </HStack>
-            <HStack>
-              <Text fontWeight="medium">Precio:</Text>
-              <Text>${turnoData.precio?.toLocaleString('es-AR') || 'N/A'}</Text>
-            </HStack>
-            <Divider pt={2}/>
-            <HStack justifyContent="flex-end" w="full" spacing={2} pt={2}>
-              <IconButton 
+   
+      <Modal isOpen={isOpen} onClose={onClose} isCentered scrollBehavior="inside" size="xl"> 
+        <ModalOverlay />
+        <ModalContent>
+         
+          <ModalHeader pb={2}>
+           
+            <Flex justify="space-between" align="center">
+             
+             <Heading size="md" mr={4}>Detalles del Turno</Heading>
+              <HStack spacing={2}>
+                <Tooltip label="Editar Turno" fontSize="xs" placement="top">
+                 <IconButton 
                     icon={<FiEdit />} 
                     aria-label="Editar Turno" 
                     variant="ghost" 
-                    onClick={handleEditar} // <-- Llama a handleEditar
+                    size="sm" 
+                    onClick={handleEditar} 
+                    isDisabled={isPaying || isDeleting || isSavingAsistencia} 
                  />
+                 </Tooltip>
+                  <Tooltip label="Eliminar Turno" fontSize="xs" placement="top">
                  <IconButton 
                     icon={<FiTrash2 />} 
                     aria-label="Eliminar Turno" 
                     colorScheme="red" 
                     variant="ghost" 
-                    onClick={onAlertOpen} // <-- Abre el diálogo de confirmación
+                    size="sm" 
+                    mr={10}
+                    onClick={onAlertOpen} 
+                    isDisabled={isPaying || isDeleting || isSavingAsistencia}
                  />
-            </HStack>
-          </VStack>
-        </ModalBody>
-      <ModalFooter>
-          {/* --- Solo mostrar si el turno NO está pagado --- */}
-          {turnoData.estado?.toLowerCase() !== 'pagado' && (
-            <VStack align="stretch" w="full"> {/* Usamos VStack para apilar */}
-              {/* --- 2. AÑADIMOS EL SELECT --- */}
-              <FormControl>
-                <FormLabel fontSize="sm">Método de Pago</FormLabel>
-                <Select 
-                  size="sm" 
-                  value={metodoPago} 
-                  onChange={(e) => setMetodoPago(e.target.value)}
-                  isDisabled={isPaying} // Deshabilitar mientras se procesa
-                >
-                  <option value="Efectivo">Efectivo</option>
-                  <option value="Transferencia">Transferencia</option>
-                  <option value="MercadoPago">MercadoPago</option>
-                  {/* Agrega más opciones si necesitas */}
-                </Select>
-              </FormControl>
-              
-              {/* --- El botón ahora está dentro del VStack --- */}
-              <Button
-                leftIcon={<FiCheckCircle />}
-                colorScheme="green"
-                onClick={handleMarcarPagado}
-                isLoading={isPaying}
-                loadingText="Pagando..."
-                w="full" // Ocupa todo el ancho
-              >
-                Marcar como Pagado
-              </Button>
-            </VStack>
-          )}
-          <Button variant="ghost" onClick={onClose} ml={turnoData.estado?.toLowerCase() !== 'pagado' ? 0 : 3}> {/* Ajuste de margen */}
-             Cerrar
-          </Button>
-        </ModalFooter>
-      </ModalContent>
-    </Modal>
+                  </Tooltip>
+              </HStack>
+            </Flex>
+          </ModalHeader>
+         <ModalCloseButton isDisabled={isPaying || isDeleting || isSavingAsistencia} top={4} right={4}/>
+          
+        
+         <ModalBody py={6}> 
 
-    <AlertDialog
+ {isLoading ? (
+ <Center h="200px"><Spinner size="xl" /></Center>
+ ) : !detalle ? (
+ <Center h="200px"><Text color="red.500">Error al cargar datos.</Text></Center>
+ ) : (
+
+ <VStack align="start" spacing={4}>
+ <Box>
+ <Heading size="sm" color="gray.700">{detalle.pacienteNombre}</Heading>
+ <Text fontSize="sm" color="gray.500"> {fechaFormateada} </Text>
+ </Box>
+ <HStack> 
+ <Text fontWeight="medium">Estado Turno:</Text> 
+ <Tag colorScheme={detalle.estado?.toLowerCase() === 'pagado' ? 'green' : 'blue'}> {detalle.estado} </Tag> 
+ </HStack>
+ <HStack> 
+<Text fontWeight="medium">Precio:</Text> 
+ <Text>${detalle.precio?.toLocaleString('es-AR') || 'N/A'}</Text> 
+</HStack>
+
+ <Divider pt={3}/>
+
+
+<Box w="full" pt={3}>
+<Heading size="xs" mb={3} color="gray.600">Registro de Asistencia</Heading>
+{renderAsistencia()}
+ </Box>
+
+
+{detalle.estado?.toLowerCase() !== 'pagado' && ( 
+ <Box w="full" pt={4} borderTopWidth="1px" borderColor="gray.200" mt={4}>
+<Heading size="xs" mb={3} color="gray.600">Registrar Pago</Heading>
+<VStack align="stretch" spacing={3}> 
+<FormControl id="metodo-pago-ver">
+ <FormLabel fontSize="sm" mb={1}>Método de Pago</FormLabel>
+<Select size="sm" value={metodoPago} onChange={(e) => setMetodoPago(e.target.value)} isDisabled={isPaying}>
+<option value="Efectivo">Efectivo</option>
+ <option value="Transferencia">Transferencia</option>
+ <option value="MercadoPago">MercadoPago</option>
+ </Select>
+ </FormControl>
+ <Button leftIcon={<FiCheckCircle />} colorScheme="green" onClick={handleMarcarPagado} isLoading={isPaying} loadingText="Pagando..." w="full" size="sm">
+Marcar como Pagado
+ </Button>
+</VStack>
+ </Box>
+ )}
+
+</VStack>
+ )}
+</ModalBody>
+          
+          
+          <ModalFooter borderTopWidth="1px" borderColor="gray.200">
+             <Button variant="ghost" onClick={onClose} ml="auto" isDisabled={isPaying || isDeleting || isSavingAsistencia}> 
+                 Cerrar
+             </Button>
+          </ModalFooter>
+        </ModalContent>
+      </Modal>
+      
+   
+      <AlertDialog
         isOpen={isAlertOpen}
         leastDestructiveRef={cancelRef}
         onClose={onAlertClose}
@@ -210,7 +309,6 @@ const handleMarcarPagado = async () => {
           </AlertDialogContent>
         </AlertDialogOverlay>
       </AlertDialog>
-
     </>
   );
 };

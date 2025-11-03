@@ -4,7 +4,9 @@ export const obraSocialService = {
  
   getObrasSociales: async () => {
     try {
+      
       const { data } = await axiosInstance.get('/ObraSocial');
+     
       return data.map(os => ({
         ...os, 
         value: os.id, 
@@ -18,7 +20,7 @@ export const obraSocialService = {
 
   getPrecio: async (obraSocialId) => {
     try {
-   
+     
       const { data } = await axiosInstance.get(`/ObraSocial/${obraSocialId}/precio`);
       return data.precio; 
     } catch (error) {

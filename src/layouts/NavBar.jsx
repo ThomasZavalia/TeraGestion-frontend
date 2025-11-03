@@ -2,23 +2,23 @@ import {
   Box,
   Flex,
   IconButton,
-  Input,
-  InputGroup,
-  InputLeftElement,
   Avatar,
   Menu,
   MenuButton,
   MenuList,
   MenuItem,
   useToast,
-  Text
+  Text,
+  useBreakpointValue, 
 } from '@chakra-ui/react';
-import { FiMenu, FiSearch,FiUser } from 'react-icons/fi';
+import { FiMenu } from 'react-icons/fi';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext'; // Importamos el AuthContext
+import { useAuth } from '../context/AuthContext'; 
+import { AsyncSelect } from 'chakra-react-select';
+import { pacienteService } from '../services/PacienteService';
 
-const Navbar = ({ onToggleSidebar,isDesktop }) => {
-  const { user, logout } = useAuth(); // Obtenemos el usuario y la función logout
+const Navbar = ({ onToggleSidebar, isDesktop }) => { 
+  const { user, logout } = useAuth();
   const navigate = useNavigate();
   const toast = useToast();
 
@@ -33,6 +33,40 @@ const Navbar = ({ onToggleSidebar,isDesktop }) => {
     });
   };
 
+  const loadPacienteOptions = async (inputValue) => {
+    if (!inputValue || inputValue.length < 3) return []; 
+    
+   
+    return pacienteService.buscarPacientes(inputValue); 
+  };
+
+  const handlePacienteChange = (selectedOption) => {
+    if (selectedOption) {
+      console.log("Navegando a paciente:", selectedOption.value);
+    
+      navigate(`/pacientes/${selectedOption.value}`);
+      
+    
+    }
+  };
+
+const selectStyles = {
+    control: (provided) => ({
+      ...provided,
+      bg: 'gray.50',
+      borderRadius: 'md',
+      borderColor: 'gray.200',
+    }),
+    placeholder: (provided) => ({
+      ...provided,
+      fontSize: 'sm',
+    }),
+    input: (provided) => ({
+      ...provided,
+      fontSize: 'sm',
+    }),
+  };
+
   return (
     <Flex
       as="header"
@@ -43,9 +77,9 @@ const Navbar = ({ onToggleSidebar,isDesktop }) => {
       bg="white"
       borderBottomWidth="1px"
       borderColor="gray.200"
-      h="14" // 56px
+      h="14" 
     >
-      {/* Lado Izquierdo: Botón Hamburguesa */}
+      
      <IconButton
         aria-label="Toggle Sidebar"
         icon={<FiMenu />}
@@ -53,24 +87,21 @@ const Navbar = ({ onToggleSidebar,isDesktop }) => {
         onClick={onToggleSidebar} 
       />
 
-      {/* Centro: Buscador (Solo Diseño) */}
      <Box 
         w={{ base: 'full', md: 'md' }} 
         mx="4" 
         display={{ base: 'none', md: 'block' }} 
       >
-        <InputGroup>
-          <InputLeftElement pointerEvents="none">
-            <FiSearch color="gray.300" />
-          </InputLeftElement>
-          <Input
-            type="text"
-            placeholder="Buscar paciente (próximamente...)"
-            bg="gray.50"
-            borderRadius="md"
-            isDisabled // <-- Deshabilitado por ahora
-          />
-        </InputGroup>
+        <AsyncSelect
+          placeholder="Buscar paciente por nombre, apellido o DNI..."
+          loadOptions={loadPacienteOptions} 
+          onChange={handlePacienteChange}
+          chakraStyles={selectStyles} 
+          noOptionsMessage={({ inputValue }) => 
+             inputValue.length < 3 ? 'Escribe al menos 3 letras...' : 'No se encontraron pacientes'
+          }
+          loadingMessage={() => 'Buscando...'}
+        />
       </Box>
 
      
@@ -81,7 +112,7 @@ const Navbar = ({ onToggleSidebar,isDesktop }) => {
            {/* Muestra Nombre solo en Desktop */}
            <Text 
                fontSize="sm" 
-               display={{ base: 'none', md: 'inline' }} // <-- Oculta nombre en base
+               display={{ base: 'none', md: 'inline' }} 
                ml={2}
            >
             {user?.username}
@@ -91,7 +122,7 @@ const Navbar = ({ onToggleSidebar,isDesktop }) => {
           <MenuItem onClick={() => navigate('/configuracion')}>
             Configuración
           </MenuItem>
-          <MenuItem onClick={handleLogout}> {/* <-- Llama al logout */}
+          <MenuItem onClick={handleLogout}>
             Cerrar Sesión
           </MenuItem>
         </MenuList>

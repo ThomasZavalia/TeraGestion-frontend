@@ -4,14 +4,14 @@ import ChartCard from './ChartCard';
 
 ChartJS.register(ArcElement, Tooltip, Legend);
 
-// Colores de ejemplo (puedes personalizarlos)
+
 const defaultColors = [
-  'rgba(54, 162, 235, 0.7)', // Azul
-  'rgba(75, 192, 192, 0.7)', // Verde azulado
-  'rgba(255, 206, 86, 0.7)', // Amarillo
-  'rgba(255, 99, 132, 0.7)', // Rojo
-  'rgba(153, 102, 255, 0.7)',// Morado
-  'rgba(255, 159, 64, 0.7)', // Naranja
+  'rgba(54, 162, 235, 0.7)', 
+  'rgba(75, 192, 192, 0.7)',
+  'rgba(255, 206, 86, 0.7)', 
+  'rgba(255, 99, 132, 0.7)', 
+  'rgba(153, 102, 255, 0.7)',
+  'rgba(255, 159, 64, 0.7)', 
 ];
 
 const PieChartReport = ({ title, data, labelField, valueField, isLoading }) => {
@@ -21,10 +21,10 @@ const PieChartReport = ({ title, data, labelField, valueField, isLoading }) => {
     labels: data?.map(item => item[labelField]) || [],
     datasets: [
       {
-        label: title, // Usado en Tooltip
+        label: title, 
         data: data?.map(item => item[valueField]) || [],
         backgroundColor: defaultColors.slice(0, data?.length || 0),
-        borderColor: defaultColors.map(color => color.replace('0.7', '1')), // Borde más opaco
+        borderColor: defaultColors.map(color => color.replace('0.7', '1')), 
         borderWidth: 1,
       },
     ],
@@ -35,7 +35,7 @@ const PieChartReport = ({ title, data, labelField, valueField, isLoading }) => {
     maintainAspectRatio: false,
      plugins: {
       legend: {
-        position: 'top', // Posición de la leyenda
+        position: 'top', 
       },
       title: { display: false },
     },
@@ -43,7 +43,7 @@ const PieChartReport = ({ title, data, labelField, valueField, isLoading }) => {
 
   return (
      <ChartCard title={title} isLoading={isLoading} isEmpty={isEmpty}>
-      {/* Puedes usar <Doughnut> en lugar de <Pie> si prefieres dona */}
+      
       <Pie options={options} data={chartData} /> 
     </ChartCard>
   );
