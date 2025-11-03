@@ -19,7 +19,7 @@ import {
   Button, 
   HStack, 
 } from '@chakra-ui/react';
-import { FiCalendar, FiClock, FiDollarSign, FiPlusCircle, FiUserPlus } from 'react-icons/fi';
+import { FiCalendar, FiClock, FiDollarSign, FiPlusCircle, FiUserPlus, FiAlertCircle } from 'react-icons/fi';
 import { useNavigate } from 'react-router-dom'; 
 import { turnoService } from '../services/TurnoService'; 
 
@@ -53,12 +53,19 @@ const StatCard = ({ title, stat, helpText, icon }) => (
 );
 
 const TurnosHoyLista = ({ turnos }) => {
+  const navigate = useNavigate();
+
   if (turnos.length === 0) {
     return <Text color="gray.500" fontSize="sm">No hay turnos programados para hoy.</Text>;
   }
-
   
-  const turnosOrdenados = [...turnos].sort((a, b) => new Date(a.fecha) - new Date(b.fecha)); // Usa 'fecha'
+  const turnosOrdenados = [...turnos].sort((a, b) => new Date(a.fecha) - new Date(b.fecha));
+
+
+  const handleTurnoClick = (turno) => {
+   
+    navigate('/turnos'); 
+  };
 
   return (
     <List spacing={3}>
@@ -71,6 +78,11 @@ const TurnosHoyLista = ({ turnos }) => {
           borderRadius="md"
           borderLeft="4px solid"
           borderColor={turno.estado?.toLowerCase() === 'pagado' ? 'green.400' : 'blue.400'}
+          onClick={() => handleTurnoClick(turno)}
+          cursor="pointer"
+          _hover={{ bg: 'gray.100', shadow: 'md' }}
+          transition="all 0.2s ease"
+
         >
           <Box display="flex" justifyContent="space-between" alignItems="center">
             <Box>
@@ -95,8 +107,8 @@ const HomePage = () => {
   const [turnosHoy, setTurnosHoy] = useState([]);
   const [stats, setStats] = useState({ 
       ingresosHoy: 0, 
-      totalPacientes: '...', 
-      turnosMesActual: '...' 
+     // totalPacientes: '...', 
+     turnosPendientesHoy: 0,
   }); 
   const [loadingTurnos, setLoadingTurnos] = useState(true);
   const [loadingStats, setLoadingStats] = useState(true); 
@@ -113,16 +125,20 @@ const HomePage = () => {
         setTurnosHoy(turnos);
 
         
-        const ingresos = turnos
+      const ingresos = turnos
             .filter(t => t.estado?.toLowerCase() === 'pagado')
             .reduce((sum, t) => sum + (t.precio || 0), 0);
+            
+       
+        const pendientes = turnos
+            .filter(t => t.estado?.toLowerCase() === 'pendiente')
+            .length;
       
-        setStats({ 
+      setStats({ 
             ingresosHoy: ingresos, 
-            totalPacientes: 'N/A', 
-            turnosMesActual: 'N/A' 
+            turnosPendientesHoy: pendientes,
+            // totalPacientes: totalPac || 'N/A', 
         });
-
       } catch (error) {
         console.error("Error cargando datos del dashboard:", error);
       } finally {
@@ -152,11 +168,11 @@ const HomePage = () => {
           helpText="Solo turnos pagados hoy"
           icon={FiDollarSign}
         />
-         <StatCard 
-          title={'Turnos Completados (?)'} 
-          stat={loadingStats ? <Spinner size="sm"/> : stats.turnosCompletadosHoy}
-          helpText="Estado 'Completado'"
-          // icon={FiCheckCircle}
+        <StatCard 
+          title={'Turnos Pendientes (Hoy)'} 
+          stat={loadingStats ? <Spinner size="sm"/> : stats.turnosPendientesHoy}
+          helpText="Turnos por cobrar hoy"
+          icon={FiAlertCircle} 
         />
       </SimpleGrid>
 
@@ -165,8 +181,9 @@ const HomePage = () => {
   
       <SimpleGrid columns={{ base: 1, lg: 2 }} spacing={6}>
       
-     <Box bg="gray.50" p={5} borderRadius="lg" shadow="sm" maxH="400px" overflowY="auto">
-    <Heading size="md" mb={4} color="gray.700">Próximos Turnos del Día</Heading>
+   
+        <Box bg="gray.50" p={5} borderRadius="lg" shadow="sm" maxH="400px" overflowY="auto">
+          <Heading size="md" mb={4} color="gray.700">Próximos Turnos del Día</Heading>
           {loadingTurnos ? (
             <Center h="150px"><Spinner /></Center>
           ) : (
