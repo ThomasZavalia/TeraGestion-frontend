@@ -8,6 +8,7 @@ import PacientesPage from '../pages/pacientes/PacientesPage';
 import TurnosPage from '../pages/turnos/TurnoPage'; // <-- ¡IMPORTA ESTA LÍNEA!
 import PagosPage from '../pages/pagos/PagosPage';
 import ReportesPage from '../pages/reportes/ReportesPage';
+import PerfilPage from '../pages/perfil/PerfilPage'; // <-- Importa la página
 
 
 import { PacienteDetallePage } from '../pages/pacientes/PacienteDetallePage';
@@ -33,6 +34,7 @@ const AppRouter = () => {
           
         <Route path="/pagos" element={<PagosPage />} />
         <Route path="/reportes" element={<ReportesPage />} />
+        <Route path="/configuracion" element={<PerfilPage />} />
           
         </Route>
       </Route>

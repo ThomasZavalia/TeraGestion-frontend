@@ -1,15 +1,17 @@
 import axiosInstance  from './axiosInstance';
 
 export const obraSocialService = {
+ 
   getObrasSociales: async () => {
     try {
       
       const { data } = await axiosInstance.get('/ObraSocial');
      
       return data.map(os => ({
-        value: os.id,
-        label: os.nombre,
-      }));
+        ...os, 
+        value: os.id, 
+        label: os.nombre, 
+      })) || [];
     } catch (error) {
       console.error("Error al obtener obras sociales:", error);
       return [];
@@ -25,5 +27,43 @@ export const obraSocialService = {
       console.error("Error al obtener precio:", error);
       return 0;
     }
-  }
+  },
+
+
+createObraSocial: async (obraSocialData) => {
+    
+    try {
+      const { data } = await axiosInstance.post('/ObraSocial', obraSocialData);
+      return { success: true, data };
+    } catch (error) {
+      console.error("Error al crear obra social:", error);
+      return { success: false, message: error.response?.data?.error || "Error al crear." };
+    }
+  },
+
+
+  updateObraSocial: async (id, obraSocialData) => {
+    // obraSocialData debe ser { id: 1, nombre: "...", precioTurno: 123 }
+    try {
+      const { data } = await axiosInstance.put(`/ObraSocial/${id}`, obraSocialData);
+      return { success: true, data };
+    } catch (error) {
+      console.error("Error al actualizar obra social:", error);
+      return { success: false, message: error.response?.data?.error || "Error al actualizar." };
+    }
+  },
+
+
+  deleteObraSocial: async (id) => {
+    try {
+      await axiosInstance.delete(`/ObraSocial/${id}`);
+      return { success: true };
+    } catch (error) {
+      console.error("Error al eliminar obra social:", error);
+      return { success: false, message: error.response?.data?.error || "Error al eliminar." };
+    }
+  },
+
 };
+
+
