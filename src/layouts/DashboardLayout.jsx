@@ -1,41 +1,50 @@
-import { useState } from 'react';
-import { Box } from '@chakra-ui/react';
+import { useState, useEffect } from 'react';
+import { Box, useBreakpointValue } from '@chakra-ui/react';
 import { Outlet } from 'react-router-dom';
-import Sidebar from './Sidebar';
+import Sidebar from './SideBar';
 import Navbar from './Navbar';
 
 const DashboardLayout = () => {
-  // Estado para controlar si el sidebar está abierto o colapsado
-  const [isSidebarOpen, setSidebarOpen] = useState(true);
+  const isDesktop = useBreakpointValue({ base: false, md: true });
+  const [isSidebarOpen, setSidebarOpen] = useState(isDesktop);
 
-  // Define los anchos
+useEffect(() => {
+      setSidebarOpen(isDesktop);
+  }, [isDesktop]);
   const sidebarWidthOpen = '250px';
-  const sidebarWidthCollapsed = '80px'; // Ancho solo para íconos
-  const sidebarWidth = isSidebarOpen ? sidebarWidthOpen : sidebarWidthCollapsed;
+  const sidebarWidthCollapsed = '80px'; 
+ const sidebarWidth = isDesktop ? (isSidebarOpen ? sidebarWidthOpen : sidebarWidthCollapsed) : (isSidebarOpen ? sidebarWidthOpen : '0px');
+ const marginLeft = isDesktop ? sidebarWidth : (isSidebarOpen ? sidebarWidth : '0px');
 
-  // Función para "togglear" el estado
-  const toggleSidebar = () => {
+ const toggleSidebar = () => {
     setSidebarOpen(!isSidebarOpen);
   };
 
+  const onSidebarClose = () => {
+    setSidebarOpen(false);
+  };
+
   return (
-    <Box>
-      {/* 1. El Sidebar */}
+   <Box>
       <Sidebar 
         width={sidebarWidth} 
         isOpen={isSidebarOpen} 
+        display={{ base: isSidebarOpen ? 'block' : 'none', md: 'block' }} 
+        
+        onClose={onSidebarClose} 
+        isDesktop={isDesktop} 
+       
       />
       
-      {/* 2. El Contenido Principal (Navbar + Outlet) */}
-      <Box
-        ml={sidebarWidth} // <-- Margen izquierdo dinámico
-        transition="margin-left 0.2s ease-in-out" // <-- Animación suave
+   <Box
+      
+        ml={{ base: 0, md: marginLeft }} 
+        transition="margin-left 0.2s ease-in-out" 
       >
-        {/* El Navbar recibe la función para el botón hamburguesa */}
-        <Navbar onToggleSidebar={toggleSidebar} />
+
+        <Navbar onToggleSidebar={toggleSidebar} isDesktop={isDesktop} />
         
-        {/* El Outlet (tus páginas) con padding */}
-        <Box p="4">
+        <Box p={{ base: 2, md: 4 }}> 
           <Outlet />
         </Box>
       </Box>
