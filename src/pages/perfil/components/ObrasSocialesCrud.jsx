@@ -97,7 +97,7 @@ const ObrasSocialesCRUD = () => {
         
         payload.id = selectedOS.id; 
         result = await obraSocialService.updateObraSocial(selectedOS.id, payload);
-      } else { // Modo Crear
+      } else { 
         result = await obraSocialService.createObraSocial(payload);
       }
 

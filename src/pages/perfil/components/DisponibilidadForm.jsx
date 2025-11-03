@@ -8,15 +8,15 @@ import {
   Input,
   Button,
   useToast,
-  SimpleGrid, // Para layout
+  SimpleGrid, 
   Text,
   Box,
-  Spinner, // Para estado de carga
+  Spinner, 
   Center,
 } from '@chakra-ui/react';
-import { disponibilidadService } from '../../../services/DisponibilidadService'; // Ajusta ruta
+import { disponibilidadService } from '../../../services/DisponibilidadService'; 
 
-// Nombres de días para mostrar
+
 const diasNombres = ["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"];
 
 const DisponibilidadForm = () => {
@@ -26,21 +26,21 @@ const DisponibilidadForm = () => {
   const [isSaving, setIsSaving] = useState(false);
   const toast = useToast();
 
-  // Carga inicial de la disponibilidad
+ 
   useEffect(() => {
     const cargarDisponibilidad = async () => {
       setIsLoading(true);
       try {
         const data = await disponibilidadService.getDisponibilidad();
-        // Asegura tener 7 días, por si el backend no los devuelve todos
+       
         const fullWeek = diasNombres.map((nombre, index) => {
             const diaData = data.find(d => d.diaSemana === index);
             return {
-                diaSemana: index, // 0-6
-                diaNombre: nombre, // Nombre para UI
-                disponible: diaData?.disponible ?? false, // Default a false si no viene
-                horaInicio: diaData?.horaInicio || '', // Usa string vacío para Input
-                horaFin: diaData?.horaFin || '', // Usa string vacío para Input
+                diaSemana: index,
+                diaNombre: nombre, 
+                disponible: diaData?.disponible ?? false, 
+                horaInicio: diaData?.horaInicio || '', 
+                horaFin: diaData?.horaFin || '', 
             };
         });
         setDisponibilidad(fullWeek.sort((a,b) => (a.diaSemana === 0 ? 7 : a.diaSemana) - (b.diaSemana === 0 ? 7 : b.diaSemana) )); // Lunes primero
@@ -53,11 +53,11 @@ const DisponibilidadForm = () => {
     cargarDisponibilidad();
   }, [toast]);
 
-  // Handler para cambiar cualquier valor de un día
+ 
   const handleChange = (diaIndex, field, value) => {
     setDisponibilidad(prev => prev.map((dia, index) => {
         if (index === diaIndex) {
-            // Si cambia a 'no disponible', limpia las horas
+           
             if (field === 'disponible' && !value) {
                 return { ...dia, disponible: false, horaInicio: '', horaFin: '' };
             }
@@ -67,10 +67,10 @@ const DisponibilidadForm = () => {
     }));
   };
 
-  // Handler para guardar
+  
   const handleSave = async () => {
     setIsSaving(true);
-    // Prepara el DTO para el backend (solo los campos necesarios)
+ 
     const dtoToSend = disponibilidad.map(dia => ({
         diaSemana: dia.diaSemana,
         disponible: dia.disponible,
@@ -79,7 +79,7 @@ const DisponibilidadForm = () => {
         horaFin: dia.horaFin || null,
     }));
     
-    // Validaciones básicas (Fin > Inicio si ambos existen)
+    
      for (const dia of dtoToSend) {
          if (dia.disponible && (!dia.horaInicio || !dia.horaFin)) {
               toast({ title: `Horas requeridas para ${diasNombres[dia.diaSemana]}`, description: "Si un día está disponible, debe tener hora de inicio y fin.", status: "warning", duration: 4000 });
@@ -118,7 +118,7 @@ const DisponibilidadForm = () => {
               onChange={(e) => handleChange(index, 'disponible', e.target.checked)} 
             />
           </HStack>
-          {/* Muestra inputs de hora solo si está disponible */}
+          
           {dia.disponible && (
             <SimpleGrid columns={2} spacing={4}>
               <FormControl>
@@ -147,7 +147,7 @@ const DisponibilidadForm = () => {
         colorScheme="blue" 
         onClick={handleSave} 
         isLoading={isSaving}
-        mt={4} // Margen superior
+        mt={4} 
       >
         Guardar Cambios de Disponibilidad
       </Button>

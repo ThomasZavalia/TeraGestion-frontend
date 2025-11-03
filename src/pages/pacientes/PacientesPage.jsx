@@ -26,11 +26,12 @@ import {
 } from '@chakra-ui/react';
 import { AddIcon } from "@chakra-ui/icons"; 
 import { FiFilter } from "react-icons/fi";
+import { useLocation,useNavigate } from 'react-router-dom';
 import { usePacientes } from '../../hooks/usePacientes';
 import { TablaPacientes } from './component/TablaPacientes';
 import { FormularioPacienteModal } from './component/FormularioPacienteModal';
 import { ComfirmarEliminarModal } from './component/ComfirmarEliminarModal';
-import { obraSocialService } from '../../services/obraSocialService';
+import { obraSocialService } from '../../services/ObraSocialService';
 
 const PacientesPage = () => {
 
@@ -44,6 +45,9 @@ const PacientesPage = () => {
   const [pacienteAEliminar, setPacienteAEliminar] = useState(null);
   const [isEliminando, setIsEliminando] = useState(false);
   const cancelRef = useRef();
+
+  const location = useLocation(); 
+  const navigate = useNavigate();
 
   const { isOpen: isFilterOpen, onOpen: onFilterOpen, onClose: onFilterClose } = useDisclosure();
  const [filtros, setFiltros] = useState({ obraSocialId: '', activo: '', tienePagosPendientes: '' });
@@ -60,6 +64,17 @@ const PacientesPage = () => {
     };
     cargarObrasSociales();
   }, []);
+
+  useEffect(() => {
+    
+    if (location.state?.abrirModalNuevo) {
+      console.log("Detectado 'abrirModalNuevo' desde el Home.");
+      handleNuevo(); 
+      
+   
+      navigate(location.pathname, { replace: true, state: {} }); 
+    }
+  }, [location.state]);
 
   const handleNuevo = () => {
     setPacienteActual(null);

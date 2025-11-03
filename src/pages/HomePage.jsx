@@ -107,7 +107,7 @@ const HomePage = () => {
   const [turnosHoy, setTurnosHoy] = useState([]);
   const [stats, setStats] = useState({ 
       ingresosHoy: 0, 
-     // totalPacientes: '...', 
+    
      turnosPendientesHoy: 0,
   }); 
   const [loadingTurnos, setLoadingTurnos] = useState(true);
@@ -137,7 +137,7 @@ const HomePage = () => {
       setStats({ 
             ingresosHoy: ingresos, 
             turnosPendientesHoy: pendientes,
-            // totalPacientes: totalPac || 'N/A', 
+           
         });
       } catch (error) {
         console.error("Error cargando datos del dashboard:", error);
@@ -148,6 +148,10 @@ const HomePage = () => {
     };
     cargarDatos();
   }, []);
+
+  const handleNuevoPacienteClick = () => {
+    navigate('/pacientes', { state: { abrirModalNuevo: true } });
+  };
 
   
   return (
@@ -192,36 +196,34 @@ const HomePage = () => {
         </Box>
 
        
-        <Box bg="gray.50" p={5} borderRadius="lg" shadow="sm">
-           <Heading size="md" mb={4} color="gray.700">Accesos Rápidos</Heading>
+       <Box bg="gray.50" p={5} borderRadius="lg" shadow="sm">
+           <Heading size="md" mb={4} color="gray.700">Acciones Frecuentes</Heading>
            <VStack spacing={4} align="stretch">
-              <Button
-                leftIcon={<FiCalendar />}
-                colorScheme="blue"
-                variant="solid"
-                onClick={() => navigate('/turnos')} 
-                size="lg"
-              >
-                Ver Agenda Completa
-              </Button>
-               <Button
-                leftIcon={<FiPlusCircle />}
-                colorScheme="teal"
-                variant="outline"
-                onClick={() => navigate('/turnos')} 
-                size="lg"
-               >
-                 Nuevo Turno
-               </Button>
+              
+              
                <Button
                  leftIcon={<FiUserPlus />}
-                 colorScheme="purple"
-                 variant="outline"
-                 onClick={() => navigate('/pacientes')} 
+                 colorScheme="blue"
+                 variant="outline" 
+                 onClick={handleNuevoPacienteClick} 
                  size="lg"
                >
-                 Nuevo Paciente
+                 Registrar Nuevo Paciente
                </Button>
+
+             
+               <Button
+                 leftIcon={<FiPlusCircle />}
+                 colorScheme="teal"
+                 variant="outline"
+                 onClick={() => navigate('/turnos')} 
+                 size="lg"
+               >
+                 Agendar Nuevo Turno
+               </Button>
+               
+              
+
            </VStack>
         </Box>
       </SimpleGrid>
