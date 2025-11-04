@@ -18,6 +18,7 @@ import {
   Divider,
   Button, 
   HStack, 
+  useColorModeValue,
 } from '@chakra-ui/react';
 import { FiCalendar, FiClock, FiDollarSign, FiPlusCircle, FiUserPlus, FiAlertCircle } from 'react-icons/fi';
 import { useNavigate } from 'react-router-dom'; 
@@ -27,43 +28,56 @@ import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 
 
-const StatCard = ({ title, stat, helpText, icon }) => (
-  <Stat
-    px={{ base: 4, md: 8 }}
-    py={'5'}
-    shadow={'md'}
-    border={'1px solid'}
-    borderColor={'gray.200'}
-    rounded={'lg'}
-    bg="white"
-  >
-    <StatLabel fontWeight={'medium'} isTruncated color="gray.500">
-      {title}
-    </StatLabel>
-    <StatNumber fontSize={'2xl'} fontWeight={'medium'} color="gray.800">
-      {stat}
-    </StatNumber>
-    {helpText && (
+const StatCard = ({ title, stat, helpText, icon }) => {
+  const bgColor = useColorModeValue('white', 'gray.800');
+  const textColor = useColorModeValue('gray.800', 'white');
+  const borderColor = useColorModeValue('gray.200', 'gray.700');
+
+  return (
+    <Stat
+      px={{ base: 4, md: 8 }}
+      py={'5'}
+      shadow={'md'}
+      border={'1px solid'}
+      borderColor={borderColor}
+      rounded={'lg'}
+      bg={bgColor}
+    >
+      <StatLabel fontWeight={'medium'} isTruncated color="gray.500">
+        {title}
+      </StatLabel>
+      
+      <StatNumber fontSize={'2xl'} fontWeight={'medium'} color={textColor}> 
+        {stat}
+      </StatNumber>
+     
+      {helpText && (
         <StatHelpText>
-        {icon && <Icon as={icon} mr={1} w={4} h={4} />}
-        {helpText}
+          {icon && <Icon as={icon} mr={1} w={4} h={4} />}
+          {helpText}
         </StatHelpText>
-    )}
-  </Stat>
-);
+      )}
+    </Stat>
+  );
+}
 
 const TurnosHoyLista = ({ turnos }) => {
   const navigate = useNavigate();
+
+ 
+  const itemBg = useColorModeValue('white', 'gray.700');
+  const itemHoverBg = useColorModeValue('gray.100', 'gray.600');
+  const textColorPrimary = useColorModeValue('gray.800', 'whiteAlpha.900');
+  const textColorSecondary = useColorModeValue('gray.600', 'gray.400');
+  // ----------------------------------------------------
 
   if (turnos.length === 0) {
     return <Text color="gray.500" fontSize="sm">No hay turnos programados para hoy.</Text>;
   }
   
-  const turnosOrdenados = [...turnos].sort((a, b) => new Date(a.fecha) - new Date(b.fecha));
-
+  const turnosOrdenados = [...turnos].sort((a, b) => new Date(a.fecha) - new Date(b.fecha)); 
 
   const handleTurnoClick = (turno) => {
-   
     navigate('/turnos'); 
   };
 
@@ -73,25 +87,25 @@ const TurnosHoyLista = ({ turnos }) => {
         <ListItem
           key={turno.id}
           p={3}
-          bg="white"
+          bg={itemBg} 
           shadow="sm"
           borderRadius="md"
           borderLeft="4px solid"
           borderColor={turno.estado?.toLowerCase() === 'pagado' ? 'green.400' : 'blue.400'}
           onClick={() => handleTurnoClick(turno)}
           cursor="pointer"
-          _hover={{ bg: 'gray.100', shadow: 'md' }}
+          _hover={{ bg: itemHoverBg, shadow: 'md' }} 
           transition="all 0.2s ease"
-
         >
           <Box display="flex" justifyContent="space-between" alignItems="center">
             <Box>
-              <Text fontWeight="bold" fontSize="sm">{`${turno.pacienteNombre} ${turno.pacienteApellido}`}</Text>
-              <Text fontSize="xs" color="gray.600">
+              <Text fontWeight="bold" fontSize="sm" color={textColorPrimary}>{`${turno.pacienteNombre} ${turno.pacienteApellido}`}</Text>
+              <Text fontSize="xs" color={textColorSecondary}> {/* <-- Color dinámico */}
                 <ListIcon as={FiClock} color="gray.500" />
                 {format(new Date(turno.fecha), 'HH:mm', { locale: es })} hs 
               </Text>
             </Box>
+          
             <Text fontSize="xs" color={turno.estado?.toLowerCase() === 'pagado' ? 'green.500' : 'gray.500'} fontWeight="medium">
               {turno.estado}
             </Text>
@@ -153,6 +167,9 @@ const HomePage = () => {
     navigate('/pacientes', { state: { abrirModalNuevo: true } });
   };
 
+  const boxBg = useColorModeValue('gray.50', 'gray.700'); 
+  const headingColor = useColorModeValue('gray.700', 'gray.200'); 
+
   
   return (
     <Box>
@@ -186,8 +203,8 @@ const HomePage = () => {
       <SimpleGrid columns={{ base: 1, lg: 2 }} spacing={6}>
       
    
-        <Box bg="gray.50" p={5} borderRadius="lg" shadow="sm" maxH="400px" overflowY="auto">
-          <Heading size="md" mb={4} color="gray.700">Próximos Turnos del Día</Heading>
+       <Box bg={boxBg} p={5} borderRadius="lg" shadow="sm" maxH="400px" overflowY="auto">
+          <Heading size="md" mb={4} color={headingColor}>Próximos Turnos del Día</Heading>
           {loadingTurnos ? (
             <Center h="150px"><Spinner /></Center>
           ) : (
@@ -196,38 +213,30 @@ const HomePage = () => {
         </Box>
 
        
-       <Box bg="gray.50" p={5} borderRadius="lg" shadow="sm">
-           <Heading size="md" mb={4} color="gray.700">Acciones Frecuentes</Heading>
+       <Box bg={boxBg} p={5} borderRadius="lg" shadow="sm">
+           <Heading size="md" mb={4} color={headingColor}>Acciones Frecuentes</Heading>
            <VStack spacing={4} align="stretch">
-              
-              
-               <Button
-                 leftIcon={<FiUserPlus />}
-                 colorScheme="blue"
-                 variant="outline" 
-                 onClick={handleNuevoPacienteClick} 
-                 size="lg"
-               >
-                 Registrar Nuevo Paciente
-               </Button>
-
-             
-               <Button
-                 leftIcon={<FiPlusCircle />}
-                 colorScheme="teal"
-                 variant="outline"
-                 onClick={() => navigate('/turnos')} 
-                 size="lg"
-               >
-                 Agendar Nuevo Turno
-               </Button>
-               
-              
-
+             <Button
+               leftIcon={<FiUserPlus />}
+               colorScheme="blue" 
+               variant="outline" 
+               onClick={handleNuevoPacienteClick} 
+               size="lg"
+             >
+               Registrar Nuevo Paciente
+             </Button>
+             <Button
+               leftIcon={<FiPlusCircle />}
+               colorScheme="teal" 
+               variant="outline"
+               onClick={() => navigate('/turnos')} 
+               size="lg"
+             >
+               Agendar Nuevo Turno
+             </Button>
            </VStack>
         </Box>
       </SimpleGrid>
-
     </Box>
   );
 };

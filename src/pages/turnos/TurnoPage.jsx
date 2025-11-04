@@ -4,7 +4,7 @@ import dayGridPlugin from '@fullcalendar/daygrid';
 import timeGridPlugin from '@fullcalendar/timegrid';
 import interactionPlugin from '@fullcalendar/interaction';
 import esLocale from '@fullcalendar/core/locales/es';
-import { Box, useDisclosure, Spinner, Center } from '@chakra-ui/react';
+import { Box, useDisclosure, Spinner, Center,useColorModeValue, } from '@chakra-ui/react';
 import { turnoService } from '../../services/TurnoService';
 import ModalCrearTurno from './components/ModalCrearTurno';
 import ModalVerTurno from './components/ModalVerTurno'; 
@@ -25,6 +25,9 @@ const TurnosPage = () => {
   const { isOpen: isCreateOpen, onOpen: onCreateOpen, onClose: onCreateClose } = useDisclosure();
   const { isOpen: isTimePickerOpen, onOpen: onTimePickerOpen, onClose: onTimePickerClose } = useDisclosure();
   const { isOpen: isViewOpen, onOpen: onViewOpen, onClose: onViewClose } = useDisclosure();
+
+  const modalBg = useColorModeValue('white', 'gray.800');
+  const modalBorder = useColorModeValue('gray.200', 'gray.700');
 
   
   useEffect(() => {
@@ -253,7 +256,7 @@ const fechaParaModalCreacion = !isEditingMode ? selectedFullDate : null;
        
          events={calendarEvents} 
          eventDisplay='block' 
-         eventColor='#3182CE' 
+        eventColor='#3182CE' 
          eventTextColor='white' 
         initialView="timeGridWeek" 
         

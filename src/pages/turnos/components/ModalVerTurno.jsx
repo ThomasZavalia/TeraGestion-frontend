@@ -4,6 +4,7 @@ import {
   Heading, 
   AlertDialog, AlertDialogBody, AlertDialogFooter, AlertDialogHeader, AlertDialogContent, AlertDialogOverlay, useDisclosure, Select, FormControl,
    FormLabel,  ButtonGroup,Flex,Tooltip,Spinner,Center,
+   useColorModeValue,
 } from '@chakra-ui/react';
 import { useState,useRef,useEffect } from 'react';
 import { format, parseISO,isFuture } from 'date-fns';
@@ -29,6 +30,13 @@ const [detalle, setDetalle] = useState(null);
  
  const { isOpen: isAlertOpen, onOpen: onAlertOpen, onClose: onAlertClose } = useDisclosure();
   const cancelRef = useRef(); 
+
+  const modalBg = useColorModeValue('white', 'gray.800');
+  const modalBorder = useColorModeValue('gray.200', 'gray.700');
+  const headingColor = useColorModeValue('gray.700', 'gray.200');
+  const subHeadingColor = useColorModeValue('gray.600', 'gray.400');
+  const textColor = useColorModeValue('gray.800', 'whiteAlpha.900');
+  const inputBg = useColorModeValue('white', 'gray.700');
 
   useEffect(() => {
     
@@ -177,42 +185,23 @@ const handleAsistencia = async (estadoAsistencia) => {
  return (
     <>
    
-      <Modal isOpen={isOpen} onClose={onClose} isCentered scrollBehavior="inside" size="xl"> 
+     <Modal isOpen={isOpen} onClose={onClose} isCentered scrollBehavior="inside" size="xl"> 
         <ModalOverlay />
-        <ModalContent>
-         
+        <ModalContent bg={modalBg}> 
           <ModalHeader pb={2}>
-           
             <Flex justify="space-between" align="center">
-             
-             <Heading size="md" mr={4}>Detalles del Turno</Heading>
-              <HStack spacing={2}>
-                <Tooltip label="Editar Turno" fontSize="xs" placement="top">
-                 <IconButton 
-                    icon={<FiEdit />} 
-                    aria-label="Editar Turno" 
-                    variant="ghost" 
-                    size="sm" 
-                    onClick={handleEditar} 
-                    isDisabled={isPaying || isDeleting || isSavingAsistencia} 
-                 />
+              <Heading size="md" mr={4} color={textColor}>Detalles del Turno</Heading> 
+              <HStack spacing={1} mr="8">
+                 <Tooltip label="Editar Turno" fontSize="xs" placement="top">
+                     <IconButton icon={<FiEdit />} aria-label="Editar Turno" variant="ghost" size="sm" onClick={handleEditar} isDisabled={isPaying || isDeleting || isSavingAsistencia} />
                  </Tooltip>
-                  <Tooltip label="Eliminar Turno" fontSize="xs" placement="top">
-                 <IconButton 
-                    icon={<FiTrash2 />} 
-                    aria-label="Eliminar Turno" 
-                    colorScheme="red" 
-                    variant="ghost" 
-                    size="sm" 
-                    mr={10}
-                    onClick={onAlertOpen} 
-                    isDisabled={isPaying || isDeleting || isSavingAsistencia}
-                 />
-                  </Tooltip>
+                 <Tooltip label="Eliminar Turno" fontSize="xs" placement="top">
+                     <IconButton icon={<FiTrash2 />} aria-label="Eliminar Turno" colorScheme="red" variant="ghost" size="sm" onClick={onAlertOpen} isDisabled={isPaying || isDeleting || isSavingAsistencia} />
+                 </Tooltip>
               </HStack>
             </Flex>
           </ModalHeader>
-         <ModalCloseButton isDisabled={isPaying || isDeleting || isSavingAsistencia} top={4} right={4}/>
+          <ModalCloseButton isDisabled={isPaying || isDeleting || isSavingAsistencia} top={4} right={4}/>
           
         
          <ModalBody py={6}> 
@@ -279,30 +268,20 @@ Marcar como Pagado
       </Modal>
       
    
-      <AlertDialog
+    <AlertDialog
         isOpen={isAlertOpen}
         leastDestructiveRef={cancelRef}
         onClose={onAlertClose}
       >
         <AlertDialogOverlay>
-          <AlertDialogContent>
-            <AlertDialogHeader fontSize="lg" fontWeight="bold">
-              Eliminar Turno
-            </AlertDialogHeader>
+          <AlertDialogContent bg={modalBg}> 
+            <AlertDialogHeader fontSize="lg" fontWeight="bold"> Eliminar Turno </AlertDialogHeader>
             <AlertDialogBody>
               ¿Estás seguro que deseas eliminar este turno? Esta acción no se puede deshacer.
             </AlertDialogBody>
             <AlertDialogFooter>
-              <Button ref={cancelRef} onClick={onAlertClose}>
-                Cancelar
-              </Button>
-              <Button 
-                colorScheme="red" 
-                onClick={handleConfirmarEliminar} 
-                ml={3}
-                isLoading={isDeleting}
-                loadingText="Eliminando..."
-              >
+              <Button ref={cancelRef} onClick={onAlertClose}> Cancelar </Button>
+              <Button colorScheme="red" onClick={handleConfirmarEliminar} ml={3} isLoading={isDeleting} loadingText="Eliminando...">
                 Eliminar
               </Button>
             </AlertDialogFooter>

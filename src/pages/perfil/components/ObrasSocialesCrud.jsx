@@ -32,6 +32,7 @@ import {
     VStack,
     FormErrorMessage,
   AlertDialog, AlertDialogBody, AlertDialogFooter, AlertDialogHeader, AlertDialogContent, AlertDialogOverlay,
+  useColorModeValue,
 } from '@chakra-ui/react';
 import { FiPlus, FiEdit, FiTrash2 } from 'react-icons/fi';
 import { useForm } from 'react-hook-form';
@@ -52,6 +53,16 @@ const ObrasSocialesCRUD = () => {
 
   
   const { register, handleSubmit, reset, setValue, formState: { errors } } = useForm();
+
+  const headerBg = useColorModeValue('gray.50', 'gray.700'); 
+ 
+  const modalBg = useColorModeValue('white', 'gray.800'); 
+  
+  const tableBorder = useColorModeValue('gray.200', 'gray.700');
+  
+  const emptyText = useColorModeValue('gray.500', 'gray.400');
+ 
+  const inputBg = useColorModeValue('white', 'gray.700');
 
 
   const cargarDatos = async () => {
@@ -149,9 +160,10 @@ const ObrasSocialesCRUD = () => {
       </HStack>
 
      
-      <TableContainer borderWidth="1px" borderRadius="md">
+    <TableContainer borderWidth="1px" borderRadius="md" borderColor={tableBorder}>
         <Table variant="simple" size="sm">
-          <Thead bg="gray.50">
+          {/* --- 4. APLICA COLOR DE FONDO DINÁMICO --- */}
+          <Thead bg={headerBg}>
             <Tr>
               <Th>Nombre</Th>
               <Th isNumeric>Precio Turno</Th>
@@ -160,10 +172,10 @@ const ObrasSocialesCRUD = () => {
           </Thead>
           <Tbody>
             {obrasSociales.length === 0 ? (
-              <Tr><Td colSpan={3}><Center p={4}>No hay obras sociales registradas.</Center></Td></Tr>
+              <Tr><Td colSpan={3}><Center p={4} color={emptyText}>No hay obras sociales registradas.</Center></Td></Tr>
             ) : (
               obrasSociales.map((os) => (
-                <Tr key={os.id}>
+                <Tr key={os.id} _hover={{ bg: useColorModeValue('gray.50', 'gray.700') }}> 
                   <Td>{os.nombre}</Td>
                   <Td isNumeric>${os.precioTurno?.toLocaleString('es-AR')}</Td>
                   <Td>
@@ -184,9 +196,9 @@ const ObrasSocialesCRUD = () => {
       </TableContainer>
 
    
-      <Modal isOpen={isModalOpen} onClose={onModalClose} isCentered>
+     <Modal isOpen={isModalOpen} onClose={onModalClose} isCentered>
         <ModalOverlay />
-        <ModalContent as="form" onSubmit={handleSubmit(onFormSubmit)}>
+        <ModalContent as="form" onSubmit={handleSubmit(onFormSubmit)} bg={modalBg}>
           <ModalHeader>{selectedOS ? 'Editar Obra Social' : 'Nueva Obra Social'}</ModalHeader>
           <ModalCloseButton />
           <ModalBody>
@@ -194,7 +206,8 @@ const ObrasSocialesCRUD = () => {
               <FormControl isInvalid={errors.nombre} isRequired>
                 <FormLabel fontSize="sm">Nombre</FormLabel>
                 <Input 
-                  {...register('nombre', { required: 'El nombre es requerido' })} 
+                  {...register('nombre', { required: 'El nombre es requerido' })}
+                  bg={inputBg} 
                 />
                 <FormErrorMessage>{errors.nombre?.message}</FormErrorMessage>
               </FormControl>
@@ -204,12 +217,13 @@ const ObrasSocialesCRUD = () => {
                   <InputLeftAddon>$</InputLeftAddon>
                   <Input 
                     type="number"
-                    step="0.01" 
+                    step="0.01"
                     {...register('precioTurno', { 
                         required: 'El precio es requerido',
                         valueAsNumber: true,
                         min: { value: 0, message: 'El precio no puede ser negativo' }
                     })} 
+                    bg={inputBg} 
                   />
                 </InputGroup>
                 <FormErrorMessage>{errors.precioTurno?.message}</FormErrorMessage>
@@ -226,13 +240,13 @@ const ObrasSocialesCRUD = () => {
       </Modal>
 
    
-      <AlertDialog
+   <AlertDialog
         isOpen={isAlertOpen}
         leastDestructiveRef={cancelRef}
         onClose={onAlertClose}
       >
         <AlertDialogOverlay>
-          <AlertDialogContent>
+          <AlertDialogContent bg={modalBg}>
             <AlertDialogHeader>Eliminar Obra Social</AlertDialogHeader>
             <AlertDialogBody>
               ¿Estás seguro que deseas eliminar "{selectedOS?.nombre}"? Esta acción no se puede deshacer.
@@ -246,7 +260,6 @@ const ObrasSocialesCRUD = () => {
           </AlertDialogContent>
         </AlertDialogOverlay>
       </AlertDialog>
-
     </Box>
   );
 };

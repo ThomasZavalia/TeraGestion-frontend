@@ -10,7 +10,8 @@ import {
   FormControl,
   FormLabel,
   Input,
-  Button
+  Button,
+  useColorModeValue,
 } from '@chakra-ui/react';
 import { FiFilter } from 'react-icons/fi';
 import { reportesService } from '../../services/ReportesService';
@@ -83,19 +84,43 @@ const ReportesPage = () => {
        loadMonthlyData({ fechaDesde, fechaHasta });
    };
 
+   const filterBg = useColorModeValue('white', 'gray.800');
+  const inputBg = useColorModeValue('white', 'gray.700');
+
   return (
     <Box>
       <Heading mb={6}>Reportes</Heading>
 
    
-      <HStack spacing={4} mb={8} wrap="wrap" bg="white" p={4} borderRadius="md" shadow="sm">
+    <HStack 
+        spacing={4} 
+        mb={8} 
+        wrap="wrap" 
+        bg={filterBg} 
+        p={4} 
+        borderRadius="md" 
+        shadow="sm"
+        align="flex-end" 
+      >
          <FormControl>
            <FormLabel fontSize="sm">Desde Mes</FormLabel>
-           <Input type="month" size="sm" value={fechaDesde} onChange={(e) => setFechaDesde(e.target.value)} />
+           <Input 
+             type="month" 
+             size="sm" 
+             value={fechaDesde} 
+             onChange={(e) => setFechaDesde(e.target.value)} 
+             bg={inputBg} 
+            />
          </FormControl>
          <FormControl>
            <FormLabel fontSize="sm">Hasta Mes</FormLabel>
-           <Input type="month" size="sm" value={fechaHasta} onChange={(e) => setFechaHasta(e.target.value)} />
+           <Input 
+             type="month" 
+             size="sm" 
+             value={fechaHasta} 
+             onChange={(e) => setFechaHasta(e.target.value)} 
+             bg={inputBg} 
+            />
          </FormControl>
          <Button 
             leftIcon={<FiFilter />} 
@@ -103,7 +128,6 @@ const ReportesPage = () => {
             size="sm" 
             onClick={handleFiltrar}
             isLoading={loadingMes}
-            alignSelf="flex-end"
          >
             Filtrar Meses
          </Button>
@@ -122,7 +146,7 @@ const ReportesPage = () => {
             labelField="mes"
             valueField="valor" 
             isLoading={loadingMes}
-            formatValue={(value) => `$ ${value.toLocaleString('es-AR')}`} // Formato moneda
+            formatValue={(value) => `$ ${value.toLocaleString('es-AR')}`} 
           />
 
        

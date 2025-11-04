@@ -9,9 +9,12 @@ import {
   MenuItem,
   useToast,
   Text,
+  useColorMode,
   useBreakpointValue, 
+  HStack,
+  useColorModeValue,
 } from '@chakra-ui/react';
-import { FiMenu } from 'react-icons/fi';
+import { FiMenu, FiSearch, FiSun, FiMoon } from 'react-icons/fi';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext'; 
 import { AsyncSelect } from 'chakra-react-select';
@@ -21,6 +24,14 @@ const Navbar = ({ onToggleSidebar, isDesktop }) => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const toast = useToast();
+
+  const { colorMode, toggleColorMode } = useColorMode();
+
+  const navBg = useColorModeValue('white', 'gray.800');
+  const navBorderColor = useColorModeValue('gray.200', 'gray.700');
+ 
+  const selectBg = useColorModeValue('gray.50', 'gray.700');
+  const selectBorderColor = useColorModeValue('gray.200', 'gray.600');
 
   const handleLogout = () => {
     logout();
@@ -53,30 +64,45 @@ const Navbar = ({ onToggleSidebar, isDesktop }) => {
 const selectStyles = {
     control: (provided) => ({
       ...provided,
-      bg: 'gray.50',
+      bg: selectBg,
       borderRadius: 'md',
-      borderColor: 'gray.200',
+      borderColor: selectBorderColor, 
+      _hover: {
+          borderColor: useColorModeValue('gray.300', 'gray.500')
+      }
     }),
     placeholder: (provided) => ({
       ...provided,
       fontSize: 'sm',
+      color: useColorModeValue('gray.400', 'gray.500') 
     }),
     input: (provided) => ({
       ...provided,
       fontSize: 'sm',
+      
     }),
+  
+    menu: (provided) => ({
+        ...provided,
+        bg: navBg, 
+        zIndex: 20 
+    }),
+    option: (provided, state) => ({
+        ...provided,
+        bg: state.isFocused ? useColorModeValue('gray.100', 'gray.600') : 'transparent',
+    })
   };
 
   return (
-    <Flex
+   <Flex
       as="header"
       align="center"
       justify="space-between"
       w="full"
       px="4"
-      bg="white"
+      bg={navBg} 
       borderBottomWidth="1px"
-      borderColor="gray.200"
+      borderColor={navBorderColor} 
       h="14" 
     >
       
@@ -87,7 +113,7 @@ const selectStyles = {
         onClick={onToggleSidebar} 
       />
 
-     <Box 
+    <Box 
         w={{ base: 'full', md: 'md' }} 
         mx="4" 
         display={{ base: 'none', md: 'block' }} 
@@ -103,30 +129,43 @@ const selectStyles = {
           loadingMessage={() => 'Buscando...'}
         />
       </Box>
+<HStack spacing={{ base: '2', md: '4' }}>
 
-     
-      <Menu>
-        <MenuButton as={Box} cursor="pointer">
-           {/* Muestra Avatar siempre */}
-           <Avatar size={'sm'} name={user?.username || '?'} /> 
-           {/* Muestra Nombre solo en Desktop */}
-           <Text 
-               fontSize="sm" 
-               display={{ base: 'none', md: 'inline' }} 
-               ml={2}
-           >
-            {user?.username}
-          </Text>
-        </MenuButton>
-        <MenuList>
-          <MenuItem onClick={() => navigate('/configuracion')}>
-            Configuración
-          </MenuItem>
-          <MenuItem onClick={handleLogout}>
-            Cerrar Sesión
-          </MenuItem>
-        </MenuList>
-      </Menu>
+      
+        <IconButton
+          aria-label="Cambiar modo de color"
+          variant="ghost"
+         
+          icon={colorMode === 'light' ? <FiMoon /> : <FiSun />}
+          onClick={toggleColorMode} 
+        />
+      
+      
+        {/* Menú de Usuario (sin cambios, ahora dentro del HStack) */}
+        <Menu>
+          <MenuButton as={Box} cursor="pointer">
+            <Avatar size={'sm'} name={user?.username || '?'} /> 
+            <Text 
+              fontSize="sm" 
+              display={{ base: 'none', md: 'inline' }} 
+              ml={2}
+            >
+             {user?.username}
+            </Text>
+          </MenuButton>
+          <MenuList>
+            <MenuItem onClick={() => navigate('/configuracion')}>
+              Configuración
+            </MenuItem>
+            <MenuItem onClick={handleLogout}>
+              Cerrar Sesión
+            </MenuItem>
+          </MenuList>
+        </Menu>
+        
+      </HStack>
+      
+
     </Flex>
   );
 };
