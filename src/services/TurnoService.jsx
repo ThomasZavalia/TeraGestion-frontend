@@ -1,19 +1,35 @@
 import  axiosInstance  from './axiosInstance';
 
 
-const formatTurnoForCalendar = (turno) => ({
-  id: turno.id.toString(), 
-  title: `${turno.pacienteNombre} ${turno.pacienteApellido}`.trim(), 
-start: turno.fecha|| turno.fechaHora, 
-className: turno.estado.toLowerCase() === 'pagado' ? 'turno-pagado' : 'turno-pendiente',
-  extendedProps: { 
-    ...turno
+const formatTurnoForCalendar = (turno) => {
+  let className = 'turno-pendiente'; 
+  if (turno.estado) {
+   const estadoLower = turno.estado.toLowerCase();
+   if (estadoLower === 'pagado') {
+     className = 'turno-pagado';
+   } else if (estadoLower === 'cancelado') {
+    className = 'turno-cancelado';
+    }
   }
-});
+
+
+ const title = (turno.pacienteApellido 
+ ? `${turno.pacienteNombre} ${turno.pacienteApellido}` 
+ : turno.pacienteNombre
+ ).trim();
+
+  return {
+   id: turno.id.toString(), 
+   title: title, 
+   start: turno.fecha || turno.fechaHora, 
+   className: className, 
+   extendedProps: { 
+      ...turno
+    }
+  };
+};
 
 export const turnoService = {
-
-
 
 
   

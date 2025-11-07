@@ -1,11 +1,13 @@
-import React, { useEffect } from "react";
+import React, { useEffect,useF } from "react";
 import {
   Modal, ModalOverlay, ModalContent, ModalHeader, ModalFooter,
   ModalBody, ModalCloseButton, Button, FormControl, FormLabel,
-  Input, VStack, useToast, Select
+  Input, VStack, useToast, Select,
+  useColorModeValue,FormErrorMessage,
 } from "@chakra-ui/react";
+import { useForm } from 'react-hook-form';
 import { pacienteService } from "../../../services/PacienteService/PacienteService";
-import { obraSocialService } from "../../../services/PacienteService/ObraSocialService"; 
+import { obraSocialService } from '../../../services/ObraSocialService';
 
 
 const FormularioInicial = {
@@ -13,6 +15,7 @@ const FormularioInicial = {
   apellido: "",
   dni: "",
   telefono: "",
+  email:"",
   obraSocialId: "", 
   fechaNacimiento: "",
 };
@@ -34,19 +37,18 @@ export const FormularioPacienteModal = ({ isOpen, onClose, onGuardado, pacienteA
   
   useEffect(() => {
     if (manejarCambio && pacienteAEditar) { 
-
       const fechaParaInput = pacienteAEditar.fechaNacimiento ? pacienteAEditar.fechaNacimiento.split('T')[0] : '';
-
       setFormData({
         nombre: pacienteAEditar.nombre || "",
         apellido: pacienteAEditar.apellido || "",
         dni: pacienteAEditar.dni || "",
         telefono: pacienteAEditar.telefono || "",
+        email: pacienteAEditar.email || "", 
         obraSocialId: pacienteAEditar.obraSocialId || "",
         fechaNacimiento: fechaParaInput,
       });
     } else {
-      setFormData(FormularioInicial);
+      setFormData(FormularioInicial); // Resetea
     }
   }, [pacienteAEditar, manejarCambio]);
 
@@ -55,7 +57,7 @@ export const FormularioPacienteModal = ({ isOpen, onClose, onGuardado, pacienteA
       const cargarObrasSociales = async () => {
         setIsLoadingOS(true);
         try {
-          const lista = await obraSocialService.getAll(); 
+         const lista = await obraSocialService.getObrasSocialesActivas();
           setObrasSociales(lista);
         } catch (error) {
           console.error("Error cargando lista de OS", error);
@@ -81,28 +83,22 @@ export const FormularioPacienteModal = ({ isOpen, onClose, onGuardado, pacienteA
     }));
   };
 
- const handleSubmit = async () => {
+const handleSubmit = async () => {
     setSaving(true);
 
-    
     const datosParaEnviar = {
       ...formData,
-
-     
+      
       obraSocialId: formData.obraSocialId ? parseInt(formData.obraSocialId, 10) : null,
       
-    
       fechaNacimiento: formData.fechaNacimiento || null, 
-      
-      
-      telefono: formData.telefono || null,
-      
      
-      email: formData.email || null,
+      telefono: formData.telefono || null, 
+      
+      email: formData.email || null, 
     };
-  
 
-    console.log("Datos que se van a enviar:", datosParaEnviar); 
+    console.log("Datos que se van a enviar:", datosParaEnviar);
 
     try {
       if (manejarCambio) {
@@ -135,6 +131,10 @@ export const FormularioPacienteModal = ({ isOpen, onClose, onGuardado, pacienteA
       setSaving(false);
     }
   };
+
+  const modalBg = useColorModeValue('white', 'gray.800');
+  const inputBg = useColorModeValue('white', 'gray.700');
+
   return (
     <Modal isOpen={isOpen} onClose={onClose} isCentered>
       <ModalOverlay />
@@ -167,31 +167,37 @@ export const FormularioPacienteModal = ({ isOpen, onClose, onGuardado, pacienteA
 
                     </FormControl>
 
-                    <FormControl isRequired>
+                   <FormControl> 
 
-                        <FormLabel>Telefono</FormLabel>
+              <FormLabel>Teléfono</FormLabel>
+              <Input name="telefono" value={formData.telefono} onChange={handleChange} bg={inputBg} />
+            </FormControl>
+            
+            <FormControl> 
+              <FormLabel>Email</FormLabel>
+              <Input name="email" type="email" value={formData.email} onChange={handleChange} bg={inputBg} />
+            </FormControl>
 
-                        <Input name="telefono" value={formData.telefono} onChange={handleChange}/>
+                    <FormControl>
+              <FormLabel>Fecha de Nacimiento</FormLabel>
+              <Input name="fechaNacimiento" value={formData.fechaNacimiento} onChange={handleChange} type="date" max={today} bg={inputBg}/>
+            </FormControl>
 
-                    </FormControl>
-
-                    <FormControl isRequired>
-                        <FormLabel>Fecha de Nacimiento</FormLabel>
-                        <Input
-                        name="fechaNacimiento" value={formData.fechaNacimiento}  onChange={handleChange} type="date" max={today}/>
-                    </FormControl>
-            <FormControl>
+           <FormControl>
               <FormLabel>Obra Social</FormLabel>
               <Select
                 name="obraSocialId" 
                 value={formData.obraSocialId || ""} 
                 onChange={handleChange}
-                placeholder="Seleccione una obra social"
+                
+                placeholder="Sin Obra Social / Particular" 
                 isDisabled={isLoadingOS}
+                bg={inputBg}
               >
+                
                 {obrasSociales.map((os) => (
-                  <option key={os.id} value={os.id}>
-                    {os.nombre}
+                  <option key={os.value} value={os.value}>
+                    {os.label}
                   </option>
                 ))}
               </Select>

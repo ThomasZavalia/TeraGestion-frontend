@@ -23,14 +23,17 @@ import {
   useDisclosure, 
   Tooltip,
   Alert,AlertIcon,
+  Input,
+  useColorModeValue,
 } from '@chakra-ui/react';
-import { AddIcon } from "@chakra-ui/icons"; 
+import { AddIcon} from "@chakra-ui/icons"; 
 import { FiFilter } from "react-icons/fi";
 import { useLocation,useNavigate } from 'react-router-dom';
 import { usePacientes } from '../../hooks/usePacientes';
 import { TablaPacientes } from './component/TablaPacientes';
 import { FormularioPacienteModal } from './component/FormularioPacienteModal';
 import { ComfirmarEliminarModal } from './component/ComfirmarEliminarModal';
+import { pacienteService } from '../../services/PacienteService/PacienteService';
 import { obraSocialService } from '../../services/ObraSocialService';
 
 const PacientesPage = () => {
@@ -66,6 +69,10 @@ const PacientesPage = () => {
   }, []);
 
   useEffect(() => {
+     recargarPacientes({ activo: 'true' }); 
+  }, [recargarPacientes]);
+
+  useEffect(() => {
     
     if (location.state?.abrirModalNuevo) {
       console.log("Detectado 'abrirModalNuevo' desde el Home.");
@@ -99,13 +106,25 @@ const PacientesPage = () => {
     onAlertOpen(); 
   };
 
-  const confirmarEliminar = async () => {
+  const handleReactivar = async (paciente) => {
+      
+      try {
+          await pacienteService.actualizarPaciente(paciente.id, { ...paciente, activo: true });
+          toast({ title: "Paciente Reactivado", status: "success", duration: 3000 });
+          recargarPacientes(filtros);
+      } catch (error) {
+          toast({ title: "Error al reactivar", description: error.message, status: "error" });
+      }
+  };
+
+ const confirmarEliminar = async () => {
     setIsEliminando(true);
     try {
-      await eliminarPaciente(pacienteAEliminar.id);
+      
+      await eliminarPaciente(pacienteAEliminar.id); 
       toast({
-        title: "Paciente eliminado",
-        status: "success",
+        title: "Paciente Desactivado", 
+        status: "warning", 
         duration: 3000,
         isClosable: true,
       });
@@ -135,10 +154,13 @@ const PacientesPage = () => {
   };
 
  const handleLimpiarFiltros = () => {
-        setFiltros({ obraSocialId: '', activo: '', tienePagosPendientes: '' }); 
-        recargarPacientes({}); 
+        setFiltros({ obraSocialId: '', activo: 'true', tienePagosPendientes: '' }); 
+        recargarPacientes({activo:'true'}); 
         onFilterClose();
     };
+
+    const boxBg = useColorModeValue('white', 'gray.800');
+  const inputBg = useColorModeValue('white', 'gray.700');
 
   const contenido = () => {
     if (loading) {
@@ -158,7 +180,7 @@ const PacientesPage = () => {
       );
     }
 
-  return <TablaPacientes pacientes={pacientes} onEditar={handleEditar} onEliminar={handleEliminar} />;
+  return <TablaPacientes pacientes={pacientes} onEditar={handleEditar} onEliminar={handleEliminar} onReactivar={handleReactivar} />;
   };
 
  return (
@@ -166,7 +188,7 @@ const PacientesPage = () => {
       <HStack justifyContent="space-between" mb={10}>
         <Heading>Pacientes</Heading>
         <HStack>
-          {/* --- BOTÓN DE FILTRO AÑADIDO --- */}
+        
           <Tooltip label="Filtrar Pacientes" aria-label="Filtrar Pacientes">
             <IconButton
               icon={<FiFilter />}
@@ -184,7 +206,10 @@ const PacientesPage = () => {
         </HStack>
       </HStack>
 
-      <Box>
+      <Input placeholder="Buscar en la lista..." ></Input>
+      
+
+      <Box bg={boxBg} p={4} borderRadius="md" shadow="md"> {/* Color dinámico */}
         {contenido()}
       </Box>
 
@@ -196,18 +221,16 @@ const PacientesPage = () => {
         pacienteAEditar={pacienteActual}
       />
 
-      <ComfirmarEliminarModal
+     <ComfirmarEliminarModal
         isOpen={isAlertOpen}
         onClose={onAlertClose}
         onConfirm={confirmarEliminar}
         isLoading={isEliminando}
         leastDestructiveRef={cancelRef} 
-        title="Eliminar Paciente" 
+        title="Desactivar Paciente" 
       >
 
-                ¿Estás seguro? Se eliminará a <strong> {pacienteAEliminar?.nombre} {pacienteAEliminar?.apellido}</strong>.
-
-      
+      ¿Estás seguro? El paciente **{pacienteAEliminar?.nombre} {pacienteAEliminar?.apellido}** se marcará como "Inactivo" y no aparecerá en las búsquedas.
       </ComfirmarEliminarModal>
 
 
@@ -219,7 +242,7 @@ const PacientesPage = () => {
 
           <DrawerBody>
             <VStack spacing={4}>
-              {/* Filtro por Obra Social */}
+              
               <FormControl>
                 <FormLabel fontSize="sm">Obra Social</FormLabel>
                 <Select
@@ -231,7 +254,7 @@ const PacientesPage = () => {
                  
                   isDisabled={isLoadingOS} 
                 >
-                  {/* --- 2. ERROR 'key' y DATOS CORREGIDO --- */}
+                
                   {!isLoadingOS && obrasSociales.map(os => (
                    
                     <option key={os.value} value={os.value}> 

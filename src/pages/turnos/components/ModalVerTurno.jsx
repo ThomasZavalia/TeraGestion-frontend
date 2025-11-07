@@ -84,21 +84,23 @@ let fechaFormateada = 'Fecha inválida';
 
 
 const handleMarcarPagado = async () => {
-if (!detalle) return;
-setIsPaying(true);
-
-const result = await turnoService.marcarComoPagado(detalle.id, metodoPago); 
-
- if (result.success) {
-   toast({ title: 'Turno Pagado', status: 'success' });
-
- const datosFrescos = await turnoService.getTurnoDetalle(detalle.id);
-
-   onTurnoUpdate(turnoService.formatTurnoForCalendar(datosFrescos)); 
-   onClose(); 
-   } else {
-toast({ title: 'Error al pagar', description: result.message, status: 'error' });
-  setIsPaying(false); }
+  if (!detalle) return;
+  setIsPaying(true); 
+  try {
+    const result = await turnoService.marcarComoPagado(detalle.id, metodoPago); 
+    if (result.success) {
+      toast({ title: 'Turno Pagado', status: 'success' });
+      const datosFrescos = await turnoService.getTurnoDetalle(detalle.id);
+      onTurnoUpdate(turnoService.formatTurnoForCalendar(datosFrescos)); 
+      onClose(); 
+    } else {
+      toast({ title: 'Error al pagar', description: result.message, status: 'error' });
+    }
+  } catch (error) {
+    toast({ title: 'Error', description: error.message, status: 'error' });
+  } finally {
+    setIsPaying(false);
+  }
 };
 
   const handleEditar = () => {
@@ -109,21 +111,35 @@ toast({ title: 'Error al pagar', description: result.message, status: 'error' })
   };
 
  
-  const handleConfirmarEliminar = async () => {
-    if (!turnoData) return;
-    setIsDeleting(true);
-    const result = await turnoService.deleteTurno(turnoData.id);
-    setIsDeleting(false);
-    onAlertClose(); 
+ const handleConfirmarCancelar = async () => {
+    if (!detalle) return;
+    setIsDeleting(true); 
 
-    if (result.success) {
-      toast({ title: 'Turno Eliminado', status: 'success', duration: 3000 });
-      onDelete(turnoData.id); 
-      onClose(); 
-    } else {
-      toast({ title: 'Error al eliminar', description: result.message, status: 'error', duration: 5000 });
+    try {
+    
+      const result = await turnoService.deleteTurno(detalle.id);
+      
+      if (result.success) {
+        toast({ title: 'Turno Cancelado', status: 'warning', duration: 3000 });
+        
+        // 2. Pide los datos frescos (ahora con estado: "Cancelado")
+        const datosFrescos = await turnoService.getTurnoDetalle(detalle.id);
+        
+        // 3. Pasa los datos (formateados) a TurnosPage
+        onTurnoUpdate(turnoService.formatTurnoForCalendar(datosFrescos));
+        
+        onAlertClose(); 
+        onClose(); 
+      } else {
+        toast({ title: 'Error al cancelar', description: result.message, status: 'error', duration: 5000 });
+      }
+    } catch (error) {
+       toast({ title: 'Error grave', description: error.message, status: 'error' });
+    } finally {
+      setIsDeleting(false); 
     }
   };
+
 
 const handleAsistencia = async (estadoAsistencia) => {
     if (!detalle) return;
@@ -182,6 +198,7 @@ const handleAsistencia = async (estadoAsistencia) => {
     }
   };
   if (!isOpen) return null;
+  const isCancelado = detalle?.estado?.toLowerCase() === 'cancelado';
  return (
     <>
    
@@ -193,11 +210,20 @@ const handleAsistencia = async (estadoAsistencia) => {
               <Heading size="md" mr={4} color={textColor}>Detalles del Turno</Heading> 
               <HStack spacing={1} mr="8">
                  <Tooltip label="Editar Turno" fontSize="xs" placement="top">
-                     <IconButton icon={<FiEdit />} aria-label="Editar Turno" variant="ghost" size="sm" onClick={handleEditar} isDisabled={isPaying || isDeleting || isSavingAsistencia} />
+                     <IconButton icon={<FiEdit />} aria-label="Editar Turno" variant="ghost" size="sm" onClick={handleEditar} isDisabled={isCancelado || isPaying || isDeleting || isSavingAsistencia} />
                  </Tooltip>
-                 <Tooltip label="Eliminar Turno" fontSize="xs" placement="top">
-                     <IconButton icon={<FiTrash2 />} aria-label="Eliminar Turno" colorScheme="red" variant="ghost" size="sm" onClick={onAlertOpen} isDisabled={isPaying || isDeleting || isSavingAsistencia} />
-                 </Tooltip>
+                 <Tooltip label="Cancelar Turno" fontSize="xs" placement="top">
+                  <IconButton 
+                    icon={<FiTrash2 />} 
+                    aria-label="Cancelar Turno" 
+                    colorScheme="red" 
+                    variant="ghost" 
+                    size="sm" 
+                    onClick={onAlertOpen} 
+                   
+                    isDisabled={isCancelado || isPaying || isDeleting || isSavingAsistencia}
+                  />
+                </Tooltip>
               </HStack>
             </Flex>
           </ModalHeader>
@@ -219,7 +245,12 @@ const handleAsistencia = async (estadoAsistencia) => {
  </Box>
  <HStack> 
  <Text fontWeight="medium">Estado Turno:</Text> 
- <Tag colorScheme={detalle.estado?.toLowerCase() === 'pagado' ? 'green' : 'blue'}> {detalle.estado} </Tag> 
+ <Tag colorScheme={
+                  detalle.estado?.toLowerCase() === 'pagado' ? 'green' :
+                  detalle.estado?.toLowerCase() === 'cancelado' ? 'red' : 'blue' 
+                }> 
+                  {detalle.estado} 
+                </Tag>
  </HStack>
  <HStack> 
 <Text fontWeight="medium">Precio:</Text> 
@@ -228,7 +259,10 @@ const handleAsistencia = async (estadoAsistencia) => {
 
  <Divider pt={3}/>
 
-
+{isCancelado ? (
+<Text color="red.500" fontWeight="medium">Este turno ha sido cancelado.</Text>
+) : 
+( <>
 <Box w="full" pt={3}>
 <Heading size="xs" mb={3} color="gray.600">Registro de Asistencia</Heading>
 {renderAsistencia()}
@@ -253,7 +287,9 @@ Marcar como Pagado
 </VStack>
  </Box>
  )}
-
+ 
+ </>
+)}
 </VStack>
  )}
 </ModalBody>
@@ -268,22 +304,30 @@ Marcar como Pagado
       </Modal>
       
    
-    <AlertDialog
+  <AlertDialog
         isOpen={isAlertOpen}
         leastDestructiveRef={cancelRef}
         onClose={onAlertClose}
       >
         <AlertDialogOverlay>
           <AlertDialogContent bg={modalBg}> 
-            <AlertDialogHeader fontSize="lg" fontWeight="bold"> Eliminar Turno </AlertDialogHeader>
+            <AlertDialogHeader fontSize="lg" fontWeight="bold"> 
+              Cancelar Turno {/* <-- Texto cambiado */}
+            </AlertDialogHeader>
             <AlertDialogBody>
-              ¿Estás seguro que deseas eliminar este turno? Esta acción no se puede deshacer.
+              ¿Estás seguro que deseas cancelar este turno? Esta acción no se puede deshacer.
             </AlertDialogBody>
             <AlertDialogFooter>
-              <Button ref={cancelRef} onClick={onAlertClose}> Cancelar </Button>
-              <Button colorScheme="red" onClick={handleConfirmarEliminar} ml={3} isLoading={isDeleting} loadingText="Eliminando...">
-                Eliminar
-              </Button>
+              <Button ref={cancelRef} onClick={onAlertClose}> Salir </Button>
+             <Button 
+              colorScheme="red" 
+              onClick={handleConfirmarCancelar} 
+              ml={3} 
+              isLoading={isDeleting} 
+              loadingText="Cancelando..."
+            >
+              Cancelar Turno
+            </Button>
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialogOverlay>

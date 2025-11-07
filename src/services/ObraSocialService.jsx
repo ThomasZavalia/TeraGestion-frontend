@@ -43,7 +43,7 @@ createObraSocial: async (obraSocialData) => {
 
 
   updateObraSocial: async (id, obraSocialData) => {
-    // obraSocialData debe ser { id: 1, nombre: "...", precioTurno: 123 }
+   
     try {
       const { data } = await axiosInstance.put(`/ObraSocial/${id}`, obraSocialData);
       return { success: true, data };
@@ -63,6 +63,23 @@ createObraSocial: async (obraSocialData) => {
       return { success: false, message: error.response?.data?.error || "Error al eliminar." };
     }
   },
+
+  getObrasSocialesActivas : async () => {
+    try {
+     
+      const { data } = await axiosInstance.get('/ObraSocial/activas'); 
+      return data.map(os => ({
+        ...os,
+        value: os.id,
+        label: os.nombre,
+      })) || [];
+    } catch (error) {
+      console.error("Error al obtener obras sociales ACTIVAS:", error);
+      return [];
+    }
+},
+
+
 
 };
 

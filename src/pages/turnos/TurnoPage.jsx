@@ -138,92 +138,50 @@ const getColorForTurno = (turnoProps) => {
 
 
 
-const handleTurnoUpdate = (turnoActualizadoDatos) => {
-    console.log("handleTurnoUpdate - Datos recibidos:", turnoActualizadoDatos);
-    
-    if (!calendarRef.current || !turnoActualizadoDatos || !turnoActualizadoDatos.id) {
-        console.error("handleTurnoUpdate cancelado: faltan datos o ID.");
-        return;
-    }
-
+const handleTurnoUpdate = (eventoFormateado) => {
+  console.log("handleTurnoUpdate - Recibiendo evento formateado:", eventoFormateado);
+  
+  if (calendarRef.current) {
     const calendarApi = calendarRef.current.getApi();
-    const eventoIdStr = turnoActualizadoDatos.id.toString();
+    
+    
+    const eventoIdStr = eventoFormateado.id.toString();
+    
+  
     const eventoExistente = calendarApi.getEventById(eventoIdStr);
 
-    if (!eventoExistente) {
-        console.warn("Evento a actualizar no encontrado en calendario:", eventoIdStr);
-        return;
+    if (eventoExistente) {
+      console.log("Actualizando evento en calendario ID:", eventoIdStr);
+
+     
+      eventoExistente.setProp('className', eventoFormateado.className);
+
+     
+      eventoExistente.setExtendedProp('estado', eventoFormateado.extendedProps.estado);
+      eventoExistente.setExtendedProp('asistencia', eventoFormateado.extendedProps.asistencia);
+      
+      
+      
+      setCalendarEvents(prev => 
+        prev.map(ev => 
+          ev.id === eventoIdStr ? eventoFormateado : ev
+        )
+      );
+
+    } else {
+      
+      console.warn("Evento a actualizar no encontrado, agregando como nuevo:", eventoIdStr);
+      calendarApi.addEvent(eventoFormateado);
+      setCalendarEvents(prev => [...prev, eventoFormateado]);
     }
-
-    let eventoFormateado;
-
-   
-    if (turnoActualizadoDatos.title && turnoActualizadoDatos.start) {
-        console.log("Actualizando con EVENTO COMPLETO.");
-       eventoFormateado = {
-            ...turnoActualizadoDatos, 
-            
-         
-            title: eventoExistente.title, 
-            start: eventoExistente.start, 
-            end: eventoExistente.end,    
-            
-           
-            color: getColorForTurno(turnoActualizadoDatos.extendedProps)
-        };
-    
-    } else { 
-        console.log("Actualizando con DTO PARCIAL.");
-        
-        const nuevasProps = {
-            ...eventoExistente.extendedProps,
-            ...turnoActualizadoDatos
-        };
-
-        eventoFormateado = {
-            id: eventoIdStr,
-            title: eventoExistente.title, 
-            start: eventoExistente.start, 
-            end: eventoExistente.end,     
-            extendedProps: nuevasProps,     
-            color: getColorForTurno(nuevasProps) 
-        };
-    }
-
-    console.log("Evento final formateado:", eventoFormateado);
-
+  }
   
-    eventoExistente.remove();
-    calendarApi.addEvent(eventoFormateado);
-    
-   
-    setCalendarEvents(prev => [
-        ...prev.filter(ev => ev.id !== eventoIdStr),
-        eventoFormateado
-    ]);
 
-   
-    handleCloseCreateModal();
+  handleCloseCreateModal();
+  handleCloseViewModal(); 
 };
 
 
-
-
-  const handleTurnoDelete = (turnoId) => {
-     console.log("handleTurnoDelete - ID:", turnoId);
-      if (calendarRef.current) {
-          const calendarApi = calendarRef.current.getApi();
-          const eventoExistente = calendarApi.getEventById(turnoId.toString());
-          if (eventoExistente) {
-              console.log("Eliminando evento del calendario...");
-              eventoExistente.remove();
-              setCalendarEvents(prev => prev.filter(ev => ev.id !== turnoId.toString()));
-          } else {
-               console.warn("Evento a eliminar no encontrado en calendario:", turnoId);
-          }
-      }
-      handleCloseViewModal(); 
-  };
 
  const handleCloseCreateModal = () => {
 console.log("Cerrando Modal Crear/Editar."); 
@@ -320,14 +278,13 @@ const fechaParaModalCreacion = !isEditingMode ? selectedFullDate : null;
       )}
 
      
-      {isViewOpen && selectedTurnoEvent && (
+   {isViewOpen && selectedTurnoEvent && (
         <ModalVerTurno
           isOpen={isViewOpen}
           onClose={handleCloseViewModal} 
           turno={selectedTurnoEvent} 
           onTurnoUpdate={handleTurnoUpdate} 
           onEdit={handleEditRequest}
-          onDelete={handleTurnoDelete} 
         />
       )}
     </Box>

@@ -32,7 +32,7 @@ export const useTurnoForm = (config) => {
 
   
   useEffect(() => {
-    obraSocialService.getObrasSociales().then(setObrasSocialesList);
+    obraSocialService.getObrasSocialesActivas().then(setObrasSocialesList);
   }, []);
 
 

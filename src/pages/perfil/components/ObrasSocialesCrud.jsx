@@ -33,8 +33,10 @@ import {
     FormErrorMessage,
   AlertDialog, AlertDialogBody, AlertDialogFooter, AlertDialogHeader, AlertDialogContent, AlertDialogOverlay,
   useColorModeValue,
+  Tag,
+  Switch,
 } from '@chakra-ui/react';
-import { FiPlus, FiEdit, FiTrash2 } from 'react-icons/fi';
+import { FiPlus, FiEdit, FiTrash2, FiEye, FiEyeOff } from 'react-icons/fi';
 import { useForm } from 'react-hook-form';
 import { obraSocialService } from '../../../services/ObraSocialService'; 
 
@@ -79,7 +81,7 @@ const ObrasSocialesCRUD = () => {
  
   const handleCrear = () => {
     setSelectedOS(null);
-    reset({ nombre: '', precioTurno: 0 }); 
+   reset({ nombre: '', precioTurno: 0, activa: true });
     onModalOpen();
   };
 
@@ -91,16 +93,42 @@ const ObrasSocialesCRUD = () => {
   };
 
  
-  const handleEliminar = (os) => {
+ const handleDesactivar = (os) => { 
     setSelectedOS(os);
     onAlertOpen();
+  };
+
+const handleReactivar = async (os) => {
+    setIsSubmitting(true);
+    const payload = { 
+        id: os.id,
+        nombre: os.nombre,
+        precioTurno: os.precioTurno,
+        activa: true 
+    }; 
+    
+    try {
+     
+      const result = await obraSocialService.updateObraSocial(os.id, payload); 
+      if (result.success) {
+        toast({ title: 'Obra Social reactivada', status: 'success' });
+        await cargarDatos(); 
+      } else {
+        toast({ title: 'Error', description: result.message, status: 'error' });
+      }
+    } catch (error) {
+      toast({ title: 'Error inesperado', status: 'error' });
+    }
+    setIsSubmitting(false);
   };
 
 
   const onFormSubmit = async (data) => {
     setIsSubmitting(true);
   
-    const payload = { ...data, precioTurno: parseFloat(data.precioTurno || 0) };
+    const payload = { ...data, 
+        precioTurno: parseFloat(data.precioTurno || 0),
+        activa: selectedOS ? data.activa : true};
 
     try {
       let result;
@@ -127,14 +155,15 @@ const ObrasSocialesCRUD = () => {
   };
 
 
-  const onConfirmDelete = async () => {
+ const onConfirmDelete = async () => {
     if (!selectedOS) return;
     setIsSubmitting(true); 
     
-    const result = await obraSocialService.deleteObraSocial(selectedOS.id);
+  
+    const result = await obraSocialService.deleteObraSocial(selectedOS.id); 
     
     if (result.success) {
-      toast({ title: 'Obra Social eliminada', status: 'success' });
+      toast({ title: 'Obra Social desactivada', status: 'success' });
       onAlertClose();
       await cargarDatos(); 
     } else {
@@ -143,7 +172,6 @@ const ObrasSocialesCRUD = () => {
     setIsSubmitting(false);
     setSelectedOS(null);
   };
-
  
 
   if (isLoading) {
@@ -162,11 +190,12 @@ const ObrasSocialesCRUD = () => {
      
     <TableContainer borderWidth="1px" borderRadius="md" borderColor={tableBorder}>
         <Table variant="simple" size="sm">
-          {/* --- 4. APLICA COLOR DE FONDO DINÁMICO --- */}
+        
           <Thead bg={headerBg}>
             <Tr>
               <Th>Nombre</Th>
               <Th isNumeric>Precio Turno</Th>
+              <Th>Estado</Th>
               <Th>Acciones</Th>
             </Tr>
           </Thead>
@@ -175,17 +204,40 @@ const ObrasSocialesCRUD = () => {
               <Tr><Td colSpan={3}><Center p={4} color={emptyText}>No hay obras sociales registradas.</Center></Td></Tr>
             ) : (
               obrasSociales.map((os) => (
-                <Tr key={os.id} _hover={{ bg: useColorModeValue('gray.50', 'gray.700') }}> 
+               <Tr key={os.id} _hover={{ bg: useColorModeValue('gray.50', 'gray.700') }} opacity={os.activa ? 1 : 0.5}> 
                   <Td>{os.nombre}</Td>
                   <Td isNumeric>${os.precioTurno?.toLocaleString('es-AR')}</Td>
+                <Td>
+                    <Tag size="sm" colorScheme={os.activa ? 'green' : 'red'}>
+                      {os.activa ? 'Activa' : 'Inactiva'}
+                    </Tag>
+                  </Td>
                   <Td>
                     <HStack spacing={1}>
-                      <Tooltip label="Editar" fontSize="xs">
+                     <Tooltip label="Editar" fontSize="xs">
                         <IconButton icon={<FiEdit />} size="sm" variant="ghost" onClick={() => handleEditar(os)} />
                       </Tooltip>
                       <Tooltip label="Eliminar" fontSize="xs">
                         <IconButton icon={<FiTrash2 />} size="sm" variant="ghost" colorScheme="red" onClick={() => handleEliminar(os)} />
                       </Tooltip>
+
+                      {os.activa ? (
+                        
+                        <Tooltip label="Desactivar" fontSize="xs">
+                          <IconButton icon={<FiEyeOff />} size="sm" variant="ghost" colorScheme="red" onClick={() => handleDesactivar(os)} />
+                        </Tooltip>
+                      ) : (
+                        <Tooltip label="Reactivar" fontSize="xs">
+                          <IconButton 
+                            icon={<FiEye />} 
+                            size="sm" 
+                            variant="ghost" 
+                            colorScheme="green" 
+                            onClick={() => handleReactivar(os)} 
+                            isLoading={isSubmitting} 
+                          />
+                        </Tooltip>
+                      )}
                     </HStack>
                   </Td>
                 </Tr>
@@ -228,6 +280,17 @@ const ObrasSocialesCRUD = () => {
                 </InputGroup>
                 <FormErrorMessage>{errors.precioTurno?.message}</FormErrorMessage>
               </FormControl>
+              {selectedOS && ( 
+                <FormControl display="flex" alignItems="center">
+                  <FormLabel htmlFor="os-activa" mb="0" fontSize="sm">
+                    ¿Activa?
+                  </FormLabel>
+                  <Switch 
+                    id="os-activa" 
+                    {...register('activa')} 
+                  />
+                </FormControl>
+              )}
             </VStack>
           </ModalBody>
           <ModalFooter>
@@ -240,21 +303,21 @@ const ObrasSocialesCRUD = () => {
       </Modal>
 
    
-   <AlertDialog
+  <AlertDialog
         isOpen={isAlertOpen}
         leastDestructiveRef={cancelRef}
         onClose={onAlertClose}
       >
         <AlertDialogOverlay>
           <AlertDialogContent bg={modalBg}>
-            <AlertDialogHeader>Eliminar Obra Social</AlertDialogHeader>
+            <AlertDialogHeader>Desactivar Obra Social</AlertDialogHeader>
             <AlertDialogBody>
-              ¿Estás seguro que deseas eliminar "{selectedOS?.nombre}"? Esta acción no se puede deshacer.
+              ¿Estás seguro? "{selectedOS?.nombre}" ya no aparecerá en los dropdowns para nuevos turnos, pero se mantendrá en los reportes historicos.
             </AlertDialogBody>
             <AlertDialogFooter>
               <Button ref={cancelRef} onClick={onAlertClose}>Cancelar</Button>
               <Button colorScheme="red" onClick={onConfirmDelete} ml={3} isLoading={isSubmitting}>
-                Eliminar
+                Desactivar
               </Button>
             </AlertDialogFooter>
           </AlertDialogContent>
