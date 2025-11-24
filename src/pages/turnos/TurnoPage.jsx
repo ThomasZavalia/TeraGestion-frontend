@@ -4,7 +4,7 @@ import dayGridPlugin from '@fullcalendar/daygrid';
 import timeGridPlugin from '@fullcalendar/timegrid';
 import interactionPlugin from '@fullcalendar/interaction';
 import esLocale from '@fullcalendar/core/locales/es';
-import { Box, useDisclosure, Spinner, Center,useColorModeValue, } from '@chakra-ui/react';
+import { Box, useDisclosure, Spinner, Center,useColorModeValue, useToast, } from '@chakra-ui/react';
 import { turnoService } from '../../services/TurnoService';
 import ModalCrearTurno from './components/ModalCrearTurno';
 import ModalVerTurno from './components/ModalVerTurno'; 
@@ -20,6 +20,9 @@ const TurnosPage = () => {
   const [selectedTurnoEvent, setSelectedTurnoEvent] = useState(null); 
   const [turnoParaEditar, setTurnoParaEditar] = useState(null);     
   const [isEditingMode, setIsEditingMode] = useState(false);
+  const [turnoAReprogramar, setTurnoAReprogramar] = useState(null);
+
+  const toast = useToast();
 
   
   const { isOpen: isCreateOpen, onOpen: onCreateOpen, onClose: onCreateClose } = useDisclosure();
@@ -44,20 +47,44 @@ const TurnosPage = () => {
   }, []);
 
   
-  const handleDateClick = (arg) => {
+ const handleDateClick = (arg) => {
+    
+    setIsEditingMode(false);
+    setTurnoParaEditar(null);
+    
+    setSelectedDay(arg.date);
+    setSelectedFullDate(null);
+    onTimePickerOpen();
+  };
+
+  const handleReprogramarRequest = (turnoData) => {
+      setTurnoAReprogramar(turnoData); 
+      handleCloseViewModal(); 
       
-      setIsEditingMode(false);
-      setTurnoParaEditar(null);
-      setSelectedDay(arg.date);
-      setSelectedFullDate(null); 
-      onTimePickerOpen();
+     
+      toast({
+          title: "Modo Reprogramación Activado",
+          description: `Selecciona el NUEVO día y horario para ${turnoData.pacienteNombre}.`,
+          status: "info",
+          duration: 6000, 
+          isClosable: true,
+          position: 'top',
+          containerStyle: {
+              border: '2px solid #3182CE', 
+          }
+      });
   };
   
 
 const handleEventClick = (arg) => {
+  if (turnoAReprogramar) {
+        setTurnoAReprogramar(null);
+        toast({ title: "Reprogramación cancelada", status: "info", duration: 2000 });
+    }
     
       setIsEditingMode(false);
       setTurnoParaEditar(null);
+      setTurnoAReprogramar(null);
 
      
       
@@ -79,19 +106,37 @@ const handleEventClick = (arg) => {
       onViewOpen();
   };
 
-  
-  const handleTimeSelect = (time) => {
-      
-      setIsEditingMode(false);
-      setTurnoParaEditar(null);
-      const [hour, minute] = time.split(':');
-      const fullDate = new Date(selectedDay);
-      fullDate.setHours(parseInt(hour), parseInt(minute), 0, 0);
-      setSelectedFullDate(fullDate);
-      onTimePickerClose();
-      onCreateOpen(); 
-  };
 
+  
+  
+ const handleTimeSelect = async (time) => { 
+    const [hour, minute] = time.split(':');
+    const fullDate = new Date(selectedDay);
+    fullDate.setHours(parseInt(hour), parseInt(minute), 0, 0);
+    
+    onTimePickerClose(); 
+
+    if (turnoAReprogramar) {
+
+        try {
+           
+            const turnoActualizado = await turnoService.reprogramarTurno(turnoAReprogramar.id, fullDate);
+            
+            handleTurnoUpdate(turnoActualizado);
+            
+            toast({ title: "Turno Reprogramado con éxito", status: "success", duration: 3000 });
+            setTurnoAReprogramar(null);
+        } catch (error) {
+            toast({ title: "Error al reprogramar", description: error.message, status: "error" });
+        }
+    } else {
+      
+        setIsEditingMode(false); 
+        setTurnoParaEditar(null); 
+        setSelectedFullDate(fullDate); 
+        onCreateOpen(); 
+    }
+  };
  const handleEditRequest = (datosDelTurno) => { 
   console.log("[handleEditRequest] Solicitud editar con datos:", datosDelTurno);
   
@@ -285,6 +330,7 @@ const fechaParaModalCreacion = !isEditingMode ? selectedFullDate : null;
           turno={selectedTurnoEvent} 
           onTurnoUpdate={handleTurnoUpdate} 
           onEdit={handleEditRequest}
+          onReprogramar={handleReprogramarRequest}
         />
       )}
     </Box>

@@ -37,7 +37,7 @@ export const ComfirmarEliminarModal = ({
               Cancelar
             </Button>
             <Button colorScheme="red" onClick={onConfirm} isDisabled={isLoading} ml={3}>
-              Eliminar
+              Desactivar
             </Button>
           </AlertDialogFooter>
         </AlertDialogContent>

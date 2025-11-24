@@ -51,7 +51,7 @@ export const SesionService = {
         notas: sesionData.notas,
       };
       const { data } = await axiosInstance.put(`${API_URL}/${id}`, dto);
-      return data;
+    return { success: true, data };
     } catch (error) {
       console.error("Error al actualizar la sesión:", error);
       throw error;

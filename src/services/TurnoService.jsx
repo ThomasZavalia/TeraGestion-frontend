@@ -23,9 +23,18 @@ const formatTurnoForCalendar = (turno) => {
    title: title, 
    start: turno.fecha || turno.fechaHora, 
    className: className, 
-   extendedProps: { 
-      ...turno
-    }
+   extendedProps: {
+            id: turno.id,
+            pacienteId: turno.pacienteId,
+            pacienteNombre: turno.pacienteNombre,
+            pacienteApellido: turno.pacienteApellido,
+            estado: turno.estado,
+            precio: turno.precio,
+            asistencia: turno.asistencia,
+            
+            
+            obraSocialId: turno.obraSocialId 
+        }
   };
 };
 
@@ -36,6 +45,7 @@ export const turnoService = {
   getTurnos: async () => {
     try {
       const { data } = await axiosInstance.get('/Turno'); 
+      console.log("DATOS CRUDOS DE LA API (/Turno):", data);
       return data.map(formatTurnoForCalendar); 
     } catch (error) {
       console.error("Error al obtener turnos:", error);
@@ -115,6 +125,16 @@ getTurnosDeHoy: async () => {
     } catch (error) {
       console.error("Error al obtener turnos de hoy:", error);
       return []; 
+    }
+  },
+
+  reprogramarTurno: async (id, nuevaFecha) => {
+    try {
+      const { data } = await axiosInstance.put(`/Turno/${id}/reprogramar`, { nuevaFecha });
+      return formatTurnoForCalendar(data); 
+    } catch (error) {
+      console.error("Error al reprogramar:", error);
+      throw error;
     }
   },
 

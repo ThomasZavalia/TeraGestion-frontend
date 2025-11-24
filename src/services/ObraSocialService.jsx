@@ -67,7 +67,7 @@ createObraSocial: async (obraSocialData) => {
   getObrasSocialesActivas : async () => {
     try {
      
-      const { data } = await axiosInstance.get('/ObraSocial/activas'); 
+      const { data } = await axiosInstance.get('ObraSocial/activas'); 
       return data.map(os => ({
         ...os,
         value: os.id,

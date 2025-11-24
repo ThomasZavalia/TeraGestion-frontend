@@ -54,7 +54,9 @@ const ObrasSocialesCRUD = () => {
   const cancelRef = useRef();
 
   
-  const { register, handleSubmit, reset, setValue, formState: { errors } } = useForm();
+ const { register, handleSubmit, reset, setValue, formState: { errors } } = useForm({
+      mode: 'onBlur' 
+  });
 
   const headerBg = useColorModeValue('gray.50', 'gray.700'); 
  
@@ -250,7 +252,7 @@ const handleReactivar = async (os) => {
    
      <Modal isOpen={isModalOpen} onClose={onModalClose} isCentered>
         <ModalOverlay />
-        <ModalContent as="form" onSubmit={handleSubmit(onFormSubmit)} bg={modalBg}>
+       <ModalContent as="form" onSubmit={handleSubmit(onFormSubmit)} bg={modalBg}>
           <ModalHeader>{selectedOS ? 'Editar Obra Social' : 'Nueva Obra Social'}</ModalHeader>
           <ModalCloseButton />
           <ModalBody>
@@ -258,8 +260,12 @@ const handleReactivar = async (os) => {
               <FormControl isInvalid={errors.nombre} isRequired>
                 <FormLabel fontSize="sm">Nombre</FormLabel>
                 <Input 
-                  {...register('nombre', { required: 'El nombre es requerido' })}
-                  bg={inputBg} 
+                 {...register('nombre', { 
+                    required: 'El nombre es requerido',
+                    minLength: { value: 3, message: 'Debe tener al menos 3 caracteres' },
+                    maxLength: { value: 50, message: 'Máximo 50 caracteres' },
+                    validate: (value) => value.trim() !== '' || 'El nombre no puede ser solo espacios'
+                  })} 
                 />
                 <FormErrorMessage>{errors.nombre?.message}</FormErrorMessage>
               </FormControl>
@@ -267,15 +273,16 @@ const handleReactivar = async (os) => {
                 <FormLabel fontSize="sm">Precio del Turno</FormLabel>
                 <InputGroup>
                   <InputLeftAddon>$</InputLeftAddon>
-                  <Input 
+                 <Input 
                     type="number"
-                    step="0.01"
+                    step="0.01" 
+                    bg={inputBg}
                     {...register('precioTurno', { 
                         required: 'El precio es requerido',
-                        valueAsNumber: true,
-                        min: { value: 0, message: 'El precio no puede ser negativo' }
+                        valueAsNumber: true, 
+                        min: { value: 0, message: 'El precio no puede ser negativo' },
+                        validate: (value) => value > 0 || 'El precio debe ser mayor a 0' 
                     })} 
-                    bg={inputBg} 
                   />
                 </InputGroup>
                 <FormErrorMessage>{errors.precioTurno?.message}</FormErrorMessage>

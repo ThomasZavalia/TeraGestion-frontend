@@ -41,6 +41,7 @@ const PacientesPage = () => {
   const { pacientes, loading, error, recargarPacientes, eliminarPaciente } = usePacientes();
   const toast = useToast();
 
+  const [busqueda, setBusqueda] = useState('');
  
   const { isOpen: isFormOpen, onOpen: onFormOpen, onClose: onFormClose } = useDisclosure();
   const [pacienteActual, setPacienteActual] = useState(null);
@@ -95,7 +96,7 @@ const PacientesPage = () => {
 
   const handleGuardado = () => {
     onFormClose(); 
-    recargarPacientes();
+    recargarPacientes(filtros);
   };
 
   
@@ -162,6 +163,15 @@ const PacientesPage = () => {
     const boxBg = useColorModeValue('white', 'gray.800');
   const inputBg = useColorModeValue('white', 'gray.700');
 
+  const pacientesFiltrados = pacientes.filter((paciente) => {
+      const termino = busqueda.toLowerCase();
+      return (
+          paciente.nombre.toLowerCase().includes(termino) ||
+          paciente.apellido.toLowerCase().includes(termino) ||
+          paciente.dni.toLowerCase().includes(termino)
+      );
+  });
+
   const contenido = () => {
     if (loading) {
       return (
@@ -180,7 +190,7 @@ const PacientesPage = () => {
       );
     }
 
-  return <TablaPacientes pacientes={pacientes} onEditar={handleEditar} onEliminar={handleEliminar} onReactivar={handleReactivar} />;
+  return <TablaPacientes pacientes={pacientesFiltrados} onEditar={handleEditar} onEliminar={handleEliminar} onReactivar={handleReactivar} />;
   };
 
  return (
@@ -195,21 +205,28 @@ const PacientesPage = () => {
               aria-label="Filtrar Pacientes"
               variant="outline"
               onClick={onFilterOpen} 
+               onFocus={(e) => e.preventDefault()}
             />
           </Tooltip>
          
           <Tooltip label="Agregar Paciente" aria-label="Agregar Paciente">
-            <Button leftIcon={<AddIcon />} colorScheme='teal' onClick={handleNuevo}>
+            <Button leftIcon={<AddIcon />} colorScheme='teal' onClick={handleNuevo}  onFocus={(e) => e.preventDefault()}>
               Agregar Paciente
             </Button>
           </Tooltip>
         </HStack>
       </HStack>
 
-      <Input placeholder="Buscar en la lista..." ></Input>
+     <Input 
+          placeholder="Buscar en la lista por nombre, apellido o DNI..." 
+          value={busqueda}
+          onChange={(e) => setBusqueda(e.target.value)}
+          mb={4}
+          bg={inputBg}
+      />
       
 
-      <Box bg={boxBg} p={4} borderRadius="md" shadow="md"> {/* Color dinámico */}
+      <Box bg={boxBg} p={4} borderRadius="md" shadow="md"> 
         {contenido()}
       </Box>
 

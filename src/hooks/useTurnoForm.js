@@ -32,13 +32,37 @@ export const useTurnoForm = (config) => {
 
   
   useEffect(() => {
-    obraSocialService.getObrasSocialesActivas().then(setObrasSocialesList);
+    obraSocialService.getObrasSocialesActivas()
+      .then(data => {
+     
+        console.log("Datos crudos de Obras Sociales:", data);
+
+      
+        const formattedList = data.map(os => ({
+       
+          value: os.id,  
+          label: os.nombre
+        }));
+
+     
+        setObrasSocialesList(formattedList);
+      })
+      .catch(error => {
+        console.error("Error al cargar obras sociales:", error);
+        setObrasSocialesList([]); 
+      });
   }, []);
 
 
-  useEffect(() => {
-    console.log("[useTurnoForm Init/Reset] Running. isEditingMode:", isEditingMode, "Turno:", turnoAEditar); 
-    
+ useEffect(() => {
+   console.log("[useTurnoForm Init/Reset] Running. isEditingMode:", isEditingMode, "Turno:", turnoAEditar); 
+  
+  
+    if (isEditingMode && turnoAEditar && obrasSocialesList.length === 0) {
+        console.log("[useTurnoForm Init/Reset] Waiting for Obras Sociales to load...");
+        return; 
+    }
+
     if (isEditingMode && turnoAEditar) {
       console.log("[useTurnoForm Init/Reset] Initializing for EDIT..."); 
       setPacienteTipo('existente');
@@ -62,7 +86,7 @@ export const useTurnoForm = (config) => {
       setObraSocialId(null);
       setPrecio(0);
     }
-  }, [isEditingMode, turnoAEditar]);
+  }, [isEditingMode, turnoAEditar,obrasSocialesList]);
 
   
   useEffect(() => {
@@ -139,6 +163,34 @@ export const useTurnoForm = (config) => {
 
 
   const handleSubmit = async () => {
+
+    if (!isEditingMode) {
+        if (pacienteTipo === 'existente' && !pacienteSeleccionado) {
+            toast({ title: 'Campo requerido', description: 'Debe seleccionar un paciente existente.', status: 'error' });
+            return; 
+        }
+        if (pacienteTipo === 'nuevo') {
+            if (!nombrePaciente.trim() || !apellidoPaciente.trim() || !dni.trim()) {
+                toast({ title: 'Campos requeridos', description: 'Nombre, Apellido y DNI son obligatorios para un nuevo paciente.', status: 'error' });
+                return;
+            }
+            if (!/^[0-9]{7,8}$/.test(dni)) {
+                toast({ title: 'DNI Inválido', description: 'El DNI debe tener 7 u 8 números.', status: 'error' });
+                return;
+            }
+           
+        }
+    }
+    
+   
+    if (!esParticular && !obraSocialId) {
+         toast({ title: 'Campo requerido', description: 'Debe seleccionar una Obra Social (o marcar como "Particular").', status: 'error' });
+         return;
+    }
+    if (esParticular && (!precio || precio <= 0)) {
+         toast({ title: 'Precio Inválido', description: 'Si es particular, el precio debe ser mayor a 0.', status: 'error' });
+         return;
+    }
 if (dniError) {
         toast({ 
             title: 'Error en formulario', 
@@ -152,7 +204,7 @@ if (dniError) {
     setIsSubmitting(true);
     console.log('--- handleSubmit --- Mode:', isEditingMode ? 'EDIT' : 'CREATE'); 
 
-    // DTO Base
+   
     const turnoDtoBase = {
       esParticular: esParticular,
       pacienteId: pacienteSeleccionado?.value, 
@@ -203,7 +255,7 @@ onTurnoActualizado(datosCompletosParaUI);
         console.log('Llamando a createTurno DTO:', dtoCreacion); 
         const nuevoTurno = await turnoService.createTurno(dtoCreacion);
         toast({ title: 'Turno Creado', description: `Turno para ${nuevoTurno.title} agendado.`, status: 'success', duration: 3000 });
-        onTurnoCreado(nuevoTurno); // Callback
+        onTurnoCreado(nuevoTurno); 
       }
     } catch (error) { 
  console.error('Error en handleSubmit:', error.response?.data || error.message || error); 
@@ -226,6 +278,8 @@ toast({
  setIsSubmitting(false); 
  } 
  };
+
+
  return {
     pacienteTipo, setPacienteTipo,
     pacienteSeleccionado, setPacienteSeleccionado,

@@ -33,4 +33,16 @@ export const sesionService = {
     }
   },
 
+
+ actualizarSesion: async (id, sesionData) => {
+    
+    try {
+      const { data } = await axiosInstance.put(`/Sesion/${id}`, sesionData);
+      return { success: true, data };
+    } catch (error) {
+      console.error("Error actualizando sesión:", error);
+      return { success: false, message: "Error al guardar notas." };
+    }
+  },
+
 };

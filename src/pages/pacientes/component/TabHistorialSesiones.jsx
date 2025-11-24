@@ -118,6 +118,7 @@ export const TabHistorialSesiones = ({ sesiones, onRecargar }) => {
                             <IconButton
                                 icon={<EditIcon />}
                                 aria-label="Editar Sesión"
+                                onFocus={(e) => e.preventDefault()}
                                 onClick={() => handleEditar(sesion)}
                             />
                         </Tooltip>

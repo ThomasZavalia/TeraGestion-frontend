@@ -117,5 +117,17 @@ export const pacienteService = {
       console.log("Error al eliminar el paciente:", error);
       throw error;
     }
-  }
+  },
+
+  checkDniExists: async (dni) => {
+      try {
+       
+        const { data } = await axiosInstance.get(`/Paciente/check-dni?dni=${dni}`);
+        return data.exists;
+      } catch (error) {
+        console.error("Error al verificar DNI:", error);
+       
+        return false; 
+      }
+    },
 };

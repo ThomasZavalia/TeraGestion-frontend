@@ -4,16 +4,17 @@ import {
   Heading, 
   AlertDialog, AlertDialogBody, AlertDialogFooter, AlertDialogHeader, AlertDialogContent, AlertDialogOverlay, useDisclosure, Select, FormControl,
    FormLabel,  ButtonGroup,Flex,Tooltip,Spinner,Center,
-   useColorModeValue,
+   useColorModeValue,Textarea,
+   Accordion, AccordionItem, AccordionButton, AccordionPanel, AccordionIcon
 } from '@chakra-ui/react';
 import { useState,useRef,useEffect } from 'react';
 import { format, parseISO,isFuture } from 'date-fns';
 import { es } from 'date-fns/locale';
-import { FiEdit, FiTrash2, FiCheckCircle, FiCheck, FiX } from 'react-icons/fi';
+import { FiEdit, FiTrash2, FiCheckCircle, FiCheck, FiX,FiClock,FiSave } from 'react-icons/fi';
 import { turnoService } from '../../../services/TurnoService';
 import { sesionService } from '../../../services/SesionService';
 
-const ModalVerTurno = ({ isOpen, onClose, turno, onTurnoUpdate, onEdit, onDelete }) => { 
+const ModalVerTurno = ({ isOpen, onClose, turno, onTurnoUpdate, onEdit, onDelete,onReprogramar }) => { 
   const toast = useToast();
 
 const [detalle, setDetalle] = useState(null); 
@@ -23,6 +24,9 @@ const [detalle, setDetalle] = useState(null);
   const [isDeleting, setIsDeleting] = useState(false);
   
   const [isSavingAsistencia, setIsSavingAsistencia] = useState(false); 
+
+  const [notas, setNotas] = useState('');
+  const [isSavingNotas, setIsSavingNotas] = useState(false);
   //const [asistenciaRegistrada, setAsistenciaRegistrada] = useState(null); 
 
   const [metodoPago, setMetodoPago] = useState('Efectivo'); 
@@ -36,7 +40,9 @@ const [detalle, setDetalle] = useState(null);
   const headingColor = useColorModeValue('gray.700', 'gray.200');
   const subHeadingColor = useColorModeValue('gray.600', 'gray.400');
   const textColor = useColorModeValue('gray.800', 'whiteAlpha.900');
+  const secondaryTextColor = useColorModeValue('gray.500', 'gray.400');
   const inputBg = useColorModeValue('white', 'gray.700');
+  const accordionBg = useColorModeValue('gray.50', 'gray.700');
 
   useEffect(() => {
     
@@ -50,6 +56,7 @@ const [detalle, setDetalle] = useState(null);
           const data = await turnoService.getTurnoDetalle(turnoId);
           
           setDetalle(data); 
+          setNotas(data.notasSesion || '');
         } catch (error) {
           console.error("Error al cargar detalle del turno", error);
           toast({ title: 'Error', description: 'No se pudo cargar el detalle del turno.', status: 'error' });
@@ -61,27 +68,37 @@ const [detalle, setDetalle] = useState(null);
       
       fetchDetalle();
     }
+
+  if (!isOpen) {
+       
+        setDetalle(null); setIsLoading(true); setIsPaying(false); setIsDeleting(false);
+        setIsSavingAsistencia(false); setIsSavingNotas(false); setNotas(''); setMetodoPago('Efectivo');
+    }
   }, [isOpen, turno, toast]);
  
 const turnoData = turno?.extendedProps;
 const turnoFecha = turno?.start;
 
 
+let fechaFormateada = 'Cargando...'; 
+let esTurnoFuturo = false;
+let isCancelado = false;
+let isPagado = false;
 
-let fechaFormateada = 'Fecha inválida'; 
-  if (detalle && detalle.fechaHora) { 
+
+if (detalle && detalle.fechaHora) { 
     try {
       const fechaTurno = parseISO(detalle.fechaHora); 
       fechaFormateada = format(fechaTurno, "eeee dd 'de' MMMM, yyyy 'a las' HH:mm 'hs'", { locale: es });
-    } catch (error) {
-       console.error('Error al parsear/formatear la fecha:', error);
+      esTurnoFuturo = isFuture(fechaTurno);
+    } catch (error) { 
+        console.error('Error fecha:', error);
+        fechaFormateada = 'Fecha inválida'; 
     }
-  }
-
-
-
- const esTurnoFuturo = detalle ? isFuture(parseISO(detalle.fechaHora)) : false;
-
+    
+    isCancelado = detalle?.estado?.toLowerCase() === 'cancelado';
+    isPagado = detalle.estado?.toLowerCase() === 'pagado';
+}
 
 const handleMarcarPagado = async () => {
   if (!detalle) return;
@@ -103,10 +120,30 @@ const handleMarcarPagado = async () => {
   }
 };
 
-  const handleEditar = () => {
-    if (detalle) {
+const handleEditar = () => {
+
+    if (detalle && turno?.extendedProps) {
       
-      onEdit(detalle); 
+  
+      const datosCompletosParaEditar = {
+        ...turno.extendedProps,
+        ...detalle
+      };
+
+    
+      console.log("Enviando estos datos al modal de edición:", datosCompletosParaEditar);
+
+   
+      onEdit(datosCompletosParaEditar); 
+
+    } else {
+  
+      console.error("Error: Faltan 'detalle' o 'turno.extendedProps' para poder editar.");
+      toast({
+        title: 'Error',
+        description: 'No se pudieron cargar los datos completos para editar.',
+        status: 'error'
+      });
     }
   };
 
@@ -122,10 +159,10 @@ const handleMarcarPagado = async () => {
       if (result.success) {
         toast({ title: 'Turno Cancelado', status: 'warning', duration: 3000 });
         
-        // 2. Pide los datos frescos (ahora con estado: "Cancelado")
+       
         const datosFrescos = await turnoService.getTurnoDetalle(detalle.id);
         
-        // 3. Pasa los datos (formateados) a TurnosPage
+        
         onTurnoUpdate(turnoService.formatTurnoForCalendar(datosFrescos));
         
         onAlertClose(); 
@@ -140,41 +177,51 @@ const handleMarcarPagado = async () => {
     }
   };
 
-
 const handleAsistencia = async (estadoAsistencia) => {
-    if (!detalle) return;
+    if (!detalle || isCancelado) return; 
     setIsSavingAsistencia(true);
     
-    
-    const result = await sesionService.registrarAsistencia(detalle.id, estadoAsistencia);
+    const result = await sesionService.registrarAsistencia(detalle.id, estadoAsistencia); 
     
     if (result.success) {
-      toast({
-        title: `Asistencia registrada`,
-        status: 'success',
-        duration: 3000,
-      });
+      toast({ title: `Asistencia registrada`, status: 'success' });
       
-      
+     
       const datosFrescos = await turnoService.getTurnoDetalle(detalle.id);
+      setDetalle(datosFrescos); 
+      setNotas(datosFrescos.notasSesion || '');
       
-    
-     onTurnoUpdate(turnoService.formatTurnoForCalendar(datosFrescos));
-      onClose(); 
     } else {
-      toast({
-        title: 'Error al registrar',
-        description: result.message,
-        status: result.alreadyExists ? 'warning' : 'error', 
-      });
+      toast({ title: 'Error al registrar', description: result.message, status: result.alreadyExists ? 'warning' : 'error' });
     }
     setIsSavingAsistencia(false);
-  }
+  };
 
 
 
+  const handleReprogramarClick = () => {
+      if (detalle) {
+          onReprogramar(detalle); 
+      }
+  };
 
-  
+
+
+const handleGuardarNotas = async () => {
+    if (!detalle || !detalle.sesionId) return;
+    setIsSavingNotas(true);
+    const payload = { notas: notas, asistencia: detalle.asistencia };
+    const result = await sesionService.actualizarSesion(detalle.sesionId, payload);
+    
+    if (result.success) {
+        toast({ title: 'Notas guardadas', status: 'success', duration: 2000 });
+        setDetalle(prev => ({ ...prev, notasSesion: notas }));
+    } else {
+        toast({ title: 'Error', description: result.message, status: 'error' });
+    }
+    setIsSavingNotas(false);
+  };
+
   const renderAsistencia = () => {
    
     if (esTurnoFuturo) {
@@ -198,107 +245,106 @@ const handleAsistencia = async (estadoAsistencia) => {
     }
   };
   if (!isOpen) return null;
-  const isCancelado = detalle?.estado?.toLowerCase() === 'cancelado';
+ 
  return (
     <>
    
-     <Modal isOpen={isOpen} onClose={onClose} isCentered scrollBehavior="inside" size="xl"> 
+    <Modal isOpen={isOpen} onClose={onClose} isCentered scrollBehavior="inside" size="xl"> 
         <ModalOverlay />
-        <ModalContent bg={modalBg}> 
+        <ModalContent bg={modalBg}>
           <ModalHeader pb={2}>
             <Flex justify="space-between" align="center">
-              <Heading size="md" mr={4} color={textColor}>Detalles del Turno</Heading> 
+              <Heading size="md" mr={4} color={textColor}>Detalles</Heading>
               <HStack spacing={1} mr="8">
-                 <Tooltip label="Editar Turno" fontSize="xs" placement="top">
-                     <IconButton icon={<FiEdit />} aria-label="Editar Turno" variant="ghost" size="sm" onClick={handleEditar} isDisabled={isCancelado || isPaying || isDeleting || isSavingAsistencia} />
+                 <Tooltip label="Reprogramar">
+                     <IconButton icon={<FiClock />} variant="ghost" size="sm" onClick={handleReprogramarClick} isDisabled={isPagado || isCancelado} onFocus={(e) => e.preventDefault()} />
                  </Tooltip>
-                 <Tooltip label="Cancelar Turno" fontSize="xs" placement="top">
-                  <IconButton 
-                    icon={<FiTrash2 />} 
-                    aria-label="Cancelar Turno" 
-                    colorScheme="red" 
-                    variant="ghost" 
-                    size="sm" 
-                    onClick={onAlertOpen} 
-                   
-                    isDisabled={isCancelado || isPaying || isDeleting || isSavingAsistencia}
-                  />
-                </Tooltip>
+                 <Tooltip label="Editar">
+                     <IconButton icon={<FiEdit />} variant="ghost" size="sm" onClick={handleEditar} isDisabled={isPagado || isCancelado} />
+                 </Tooltip>
+                 <Tooltip label="Cancelar">
+                     <IconButton icon={<FiTrash2 />} colorScheme="red" variant="ghost" size="sm" onClick={onAlertOpen} isDisabled={isPagado || isCancelado} />
+                 </Tooltip>
               </HStack>
             </Flex>
           </ModalHeader>
-          <ModalCloseButton isDisabled={isPaying || isDeleting || isSavingAsistencia} top={4} right={4}/>
+          <ModalCloseButton top={4} right={4}/> 
           
-        
-         <ModalBody py={6}> 
+          <ModalBody py={4}> 
+            {isLoading ? ( <Center h="150px"><Spinner /></Center> ) : !detalle ? ( <Text>Error</Text> ) : (
+                <VStack align="stretch" spacing={4}>
+                  
+                  {/* 1. DATOS PRINCIPALES (Compacto) */}
+                  <Box>
+                    <Heading size="md" color={headingColor}>{detalle.pacienteNombre} {detalle.pacienteApellido}</Heading>
+                    <Text fontSize="sm" color={secondaryTextColor} mt={1}> {fechaFormateada} </Text>
+                    <HStack mt={2}>
+                        <Tag colorScheme={isCancelado ? 'red' : (isPagado ? 'green' : 'blue')} size="sm">{detalle.estado}</Tag>
+                        <Text fontSize="sm" fontWeight="bold">${detalle.precio?.toLocaleString('es-AR')}</Text>
+                    </HStack>
+                  </Box>
 
- {isLoading ? (
- <Center h="200px"><Spinner size="xl" /></Center>
- ) : !detalle ? (
- <Center h="200px"><Text color="red.500">Error al cargar datos.</Text></Center>
- ) : (
+                  <Divider borderColor={modalBorder}/>
+                  
+                  {/* 2. ASISTENCIA (Siempre visible) */}
+                  <Box>
+                    <Text fontSize="xs" fontWeight="bold" color="gray.500" mb={2} textTransform="uppercase">Asistencia</Text>
+                    {renderAsistencia()}
+                  </Box>
 
- <VStack align="start" spacing={4}>
- <Box>
- <Heading size="sm" color="gray.700">{detalle.pacienteNombre}</Heading>
- <Text fontSize="sm" color="gray.500"> {fechaFormateada} </Text>
- </Box>
- <HStack> 
- <Text fontWeight="medium">Estado Turno:</Text> 
- <Tag colorScheme={
-                  detalle.estado?.toLowerCase() === 'pagado' ? 'green' :
-                  detalle.estado?.toLowerCase() === 'cancelado' ? 'red' : 'blue' 
-                }> 
-                  {detalle.estado} 
-                </Tag>
- </HStack>
- <HStack> 
-<Text fontWeight="medium">Precio:</Text> 
- <Text>${detalle.precio?.toLocaleString('es-AR') || 'N/A'}</Text> 
-</HStack>
+                  {/* 3. NOTAS (ACORDEÓN para ahorrar espacio) */}
+                  {/* Solo si hay sesión creada */}
+                  {detalle.sesionId && (
+                    <Accordion allowToggle>
+                      <AccordionItem border="none">
+                        <h2>
+                          <AccordionButton p={2} bg={accordionBg} borderRadius="md" _hover={{ bg: 'gray.200' }}>
+                            <Box flex="1" textAlign="left" fontSize="sm" fontWeight="bold">
+                               Notas de la Sesión
+                            </Box>
+                            <AccordionIcon />
+                          </AccordionButton>
+                        </h2>
+                        <AccordionPanel pb={4} px={0}>
+                           <Textarea 
+                              placeholder="Escribe la evolución aquí..."
+                              value={notas}
+                              onChange={(e) => setNotas(e.target.value)}
+                              bg={inputBg}
+                              minH="120px"
+                           />
+                           <Button 
+                              mt={2} size="sm" leftIcon={<FiSave />} colorScheme="blue" width="full"
+                              onClick={handleGuardarNotas} isLoading={isSavingNotas}
+                           >
+                              Guardar Notas
+                           </Button>
+                        </AccordionPanel>
+                      </AccordionItem>
+                    </Accordion>
+                  )}
 
- <Divider pt={3}/>
-
-{isCancelado ? (
-<Text color="red.500" fontWeight="medium">Este turno ha sido cancelado.</Text>
-) : 
-( <>
-<Box w="full" pt={3}>
-<Heading size="xs" mb={3} color="gray.600">Registro de Asistencia</Heading>
-{renderAsistencia()}
- </Box>
-
-
-{detalle.estado?.toLowerCase() !== 'pagado' && ( 
- <Box w="full" pt={4} borderTopWidth="1px" borderColor="gray.200" mt={4}>
-<Heading size="xs" mb={3} color="gray.600">Registrar Pago</Heading>
-<VStack align="stretch" spacing={3}> 
-<FormControl id="metodo-pago-ver">
- <FormLabel fontSize="sm" mb={1}>Método de Pago</FormLabel>
-<Select size="sm" value={metodoPago} onChange={(e) => setMetodoPago(e.target.value)} isDisabled={isPaying}>
-<option value="Efectivo">Efectivo</option>
- <option value="Transferencia">Transferencia</option>
- <option value="MercadoPago">MercadoPago</option>
- </Select>
- </FormControl>
- <Button leftIcon={<FiCheckCircle />} colorScheme="green" onClick={handleMarcarPagado} isLoading={isPaying} loadingText="Pagando..." w="full" size="sm">
-Marcar como Pagado
- </Button>
-</VStack>
- </Box>
- )}
- 
- </>
-)}
-</VStack>
- )}
-</ModalBody>
-          
-          
-          <ModalFooter borderTopWidth="1px" borderColor="gray.200">
-             <Button variant="ghost" onClick={onClose} ml="auto" isDisabled={isPaying || isDeleting || isSavingAsistencia}> 
-                 Cerrar
-             </Button>
+                  {/* 4. PAGO (Abajo, siempre visible si falta pagar) */}
+                  {!isPagado && !isCancelado && ( 
+                     <Box pt={2}>
+                         <Text fontSize="xs" fontWeight="bold" color="gray.500" mb={2} textTransform="uppercase">Pago</Text>
+                         <HStack>
+                            <Select size="sm" value={metodoPago} onChange={(e) => setMetodoPago(e.target.value)} isDisabled={isPaying} bg={inputBg}>
+                                <option value="Efectivo">Efectivo</option>
+                                <option value="Transferencia">Transferencia</option>
+                                <option value="MercadoPago">MercadoPago</option>
+                            </Select>
+                            <Button leftIcon={<FiCheckCircle />} colorScheme="green" onClick={handleMarcarPagado} isLoading={isPaying} size="sm" px={6}>
+                                Cobrar
+                            </Button>
+                         </HStack>
+                     </Box>
+                  )}
+                </VStack>
+            )}
+          </ModalBody>
+          <ModalFooter pt={2} pb={4}>
+             <Button variant="ghost" onClick={onClose} size="sm" ml="auto">Cerrar</Button>
           </ModalFooter>
         </ModalContent>
       </Modal>

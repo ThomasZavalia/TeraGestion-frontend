@@ -1,7 +1,7 @@
 import {
   Modal, ModalOverlay, ModalContent, ModalHeader, ModalFooter, ModalBody, ModalCloseButton,
   Button, FormControl, FormLabel, Radio, RadioGroup, Stack, Input, Switch, Select,
-  InputGroup, InputLeftAddon, VStack, Heading, Text
+  InputGroup, InputLeftAddon, VStack, Heading, Text,FormErrorMessage, useColorModeValue,
 } from '@chakra-ui/react';
 import { AsyncSelect } from 'chakra-react-select'; 
 import { format } from 'date-fns'; 
@@ -9,6 +9,8 @@ import { es } from 'date-fns/locale';
 import { useTurnoForm } from '../../../hooks/useTurnoForm';
 
 const ModalCrearTurno = ({ isOpen, onClose, config, isEditingMode }) => {
+  const modalBg = useColorModeValue('white', 'gray.800');
+  const inputBg = useColorModeValue('white', 'gray.700');
 
 const {
     pacienteTipo, setPacienteTipo,
@@ -86,6 +88,7 @@ const {
         value={nombrePaciente} 
         onChange={(e) => setNombrePaciente(e.target.value)} 
         placeholder="Nombre del paciente" 
+        
       />
     </FormControl>
 
@@ -132,7 +135,7 @@ const {
                   <FormLabel>Obra Social</FormLabel>
                  <Select
                     placeholder="Seleccione una obra social"
-                    value={obraSocialId || ''}
+                  value={obraSocialId ? String(obraSocialId) : ''}
                     onChange={(e) => setObraSocialId(e.target.value ? parseInt(e.target.value) : null)}>
                     {obrasSocialesList.map(os => ( <option key={os.value} value={os.value}>{os.label}</option> ))}
                   </Select>
