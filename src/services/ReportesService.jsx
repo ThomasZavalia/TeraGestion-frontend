@@ -82,4 +82,14 @@ export const reportesService = {
             return [];
         }
     },
+
+    getTurnosPorObraSocial: async () => {
+        try {
+            const { data } = await axiosInstance.get('/Reportes/turnos-por-obrasocial');
+            return data || [];
+        } catch (error) {
+            console.error("Error fetching turnos por obra social:", error);
+            return [];
+        }
+    },
 };

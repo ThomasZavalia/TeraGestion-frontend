@@ -4,14 +4,18 @@ import dayGridPlugin from '@fullcalendar/daygrid';
 import timeGridPlugin from '@fullcalendar/timegrid';
 import interactionPlugin from '@fullcalendar/interaction';
 import esLocale from '@fullcalendar/core/locales/es';
-import { Box, useDisclosure, Spinner, Center,useColorModeValue, useToast, } from '@chakra-ui/react';
+import { Box, useDisclosure, Spinner, Center,useColorModeValue, useToast,Flex,Button,AlertDialog,AlertDialogOverlay,AlertDialogContent,AlertDialogHeader,AlertDialogBody,AlertDialogFooter, } from '@chakra-ui/react';
 import { turnoService } from '../../services/TurnoService';
 import ModalCrearTurno from './components/ModalCrearTurno';
 import ModalVerTurno from './components/ModalVerTurno'; 
 import ModalElegirHora from './components/ModalELegirHora'; 
+import { FiSlash } from 'react-icons/fi';
+import { ausenciaService } from '../../services/AusenciaService';
+import ModalRegistrarAusencia from './components/ModalRegistrarAusencia';
+
 
 const TurnosPage = () => {
-  
+  const [turnos, setTurnos] = useState([]);
   const [calendarEvents, setCalendarEvents] = useState([]); 
   const [loading, setLoading] = useState(true);
   const calendarRef = useRef(null);
@@ -21,6 +25,8 @@ const TurnosPage = () => {
   const [turnoParaEditar, setTurnoParaEditar] = useState(null);     
   const [isEditingMode, setIsEditingMode] = useState(false);
   const [turnoAReprogramar, setTurnoAReprogramar] = useState(null);
+  const [ausencias, setAusencias] = useState([]);
+  const [ausenciaAEliminar, setAusenciaAEliminar] = useState(null);
 
   const toast = useToast();
 
@@ -28,32 +34,77 @@ const TurnosPage = () => {
   const { isOpen: isCreateOpen, onOpen: onCreateOpen, onClose: onCreateClose } = useDisclosure();
   const { isOpen: isTimePickerOpen, onOpen: onTimePickerOpen, onClose: onTimePickerClose } = useDisclosure();
   const { isOpen: isViewOpen, onOpen: onViewOpen, onClose: onViewClose } = useDisclosure();
+  const { isOpen: isAusenciaOpen, onOpen: onAusenciaOpen, onClose: onAusenciaClose } = useDisclosure();
+  const { isOpen: isDeleteAusenciaOpen, onOpen: onDeleteAusenciaOpen, onClose: onDeleteAusenciaClose } = useDisclosure();
 
   const modalBg = useColorModeValue('white', 'gray.800');
   const modalBorder = useColorModeValue('gray.200', 'gray.700');
 
   
-  useEffect(() => {
-    const fetchTurnos = async () => {
+const fetchData = async () => {
       setLoading(true);
       try {
-        const data = await turnoService.getTurnos();
-        setCalendarEvents(data);
-        console.log("Turnos iniciales cargados:", data);
-      } catch (error) { console.error("Error al cargar turnos iniciales:", error); }
+        const [turnosData, ausenciasData] = await Promise.all([
+            turnoService.getTurnos(),
+            ausenciaService.getAusencias()
+        ]);
+
+   
+        const eventosTurnos = turnosData;
+
+        
+       const eventosAusencias = ausenciasData.map(aus => {
+            
+            const fechaBase = aus.fecha.split('T')[0]; // "2025-10-20"
+            
+            return {
+                id: `ausencia-${aus.id}`,
+                start: `${fechaBase}T00:00:00`, 
+                end: `${fechaBase}T23:59:59`,   
+                allDay: false, 
+                display: 'background', 
+                backgroundColor: '#FEB2B2', 
+                title: 'Ausente',
+                extendedProps: { tipo: 'ausencia', ...aus }
+            };
+        });
+
+        
+        setCalendarEvents([...eventosTurnos, ...eventosAusencias]);
+        setTurnos(eventosTurnos); 
+        setAusencias(eventosAusencias);
+
+      } catch (error) { console.error("Error al cargar datos:", error); }
       finally { setLoading(false); }
-    };
-    fetchTurnos();
+  };
+
+ 
+
+  useEffect(() => {
+    fetchData();
   }, []);
+  
+const handleDateClick = (arg) => {
+   
+    const fechaClickeada = arg.date.toISOString().split('T')[0]; 
+
+ 
+    const ausenciaEncontrada = ausencias.find(a => a.start.startsWith(fechaClickeada));
+    
+ 
+    if (ausenciaEncontrada) {
+  
+        setAusenciaAEliminar(ausenciaEncontrada.extendedProps); 
+        onDeleteAusenciaOpen();
+        return; // Detenemos aquí, no abrimos el modal de crear turno
+    }
+   
 
   
- const handleDateClick = (arg) => {
-    
-    setIsEditingMode(false);
+    setIsEditingMode(false); 
     setTurnoParaEditar(null);
-    
     setSelectedDay(arg.date);
-    setSelectedFullDate(null);
+    setSelectedFullDate(null); 
     onTimePickerOpen();
   };
 
@@ -76,34 +127,21 @@ const TurnosPage = () => {
   };
   
 
-const handleEventClick = (arg) => {
-  if (turnoAReprogramar) {
-        setTurnoAReprogramar(null);
-        toast({ title: "Reprogramación cancelada", status: "info", duration: 2000 });
+const handleEventClick = (arg) => { 
+   
+    if (arg.event.display === 'background' && arg.event.extendedProps.tipo === 'ausencia') {
+        setAusenciaAEliminar(arg.event.extendedProps); 
+        onDeleteAusenciaOpen();
+        return;
     }
-    
-      setIsEditingMode(false);
-      setTurnoParaEditar(null);
-      setTurnoAReprogramar(null);
+  
 
-     
-      
-      const eventId = arg.event.id;
-      const eventoDeMiEstado = calendarEvents.find(ev => ev.id === eventId);
-
-      if (eventoDeMiEstado) {
-          console.log("Evento encontrado en React state (fresco):", eventoDeMiEstado);
-          setSelectedTurnoEvent(eventoDeMiEstado); 
-      } else {
-          
-          console.warn("Evento no encontrado en calendarEvents state, usando arg.event (viejo)");
-          setSelectedTurnoEvent(arg.event); 
-      }
-      
-
-      setSelectedDay(null);
-      setSelectedFullDate(null);
-      onViewOpen();
+    setIsEditingMode(false); 
+    setTurnoParaEditar(null); 
+    setSelectedTurnoEvent(arg.event); 
+    setSelectedDay(null); 
+    setSelectedFullDate(null);
+    onViewOpen(); 
   };
 
 
@@ -137,6 +175,7 @@ const handleEventClick = (arg) => {
         onCreateOpen(); 
     }
   };
+
  const handleEditRequest = (datosDelTurno) => { 
   console.log("[handleEditRequest] Solicitud editar con datos:", datosDelTurno);
   
@@ -156,6 +195,9 @@ const handleEventClick = (arg) => {
   onCreateOpen(); 
 };
 
+const recargarCalendario = () => {
+      fetchData();
+  };
  
   const onTurnoCreado = (nuevoTurnoEvento) => {
       console.log("onTurnoCreado - Nuevo evento:", nuevoTurnoEvento);
@@ -241,6 +283,33 @@ setSelectedTurnoEvent(null);
       
 };
 
+const handleConfirmarEliminarAusencia = async () => {
+      if (!ausenciaAEliminar) return;
+      
+      setLoading(true); // O usa un estado local isDeletingAusencia
+      try {
+          // Llama al servicio que ya creamos
+          await ausenciaService.eliminarAusencia(ausenciaAEliminar.id);
+          
+          toast({ title: "Día desbloqueado", description: "Ahora se pueden asignar turnos nuevamente.", status: "success" });
+          
+          // Recarga el calendario para quitar el rojo
+          const [turnosData, ausenciasData] = await Promise.all([
+              turnoService.getTurnos(),
+              ausenciaService.getAusencias()
+          ]);
+         
+          fetchData(); 
+
+      } catch (error) {
+          toast({ title: "Error al desbloquear", status: "error" });
+      } finally {
+          setLoading(false);
+          onDeleteAusenciaClose();
+          setAusenciaAEliminar(null);
+      }
+  };
+
 
   if (loading) { return ( <Center h="200px"> <Spinner size="xl" /> </Center> ); }
 
@@ -253,6 +322,17 @@ const fechaParaModalCreacion = !isEditingMode ? selectedFullDate : null;
 
   return(
     <Box>
+      <Flex justify="flex-end" mb={4}>
+          <Button 
+            leftIcon={<FiSlash />} 
+            colorScheme="red" 
+            variant="outline" 
+            size="sm"
+            onClick={onAusenciaOpen}
+          >
+            Registrar Ausencia (Bloquear Día)
+          </Button>
+      </Flex>
       <FullCalendar 
          ref={calendarRef}
          plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
@@ -332,7 +412,44 @@ const fechaParaModalCreacion = !isEditingMode ? selectedFullDate : null;
           onEdit={handleEditRequest}
           onReprogramar={handleReprogramarRequest}
         />
+
+        
       )}
+
+      <ModalRegistrarAusencia 
+        isOpen={isAusenciaOpen}
+        onClose={onAusenciaClose}
+        onAusenciaCreada={recargarCalendario} 
+      />
+
+      <AlertDialog
+        isOpen={isDeleteAusenciaOpen}
+        leastDestructiveRef={calendarRef} 
+        onClose={onDeleteAusenciaClose}
+      >
+        <AlertDialogOverlay>
+          <AlertDialogContent>
+            <AlertDialogHeader fontSize="lg" fontWeight="bold">
+              Desbloquear Día
+            </AlertDialogHeader>
+
+            <AlertDialogBody>
+              ¿Quieres eliminar la ausencia del día <strong>{ausenciaAEliminar?.fecha?.split('T')[0]}</strong>?
+              <br /><br />
+              El día volverá a estar disponible para nuevos turnos, pero <strong>los turnos que ya fueron cancelados permanecerán cancelados</strong>.
+            </AlertDialogBody>
+
+            <AlertDialogFooter>
+              <Button ref={calendarRef} onClick={onDeleteAusenciaClose}>
+                Cancelar
+              </Button>
+              <Button colorScheme="red" onClick={handleConfirmarEliminarAusencia} ml={3}>
+                Desbloquear
+              </Button>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialogOverlay>
+      </AlertDialog>
     </Box>
   );
 };
