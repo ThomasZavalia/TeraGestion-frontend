@@ -20,231 +20,169 @@ export const useTurnoForm = (config) => {
   const [nombrePaciente, setNombrePaciente] = useState('');
   const [apellidoPaciente, setApellidoPaciente] = useState('');
   const [dni, setDni] = useState('');
-  const [esParticular, setEsParticular] = useState(false);
-  const [obraSocialId, setObraSocialId] = useState(null);
+  const [obraSocialId, setObraSocialId] = useState(null); 
   const [precio, setPrecio] = useState(0);
-  const [dniError, setDniError] = useState(null);
 
-  
+
+ const [dniError, setDniError] = useState(null);
   const [obrasSocialesList, setObrasSocialesList] = useState([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoadingPrecio, setIsLoadingPrecio] = useState(false);
-
+  const [didInitForEdit, setDidInitForEdit] = useState(false);
   
-  useEffect(() => {
+useEffect(() => {
     obraSocialService.getObrasSocialesActivas()
       .then(data => {
-     
-        console.log("Datos crudos de Obras Sociales:", data);
-
-      
-        const formattedList = data.map(os => ({
-       
-          value: os.id,  
-          label: os.nombre
-        }));
-
-     
-        setObrasSocialesList(formattedList);
+         
+         const formattedList = data.map(os => ({ value: os.id, label: os.nombre }));
+         setObrasSocialesList(formattedList);
       })
-      .catch(error => {
-        console.error("Error al cargar obras sociales:", error);
-        setObrasSocialesList([]); 
-      });
+      .catch(error => { console.error("Error cargando OS:", error); setObrasSocialesList([]); });
   }, []);
 
 
  useEffect(() => {
-   console.log("[useTurnoForm Init/Reset] Running. isEditingMode:", isEditingMode, "Turno:", turnoAEditar); 
-  
-  
-    if (isEditingMode && turnoAEditar && obrasSocialesList.length === 0) {
-        console.log("[useTurnoForm Init/Reset] Waiting for Obras Sociales to load...");
-        return; 
-    }
-
-    if (isEditingMode && turnoAEditar) {
-      console.log("[useTurnoForm Init/Reset] Initializing for EDIT..."); 
+    if (isEditingMode && turnoAEditar && !didInitForEdit) {
+      // MODO EDICIÓN
       setPacienteTipo('existente');
       setPacienteSeleccionado({
         value: turnoAEditar.pacienteId,
         label: `${turnoAEditar.pacienteNombre || ''} ${turnoAEditar.pacienteApellido || ''}`,
         obraSocialId: turnoAEditar.obraSocialId
       });
-      const particular = turnoAEditar.precio !== null && turnoAEditar.obraSocialId === null;
-      setEsParticular(particular);
       setObraSocialId(turnoAEditar.obraSocialId);
       setPrecio(turnoAEditar.precio || 0);
-      setNombrePaciente(''); setApellidoPaciente(''); setDni('');
-      console.log("[useTurnoForm Init/Reset] State SET for edit."); 
-    } else if (!isEditingMode) { 
-      console.log("[useTurnoForm Init/Reset] Resetting for CREATE..."); 
+      
+      // Limpiar campos nuevo paciente
+      setNombrePaciente(''); setApellidoPaciente(''); setDni(''); setDniError(null);
+      
+      setDidInitForEdit(true);
+    } else if (!isEditingMode) {
+      // MODO CREACIÓN
       setPacienteTipo('existente');
       setPacienteSeleccionado(null);
-      setNombrePaciente(''); setApellidoPaciente(''); setDni('');
-      setEsParticular(false);
+      setNombrePaciente(''); setApellidoPaciente(''); setDni(''); setDniError(null);
       setObraSocialId(null);
       setPrecio(0);
+      setDidInitForEdit(false);
     }
-  }, [isEditingMode, turnoAEditar,obrasSocialesList]);
+  }, [isEditingMode, turnoAEditar, didInitForEdit]);
 
-  
+
   useEffect(() => {
-   
-    if (!isEditingMode) { 
+    if (!isEditingMode) {
       if (pacienteTipo === 'existente' && pacienteSeleccionado) {
         setObraSocialId(pacienteSeleccionado.obraSocialId || null);
       } else if (pacienteTipo === 'nuevo') {
-        setObraSocialId(null); 
+        setObraSocialId(null);
       }
     }
-  }, [pacienteTipo, pacienteSeleccionado, isEditingMode]); 
+  }, [pacienteTipo, pacienteSeleccionado, isEditingMode]);
 
   
-  const fetchPrecio = useCallback(async () => {
-    if (!esParticular && obraSocialId) {
+ const fetchPrecio = useCallback(async () => {
+    if (obraSocialId) {
       setIsLoadingPrecio(true);
       try {
         const precioCalculado = await obraSocialService.getPrecio(obraSocialId);
         setPrecio(precioCalculado);
-      } catch (error) { console.error("Error calculando precio:", error); setPrecio(0); } 
+      } catch (error) { console.error(error); setPrecio(0); }
       finally { setIsLoadingPrecio(false); }
     } else {
-       if (!isEditingMode) setPrecio(0); 
+       if (!isEditingMode) setPrecio(0);
     }
- 
-  }, [esParticular, obraSocialId, isEditingMode]); 
+  }, [obraSocialId, isEditingMode]);
 
-
-  useEffect(() => {
-    
-    if (!isEditingMode) { 
-   fetchPrecio();
-      return; 
- }
-    if (isInitialMount.current) {
-        
-        isInitialMount.current = false;
-        
-    } else {
-        
-       fetchPrecio();
- }
-  }, [fetchPrecio, isEditingMode]);
+  useEffect(() => { fetchPrecio(); }, [fetchPrecio]);
 
 
 
   const loadPacientes = useCallback((inputValue) => {
-      console.log("loadPacientes hook llamado con:", inputValue); 
       return pacienteService.buscarPacientes(inputValue);
   }, []);
 
   const validateDni = useCallback(async (dniValue) => {
-   
     if (!dniValue || pacienteTipo !== 'nuevo' || isEditingMode) { 
         setDniError(null); 
         return; 
     }
-
     try {
-       
         const exists = await pacienteService.checkDniExists(dniValue); 
-        if (exists) {
-            setDniError('Este DNI ya está registrado. Use "Paciente Existente".');
-        } else {
-            setDniError(null);
-        }
+        if (exists) setDniError('Este DNI ya está registrado.');
+        else setDniError(null);
     } catch (error) {
         console.error("Error validando DNI:", error);
-        setDniError('No se pudo validar el DNI.'); 
+        // No bloqueamos por error de red, pero podríamos mostrar un warning
     }
-  }, [pacienteTipo, isEditingMode])
-
+  }, [pacienteTipo, isEditingMode]);
 
 
   const handleSubmit = async () => {
-
+    // --- VALIDACIONES ---
+    
+    // 1. Validar Paciente
     if (!isEditingMode) {
         if (pacienteTipo === 'existente' && !pacienteSeleccionado) {
-            toast({ title: 'Campo requerido', description: 'Debe seleccionar un paciente existente.', status: 'error' });
+            toast({ title: 'Falta Paciente', description: 'Seleccione un paciente existente.', status: 'error' });
             return; 
         }
         if (pacienteTipo === 'nuevo') {
             if (!nombrePaciente.trim() || !apellidoPaciente.trim() || !dni.trim()) {
-                toast({ title: 'Campos requeridos', description: 'Nombre, Apellido y DNI son obligatorios para un nuevo paciente.', status: 'error' });
+                toast({ title: 'Campos incompletos', description: 'Nombre, Apellido y DNI son obligatorios.', status: 'error' });
                 return;
             }
             if (!/^[0-9]{7,8}$/.test(dni)) {
                 toast({ title: 'DNI Inválido', description: 'El DNI debe tener 7 u 8 números.', status: 'error' });
                 return;
             }
-           
+            if (dniError) {
+                toast({ title: 'Error en DNI', description: dniError, status: 'error' });
+                return;
+            }
         }
     }
     
-   
-    if (!esParticular && !obraSocialId) {
-         toast({ title: 'Campo requerido', description: 'Debe seleccionar una Obra Social (o marcar como "Particular").', status: 'error' });
+  
+    if (!obraSocialId) {
+         toast({ title: 'Falta Cobertura', description: 'Seleccione una Obra Social o "Particular".', status: 'error' });
          return;
-    }
-    if (esParticular && (!precio || precio <= 0)) {
-         toast({ title: 'Precio Inválido', description: 'Si es particular, el precio debe ser mayor a 0.', status: 'error' });
-         return;
-    }
-if (dniError) {
-        toast({ 
-            title: 'Error en formulario', 
-            description: dniError, 
-            status: 'error', 
-            duration: 4000 
-        });
-        return; 
     }
 
     setIsSubmitting(true);
     console.log('--- handleSubmit --- Mode:', isEditingMode ? 'EDIT' : 'CREATE'); 
 
-   
+ 
     const turnoDtoBase = {
-      esParticular: esParticular,
+      esParticular: false, 
       pacienteId: pacienteSeleccionado?.value, 
-      obraSocialId: !esParticular ? obraSocialId : null,
-      precio: esParticular ? precio : null, 
+      obraSocialId: obraSocialId, 
+      precio: precio, 
     };
 
     try {
-      
-     if (isEditingMode) {
-
-if (!turnoAEditar?.id) throw new Error("ID del turno a editar no encontrado");
-
-
- const dtoActualizacion = {
-esParticular: turnoDtoBase.esParticular,
-obraSocialId: turnoDtoBase.obraSocialId,
-precio: precio, 
- };
-
- console.log('Llamando a updateTurno ID:', turnoAEditar.id, 'DTO:', dtoActualizacion); 
-
-        
- const turnoActualizadoResponse = await turnoService.updateTurno(turnoAEditar.id, dtoActualizacion);
-
-        toast({ title: 'Turno Actualizado', status: 'success', duration: 3000 });
-
+      if (isEditingMode) {
        
-        const datosCompletosParaUI = {
-            ...turnoActualizadoResponse, 
-            ...dtoActualizacion,         
-            id: turnoAEditar.id          
+        if (!turnoAEditar?.id) throw new Error("ID del turno no encontrado");
+
+        const dtoActualizacion = {
+            esParticular: false,
+            obraSocialId: turnoDtoBase.obraSocialId,
+            precio: turnoDtoBase.precio,
+           
         };
 
-       
-onTurnoActualizado(datosCompletosParaUI); 
-} else {
-       
-        if (!selectedDate) throw new Error("No se seleccionó fecha para crear turno");
+        console.log('Update ID:', turnoAEditar.id, 'DTO:', dtoActualizacion); 
+        const turnoActualizado = await turnoService.updateTurno(turnoAEditar.id, dtoActualizacion);
         
+        toast({ title: 'Turno Actualizado', status: 'success', duration: 3000 });
+        
+        // Combina datos para la UI
+        onTurnoActualizado({ ...turnoActualizado, id: turnoAEditar.id }); 
+
+      } else {
+        // --- CREACIÓN ---
+        if (!selectedDate) throw new Error("Falta fecha");
+
         const dtoCreacion = {
             ...turnoDtoBase, 
             fecha: selectedDate.toISOString(), 
@@ -252,41 +190,29 @@ onTurnoActualizado(datosCompletosParaUI);
             apellidoPaciente: pacienteTipo === 'nuevo' ? apellidoPaciente : null,
             dni: pacienteTipo === 'nuevo' ? dni : null,
         };
-        console.log('Llamando a createTurno DTO:', dtoCreacion); 
+
+        console.log('Create DTO:', dtoCreacion); 
         const nuevoTurno = await turnoService.createTurno(dtoCreacion);
-        toast({ title: 'Turno Creado', description: `Turno para ${nuevoTurno.title} agendado.`, status: 'success', duration: 3000 });
+        
+        toast({ title: 'Turno Creado', description: `Turno agendado.`, status: 'success', duration: 3000 });
         onTurnoCreado(nuevoTurno); 
       }
     } catch (error) { 
- console.error('Error en handleSubmit:', error.response?.data || error.message || error); 
-      
-     
-      const errorMessage = error.response?.data?.message || 
-                         error.response?.data?.error ||   
-                         error.response?.data ||          
-                         'Ocurrió un error desconocido.'; 
+      console.error('Submit Error:', error);
+      const errorMessage = error.response?.data?.message || error.response?.data?.error || error.response?.data || 'Error desconocido';
+      toast({ title: 'Error al guardar', description: errorMessage, status: 'error', duration: 5000 });
+    } finally {
+      setIsSubmitting(false); 
+    } 
+  };
 
-toast({ 
-          title: 'Error al guardar',
-          description: errorMessage, 
-          status: 'error',         
-          duration: 5000,
-          isClosable: true,
-      });
-     
-
- setIsSubmitting(false); 
- } 
- };
-
-
- return {
+  return {
     pacienteTipo, setPacienteTipo,
     pacienteSeleccionado, setPacienteSeleccionado,
     nombrePaciente, setNombrePaciente,
     apellidoPaciente, setApellidoPaciente,
     dni, setDni,
-    esParticular, setEsParticular,
+    //esParticular, setEsParticular: () => {}, 
     obraSocialId, setObraSocialId,
     precio, setPrecio,
     obrasSocialesList,
@@ -296,6 +222,5 @@ toast({
     handleSubmit,
     dniError,
     validateDni,
-   
   };
 };

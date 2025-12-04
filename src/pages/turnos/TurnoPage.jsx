@@ -96,7 +96,7 @@ const handleDateClick = (arg) => {
   
         setAusenciaAEliminar(ausenciaEncontrada.extendedProps); 
         onDeleteAusenciaOpen();
-        return; // Detenemos aquí, no abrimos el modal de crear turno
+        return; 
     }
    
 

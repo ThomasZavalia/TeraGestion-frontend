@@ -9,6 +9,7 @@ import TurnosPage from '../pages/turnos/TurnoPage'; // <-- ¡IMPORTA ESTA LÍNEA
 import PagosPage from '../pages/pagos/PagosPage';
 import ReportesPage from '../pages/reportes/ReportesPage';
 import PerfilPage from '../pages/perfil/PerfilPage'; // <-- Importa la página
+import ReservaPage from '../pages/public/ReservaPage';
 
 
 import { PacienteDetallePage } from '../pages/pacientes/PacienteDetallePage';
@@ -18,6 +19,10 @@ const AppRouter = () => {
     <Routes>
      
       <Route path="/login" element={<LoginPage />} />
+      <Route path="/reservar" element={<ReservaPage />} />
+
+      <Route path="/forgot-password" element={<div>Olvidé contraseña (Pendiente)</div>} />
+      <Route path="/reset-password" element={<div>Resetear (Pendiente)</div>} />
 
      
       <Route element={<ProtectedRoute />}>
