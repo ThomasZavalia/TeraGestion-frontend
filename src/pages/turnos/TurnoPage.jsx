@@ -12,6 +12,7 @@ import ModalElegirHora from './components/ModalELegirHora';
 import { FiSlash } from 'react-icons/fi';
 import { ausenciaService } from '../../services/AusenciaService';
 import ModalRegistrarAusencia from './components/ModalRegistrarAusencia';
+import { useSignalR } from '../../context/SignalRContext';
 
 
 const TurnosPage = () => {
@@ -27,6 +28,7 @@ const TurnosPage = () => {
   const [turnoAReprogramar, setTurnoAReprogramar] = useState(null);
   const [ausencias, setAusencias] = useState([]);
   const [ausenciaAEliminar, setAusenciaAEliminar] = useState(null);
+  const { ultimaNotificacion } = useSignalR();
 
   const toast = useToast();
 
@@ -83,6 +85,14 @@ const fetchData = async () => {
   useEffect(() => {
     fetchData();
   }, []);
+
+  useEffect(() => {
+    if (ultimaNotificacion) {
+       
+        console.log("Turno nuevo detectado, recargando calendario...");
+        fetchData(); 
+    }
+  }, [ultimaNotificacion]);
   
 const handleDateClick = (arg) => {
    

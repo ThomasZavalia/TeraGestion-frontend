@@ -19,6 +19,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext'; 
 import { AsyncSelect } from 'chakra-react-select';
 import { pacienteService } from '../services/PacienteService';
+import NotificationMenu from '../components/ui/NotificationMenu';
 
 const Navbar = ({ onToggleSidebar, isDesktop }) => { 
   const { user, logout } = useAuth();
@@ -141,7 +142,10 @@ const selectStyles = {
         />
       
       
-        {/* Menú de Usuario (sin cambios, ahora dentro del HStack) */}
+       
+       <NotificationMenu />
+       
+       
         <Menu>
           <MenuButton as={Box} cursor="pointer">
             <Avatar size={'sm'} name={user?.username || '?'} /> 
@@ -164,7 +168,6 @@ const selectStyles = {
         </Menu>
         
       </HStack>
-      
 
     </Flex>
   );

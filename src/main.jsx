@@ -6,16 +6,22 @@ import App from './App.jsx';
 import './index.css';
 import { theme } from './theme/index.js'; 
 import { AuthProvider } from './context/AuthContext';
+import { GoogleReCaptchaProvider } from 'react-google-recaptcha-v3';
+import { SignalRProvider } from './context/SignalRContext.jsx';
 
 ReactDOM.createRoot(document.getElementById('root')).render(
+  <GoogleReCaptchaProvider reCaptchaKey="6Ld5eiIsAAAAABw8Qi6lGJwFnsNGJ2TT5srkEKtE">
   <React.StrictMode>
     <ColorModeScript initialColorMode={theme.config.initialColorMode} />
     <ChakraProvider theme={theme}> 
       <AuthProvider>
+        <SignalRProvider>
       <BrowserRouter>            
         <App />
       </BrowserRouter>
+      </SignalRProvider>
       </AuthProvider>
     </ChakraProvider>
   </React.StrictMode>
+  </GoogleReCaptchaProvider>
 );
