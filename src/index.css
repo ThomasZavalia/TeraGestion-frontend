@@ -45,7 +45,7 @@
 }
 
 
-
+/*
 .fc-event.turno-pendiente {
   background-color: var(--turno-pendiente-bg) !important;
   border-color: var(--turno-pendiente-border) !important;
@@ -63,6 +63,30 @@
   border-color: var(--turno-cancelado-border) !important;
   color: var(--turno-cancelado-text) !important;
   text-decoration: line-through; 
+}*/
+
+.fc-event.turno-pagado {
+    background-color: #48BB78 !important;
+    border-color: #48BB78 !important;
+}
+
+/* Turno CANCELADO (Rojo) */
+.fc-event.turno-cancelado {
+    background-color: #E53E3E !important;
+    border-color: #E53E3E !important;
+}
+
+/* Turno PENDIENTE (Azul - por defecto, pero forzamos por si acaso) */
+.fc-event.turno-pendiente {
+    background-color: #3182CE !important;
+    border-color: #3182CE !important;
+}
+
+/* Ausencia (Naranja o Rojo suave) */
+.fc-event.turno-ausente,
+.fc-event.ausencia {
+    background-color: #ED8936 !important;
+    border-color: #ED8936 !important;
 }
 
 

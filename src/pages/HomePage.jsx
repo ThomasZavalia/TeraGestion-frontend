@@ -74,8 +74,22 @@ const TurnosHoyLista = ({ turnos }) => {
   if (turnos.length === 0) {
     return <Text color="gray.500" fontSize="sm">No hay turnos programados para hoy.</Text>;
   }
-  
-  const turnosOrdenados = [...turnos].sort((a, b) => new Date(a.fecha) - new Date(b.fecha)); 
+  const getFechaValida = (t) => {
+     
+      const rawDate = t.fecha || t.fechaHora || t.start || t.Start;
+      if (!rawDate) return null;
+      
+      const dateObj = new Date(rawDate);
+      // Verificamos si es una fecha válida
+      return isNaN(dateObj.getTime()) ? null : dateObj;
+  };
+
+
+  const turnosOrdenados = [...turnos].sort((a, b) => {
+      const dateA = getFechaValida(a) || new Date(0);
+      const dateB = getFechaValida(b) || new Date(0);
+      return dateA - dateB;
+  });
 
   const handleTurnoClick = (turno) => {
     navigate('/turnos'); 
@@ -83,7 +97,15 @@ const TurnosHoyLista = ({ turnos }) => {
 
   return (
     <List spacing={3}>
-      {turnosOrdenados.map((turno) => (
+      {turnosOrdenados.map((turno) => {
+        
+        // Obtenemos la fecha segura para renderizar
+        const fechaObj = getFechaValida(turno);
+        const horaLegible = fechaObj 
+            ? format(fechaObj, 'HH:mm', { locale: es }) 
+            : '--:--';
+
+        return (
         <ListItem
           key={turno.id}
           p={3}
@@ -97,21 +119,25 @@ const TurnosHoyLista = ({ turnos }) => {
           _hover={{ bg: itemHoverBg, shadow: 'md' }} 
           transition="all 0.2s ease"
         >
-          <Box display="flex" justifyContent="space-between" alignItems="center">
-            <Box>
-              <Text fontWeight="bold" fontSize="sm" color={textColorPrimary}>{`${turno.pacienteNombre} ${turno.pacienteApellido}`}</Text>
-              <Text fontSize="xs" color={textColorSecondary}> {/* <-- Color dinámico */}
-                <ListIcon as={FiClock} color="gray.500" />
-                {format(new Date(turno.fecha), 'HH:mm', { locale: es })} hs 
-              </Text>
-            </Box>
+         <Box display="flex" justifyContent="space-between" alignItems="center">
+                <Box>
+                <Text fontWeight="bold" fontSize="sm" color={textColorPrimary}>
+                    {`${turno.pacienteNombre || ''} ${turno.pacienteApellido || ''}`}
+                </Text>
+                <Text fontSize="xs" color={textColorSecondary}> 
+                    <ListIcon as={FiClock} color="gray.500" />
+                   
+                    {horaLegible} hs 
+                </Text>
+                </Box>
           
             <Text fontSize="xs" color={turno.estado?.toLowerCase() === 'pagado' ? 'green.500' : 'gray.500'} fontWeight="medium">
               {turno.estado}
-            </Text>
-          </Box>
-        </ListItem>
-      ))}
+           </Text>
+            </Box>
+            </ListItem>
+        );
+      })}
     </List>
   );
 };

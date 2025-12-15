@@ -6,9 +6,19 @@ import { FiBell } from 'react-icons/fi';
 import { useSignalR } from '../../context/SignalRContext';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
+import { useNavigate } from 'react-router-dom';
 
 const NotificationMenu = () => {
   const { notificaciones, unreadCount, marcarLeida } = useSignalR();
+  const navigate = useNavigate();
+
+  const handleNotificationClick = (notif) => {
+    
+      marcarLeida(notif.id);
+      
+    
+      navigate('/turnos'); 
+  };
 
   return (
     <Menu isLazy>
@@ -41,7 +51,7 @@ const NotificationMenu = () => {
           </Box>
         }
         variant="ghost"
-        _hover={{ bg: 'gray.100' }} // Feedback al pasar mouse
+        _hover={{ bg: 'gray.100' }}
       />
       <MenuList p={0} maxH="400px" overflowY="auto" w="350px" shadow="lg">
         <Box p={3} bg="gray.50">
@@ -57,7 +67,7 @@ const NotificationMenu = () => {
           notificaciones.map((notif) => (
             <MenuItem 
               key={notif.id} 
-              onClick={() => marcarLeida(notif.id)}
+             onClick={() => handleNotificationClick(notif)}
               bg={notif.leida ? 'white' : 'blue.50'}
               _hover={{ bg: 'gray.100' }}
               p={3}

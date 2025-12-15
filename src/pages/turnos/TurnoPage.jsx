@@ -15,6 +15,7 @@ import ModalRegistrarAusencia from './components/ModalRegistrarAusencia';
 import { useSignalR } from '../../context/SignalRContext';
 
 
+
 const TurnosPage = () => {
   const [turnos, setTurnos] = useState([]);
   const [calendarEvents, setCalendarEvents] = useState([]); 
@@ -44,42 +45,90 @@ const TurnosPage = () => {
 
   
 const fetchData = async () => {
-      setLoading(true);
-      try {
+    setLoading(true);
+    try {
         const [turnosData, ausenciasData] = await Promise.all([
             turnoService.getTurnos(),
             ausenciaService.getAusencias()
         ]);
 
-   
-        const eventosTurnos = turnosData;
+        console.log("---- RECARGANDO DATOS (V3) ----");
 
-        
-       const eventosAusencias = ausenciasData.map(aus => {
+        const eventosTurnos = turnosData.map(turno => {
             
-            const fechaBase = aus.fecha.split('T')[0]; // "2025-10-20"
+            const props = turno.extendedProps || {};
+
+    
+            const estado = String(props.estado || '').trim().toLowerCase();
+            const asistencia = String(props.asistencia || '').trim().toLowerCase();
+
+            let colorFinal = '#3182CE'; 
+            let claseCss = 'turno-pendiente';
+
+            if (estado === 'pagado') {
+                colorFinal = '#48BB78'; 
+                claseCss = 'turno-pagado';
+            } else if (estado === 'cancelado') {
+                colorFinal = '#E53E3E'; // Rojo
+                claseCss = 'turno-cancelado';
+            } else if (asistencia === 'ausente') {
+                colorFinal = '#ED8936';
+                claseCss = 'turno-ausente';
+            }
+
+            
+           const fechaInicio = turno.start; 
+            let fechaFinCalculada = turno.end; 
+
+            if (fechaInicio) {
+                const d = new Date(fechaInicio);
+                
+                d.setMinutes(d.getMinutes() + 40); 
+                fechaFinCalculada = d.toISOString();
+            }
+           
             
             return {
-                id: `ausencia-${aus.id}`,
-                start: `${fechaBase}T00:00:00`, 
-                end: `${fechaBase}T23:59:59`,   
-                allDay: false, 
-                display: 'background', 
-                backgroundColor: '#FEB2B2', 
-                title: 'Ausente',
-                extendedProps: { tipo: 'ausencia', ...aus }
+                id: turno.id, 
+                
+                start: fechaInicio, 
+                end: fechaFinCalculada,
+                
+              
+                title: turno.title,
+
+           
+                backgroundColor: colorFinal, 
+                borderColor: colorFinal,     
+                textColor: 'white',
+                
+               
+                classNames: [claseCss], 
+
+                
+                extendedProps: props
             };
         });
 
         
+        const eventosAusencias = ausenciasData.map(aus => {
+             const fechaBase = aus.fecha.split('T')[0];
+             return {
+                 id: `ausencia-${aus.id}`,
+                 start: `${fechaBase}T00:00:00`, end: `${fechaBase}T23:59:59`,
+                 allDay: true,
+                 display: 'background', backgroundColor: '#FEB2B2',
+                 extendedProps: { tipo: 'ausencia', ...aus }
+             };
+        });
+
         setCalendarEvents([...eventosTurnos, ...eventosAusencias]);
         setTurnos(eventosTurnos); 
         setAusencias(eventosAusencias);
 
-      } catch (error) { console.error("Error al cargar datos:", error); }
-      finally { setLoading(false); }
-  };
-
+    } catch (error) { console.error("Error cargando datos:", error); }
+    finally { setLoading(false); }
+};
  
 
   useEffect(() => {
@@ -164,12 +213,20 @@ const handleEventClick = (arg) => {
     
     onTimePickerClose(); 
 
-    if (turnoAReprogramar) {
-
+   if (turnoAReprogramar) {
         try {
-           
-            const turnoActualizado = await turnoService.reprogramarTurno(turnoAReprogramar.id, fullDate);
+            // 1. Llamamos al servicio
+            let turnoActualizado = await turnoService.reprogramarTurno(turnoAReprogramar.id, fullDate);
             
+        
+            if (turnoActualizado.start) {
+                const d = new Date(turnoActualizado.start);
+                d.setMinutes(d.getMinutes() + 40); 
+                turnoActualizado.end = d.toISOString();
+            }
+           
+            
+         
             handleTurnoUpdate(turnoActualizado);
             
             toast({ title: "Turno Reprogramado con éxito", status: "success", duration: 3000 });
@@ -209,75 +266,114 @@ const recargarCalendario = () => {
       fetchData();
   };
  
-  const onTurnoCreado = (nuevoTurnoEvento) => {
+    const onTurnoCreado = (nuevoTurnoEvento) => {
       console.log("onTurnoCreado - Nuevo evento:", nuevoTurnoEvento);
+      
+     
+      const eventoVisual = { ...nuevoTurnoEvento };
+      
+      // Si tiene fecha de inicio, le calculamos el fin a los 40 minutos
+      if (eventoVisual.start) {
+          const d = new Date(eventoVisual.start);
+          d.setMinutes(d.getMinutes() + 40); 
+          eventoVisual.end = d.toISOString();
+      }
+      // -----------------------------------------------------------
+
       if (calendarRef.current) {
         const calendarApi = calendarRef.current.getApi();
-        calendarApi.addEvent(nuevoTurnoEvento);
-        setCalendarEvents(prev => [...prev, nuevoTurnoEvento]); 
+        
+        calendarApi.addEvent(eventoVisual);
+        setCalendarEvents(prev => [...prev, eventoVisual]); 
       }
       handleCloseCreateModal(); 
   };
-
-const getColorForTurno = (turnoProps) => {
-    if (!turnoProps) return '#3182CE'; 
-
-    if (turnoProps.estado?.toLowerCase() === 'pagado') {
-        return '#48BB78'; 
-    }
-    if (turnoProps.asistencia === 'Ausente') {
-        return '#ED8936'; 
-    }
-    
-    
-    return '#3182CE'; }
 
 
 
 
 const handleTurnoUpdate = (eventoFormateado) => {
-  console.log("handleTurnoUpdate - Recibiendo evento formateado:", eventoFormateado);
+  console.log("handleTurnoUpdate - Recibiendo evento:", eventoFormateado);
   
   if (calendarRef.current) {
     const calendarApi = calendarRef.current.getApi();
-    
-    
     const eventoIdStr = eventoFormateado.id.toString();
-    
-  
     const eventoExistente = calendarApi.getEventById(eventoIdStr);
 
     if (eventoExistente) {
-      console.log("Actualizando evento en calendario ID:", eventoIdStr);
+     
+      const estadoRaw = eventoFormateado.extendedProps?.estado || eventoFormateado.estado || 'Pendiente';
+      const asistenciaRaw = eventoFormateado.extendedProps?.asistencia || eventoFormateado.asistencia || '';
+      
+      const estado = String(estadoRaw).trim().toLowerCase();
+      const asistencia = String(asistenciaRaw).trim().toLowerCase();
+
+      eventoExistente.setStart(eventoFormateado.start);
+      eventoExistente.setEnd(eventoFormateado.end);
+
+      
+      let nuevoColor = '#3182CE'; 
+      let nuevaClase = 'turno-pendiente';
+
+      if (estado === 'pagado') {
+          nuevoColor = '#48BB78'; // Verde
+          nuevaClase = 'turno-pagado';
+      } else if (estado === 'cancelado') {
+          nuevoColor = '#E53E3E'; // Rojo
+          nuevaClase = 'turno-cancelado';
+      } else if (asistencia === 'ausente') {
+          nuevoColor = '#ED8936'; // Naranja
+          nuevaClase = 'turno-ausente';
+      }
+
+      console.log(`Aplicando -> Color: ${nuevoColor}, Clase: ${nuevaClase}`);
 
      
-      eventoExistente.setProp('className', eventoFormateado.className);
-
+      
+      
+      eventoExistente.setProp('classNames', [nuevaClase]); 
+      
      
-      eventoExistente.setExtendedProp('estado', eventoFormateado.extendedProps.estado);
-      eventoExistente.setExtendedProp('asistencia', eventoFormateado.extendedProps.asistencia);
+      eventoExistente.setProp('backgroundColor', nuevoColor);
+      eventoExistente.setProp('borderColor', nuevoColor);
+
       
+      eventoExistente.setExtendedProp('estado', estadoRaw);
+      eventoExistente.setExtendedProp('asistencia', asistenciaRaw);
       
-      
+     
       setCalendarEvents(prev => 
-        prev.map(ev => 
-          ev.id === eventoIdStr ? eventoFormateado : ev
-        )
+        prev.map(ev => {
+          if (ev.id === eventoIdStr) {
+             return {
+                 ...ev, 
+             start: eventoFormateado.start, 
+                 end: eventoFormateado.end,
+                 backgroundColor: nuevoColor,
+                 borderColor: nuevoColor,
+                 classNames: [nuevaClase], 
+                 extendedProps: {
+                     ...ev.extendedProps,
+                     ...eventoFormateado.extendedProps,
+                     estado: estadoRaw,
+                     asistencia: asistenciaRaw
+                 }
+             };
+          }
+          return ev;
+        })
       );
 
     } else {
-      
-      console.warn("Evento a actualizar no encontrado, agregando como nuevo:", eventoIdStr);
-      calendarApi.addEvent(eventoFormateado);
-      setCalendarEvents(prev => [...prev, eventoFormateado]);
+    
+      console.warn("Evento no encontrado en DOM, recargando...");
+      fetchData();
     }
   }
   
-
   handleCloseCreateModal();
   handleCloseViewModal(); 
 };
-
 
 
  const handleCloseCreateModal = () => {
@@ -296,14 +392,14 @@ setSelectedTurnoEvent(null);
 const handleConfirmarEliminarAusencia = async () => {
       if (!ausenciaAEliminar) return;
       
-      setLoading(true); // O usa un estado local isDeletingAusencia
+      setLoading(true); 
       try {
-          // Llama al servicio que ya creamos
+          
           await ausenciaService.eliminarAusencia(ausenciaAEliminar.id);
           
           toast({ title: "Día desbloqueado", description: "Ahora se pueden asignar turnos nuevamente.", status: "success" });
           
-          // Recarga el calendario para quitar el rojo
+          
           const [turnosData, ausenciasData] = await Promise.all([
               turnoService.getTurnos(),
               ausenciaService.getAusencias()
@@ -318,6 +414,53 @@ const handleConfirmarEliminarAusencia = async () => {
           onDeleteAusenciaClose();
           setAusenciaAEliminar(null);
       }
+  };
+
+  const allowDrop = (dropInfo) => {
+      const hoy = new Date();
+      hoy.setHours(0, 0, 0, 0);
+      return dropInfo.start >= hoy; 
+  };
+
+  const handleEventDrop = (info) => {
+      // 1. Obtener datos
+      const turnoArrastrado = {
+          id: info.event.id,
+          title: info.event.title,
+          ...info.event.extendedProps 
+      };
+
+      const nuevaFecha = info.event.start;
+      const hoy = new Date();
+
+     
+      if (nuevaFecha < hoy) {
+          toast({ 
+              title: "Acción no permitida", 
+              description: "No puedes mover turnos al pasado.", 
+              status: "warning" 
+          });
+          info.revert(); 
+          return;
+      }
+
+     
+      info.revert(); 
+
+     
+      setTurnoAReprogramar(turnoArrastrado);
+      
+
+      setSelectedDay(nuevaFecha);
+      onTimePickerOpen();
+      
+      toast({
+          title: `Reprogramando a ${turnoArrastrado.pacienteNombre || 'Paciente'}`,
+          description: `Selecciona el horario definitivo para el ${nuevaFecha.toLocaleDateString()}`,
+          status: "info",
+          duration: 4000,
+          isClosable: true
+      });
   };
 
 
@@ -349,7 +492,10 @@ const fechaParaModalCreacion = !isEditingMode ? selectedFullDate : null;
        
          events={calendarEvents} 
          eventDisplay='block' 
-        eventColor='#3182CE' 
+       // eventColor='#3182CE' 
+       editable={true} 
+    eventDrop={handleEventDrop} 
+    eventAllow={allowDrop}
          eventTextColor='white' 
         initialView="timeGridWeek" 
         
@@ -370,9 +516,13 @@ const fechaParaModalCreacion = !isEditingMode ? selectedFullDate : null;
         slotMinTime="08:00:00" 
         slotMaxTime="23:00:00"
         scrollTime="16:00:00"
+
+        slotDuration="00:20:00"   
+    slotLabelInterval="01:00"
+
          height="75vh"
          dayMaxEvents={true}
-         slotLabelFormat={{ hour: 'numeric', minute: '2-digit', omitZeroMinute: false, hour12: false, meridiem: false, suffix: ' hs' }}
+       slotLabelFormat={{ hour: 'numeric', minute: '2-digit', omitZeroMinute: false, hour12: false, meridiem: false, suffix: ' hs' }}
          locale={esLocale}
          buttonText={{ today: 'Hoy', month: 'Mes', week: 'Semana', day: 'Día' }}
 

@@ -11,10 +11,18 @@ import ReportesPage from '../pages/reportes/ReportesPage';
 import PerfilPage from '../pages/perfil/PerfilPage'; 
 import ReservaPage from '../pages/public/ReservaPage';
 import ConfirmarTurnoPage from '../pages/public/ConfirmarTurnoPage';
+import { SignalRProvider } from '../context/SignalRContext';
 
 
 import { PacienteDetallePage } from '../pages/pacientes/PacienteDetallePage';
 
+const SignalRWrapper = () => {
+  return (
+    <SignalRProvider>
+      <DashboardLayout /> 
+    </SignalRProvider>
+  );
+};
 const AppRouter = () => {
   return (
     <Routes>
@@ -28,7 +36,7 @@ const AppRouter = () => {
 
      
       <Route element={<ProtectedRoute />}>
-        <Route element={<DashboardLayout />}>
+        <Route element={<SignalRWrapper />}>
           
           <Route path="/" element={<HomePage />} />
           <Route path="/pacientes" element={<PacientesPage />} />

@@ -18,6 +18,7 @@ import PerfilForm from './components/PerfilForm';
 import ContrasenaForm from './components/ContraseñaForm';
 import DisponibilidadForm from './components/DisponibilidadForm';
 import ObrasSocialesCRUD from './components/ObrasSocialesCrud';
+import ConfiguracionAgendaForm from './components/ConfiguracionAgendaForm'; 
 
 const PerfilPage = () => {
   const [userData, setUserData] = useState(null);
@@ -54,6 +55,7 @@ const PerfilPage = () => {
           <Tab>Cambiar Contraseña</Tab>
           <Tab>Disponibilidad Horaria</Tab>
            <Tab>Obras Sociales</Tab> 
+           <Tab>Agenda</Tab>
         </TabList>
 
         <TabPanels>
@@ -82,6 +84,12 @@ const PerfilPage = () => {
                
                 <ObrasSocialesCRUD />
            </TabPanel>
+
+           <TabPanel> 
+             <Box maxW="lg">
+                <ConfiguracionAgendaForm />
+             </Box>
+          </TabPanel>
 
         </TabPanels>
       </Tabs>

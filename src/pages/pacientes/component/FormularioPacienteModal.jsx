@@ -46,29 +46,32 @@ export const FormularioPacienteModal = ({ isOpen, onClose, onGuardado, pacienteA
     }
   }, [isOpen, toast]);
 
-  // Llena el formulario al abrir
-  useEffect(() => {
+
+ useEffect(() => {
     if (isOpen) {
       if (isEditing && pacienteAEditar) { 
         const fechaParaInput = pacienteAEditar.fechaNacimiento ? pacienteAEditar.fechaNacimiento.split('T')[0] : '';
+        
         reset({
           nombre: pacienteAEditar.nombre || "",
           apellido: pacienteAEditar.apellido || "",
           dni: pacienteAEditar.dni || "",
           telefono: pacienteAEditar.telefono || "",
           email: pacienteAEditar.email || "",
-         
+        
           obraSocialId: pacienteAEditar.obraSocialId || "", 
           fechaNacimiento: fechaParaInput,
         });
       } else {
+       
         reset({
           nombre: "", apellido: "", dni: "", telefono: "",
           email: "", obraSocialId: "", fechaNacimiento: "",
         });
       }
     }
-  }, [pacienteAEditar, isEditing, isOpen, reset]);
+    
+  }, [pacienteAEditar, isEditing, isOpen, reset, obrasSociales]);
 
 
  const onFormSubmit = async (data) => { 
