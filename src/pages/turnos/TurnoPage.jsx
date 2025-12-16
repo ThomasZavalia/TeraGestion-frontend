@@ -30,6 +30,7 @@ const TurnosPage = () => {
   const [ausencias, setAusencias] = useState([]);
   const [ausenciaAEliminar, setAusenciaAEliminar] = useState(null);
   const { ultimaNotificacion } = useSignalR();
+  const [preselectedTime, setPreselectedTime] = useState(null);
 
   const toast = useToast();
 
@@ -43,6 +44,14 @@ const TurnosPage = () => {
   const modalBg = useColorModeValue('white', 'gray.800');
   const modalBorder = useColorModeValue('gray.200', 'gray.700');
 
+
+  const calcularFechaFin = (inicio, duracionMinutos) => {
+    if (!inicio) return null;
+    const d = new Date(inicio);
+    const minutosASumar = duracionMinutos && duracionMinutos > 0 ? duracionMinutos : 40;
+    d.setMinutes(d.getMinutes() + minutosASumar);
+    return d.toISOString();
+  };
   
 const fetchData = async () => {
     setLoading(true);
@@ -77,39 +86,22 @@ const fetchData = async () => {
             }
 
             
-           const fechaInicio = turno.start; 
-            let fechaFinCalculada = turno.end; 
-
-            if (fechaInicio) {
-                const d = new Date(fechaInicio);
-                
-                d.setMinutes(d.getMinutes() + 40); 
-                fechaFinCalculada = d.toISOString();
-            }
+          const duracionReal = props.duracion || turno.duracion; 
+            const fechaFinCalculada = calcularFechaFin(turno.start, duracionReal);
            
-            
+
             return {
                 id: turno.id, 
-                
-                start: fechaInicio, 
-                end: fechaFinCalculada,
-                
-              
+                start: turno.start, 
+                end: fechaFinCalculada, 
                 title: turno.title,
-
-           
                 backgroundColor: colorFinal, 
                 borderColor: colorFinal,     
                 textColor: 'white',
-                
-               
                 classNames: [claseCss], 
-
-                
                 extendedProps: props
             };
         });
-
         
         const eventosAusencias = ausenciasData.map(aus => {
              const fechaBase = aus.fecha.split('T')[0];
@@ -163,7 +155,12 @@ const handleDateClick = (arg) => {
     setIsEditingMode(false); 
     setTurnoParaEditar(null);
     setSelectedDay(arg.date);
+    const horaClickeada = arg.date.getHours().toString().padStart(2, '0') + ':' + 
+                          arg.date.getMinutes().toString().padStart(2, '0');
+    setPreselectedTime(horaClickeada);
     setSelectedFullDate(null); 
+
+    
     onTimePickerOpen();
   };
 
@@ -206,36 +203,27 @@ const handleEventClick = (arg) => {
 
   
   
- const handleTimeSelect = async (time) => { 
+const handleTimeSelect = async (time) => { 
     const [hour, minute] = time.split(':');
     const fullDate = new Date(selectedDay);
     fullDate.setHours(parseInt(hour), parseInt(minute), 0, 0);
-    
     onTimePickerClose(); 
 
-   if (turnoAReprogramar) {
+    if (turnoAReprogramar) {
         try {
-            // 1. Llamamos al servicio
             let turnoActualizado = await turnoService.reprogramarTurno(turnoAReprogramar.id, fullDate);
             
-        
-            if (turnoActualizado.start) {
-                const d = new Date(turnoActualizado.start);
-                d.setMinutes(d.getMinutes() + 40); 
-                turnoActualizado.end = d.toISOString();
-            }
-           
+            // Recalculamos fin dinámicamente al reprogramar
+            const duracion = turnoActualizado.extendedProps?.duracion || turnoActualizado.duracion;
+            turnoActualizado.end = calcularFechaFin(turnoActualizado.start, duracion);
             
-         
             handleTurnoUpdate(turnoActualizado);
-            
-            toast({ title: "Turno Reprogramado con éxito", status: "success", duration: 3000 });
+            toast({ title: "Turno Reprogramado", status: "success", duration: 3000 });
             setTurnoAReprogramar(null);
         } catch (error) {
-            toast({ title: "Error al reprogramar", description: error.message, status: "error" });
+            toast({ title: "Error", description: error.message, status: "error" });
         }
     } else {
-      
         setIsEditingMode(false); 
         setTurnoParaEditar(null); 
         setSelectedFullDate(fullDate); 
@@ -243,6 +231,7 @@ const handleEventClick = (arg) => {
     }
   };
 
+  
  const handleEditRequest = (datosDelTurno) => { 
   console.log("[handleEditRequest] Solicitud editar con datos:", datosDelTurno);
   
@@ -266,30 +255,20 @@ const recargarCalendario = () => {
       fetchData();
   };
  
-    const onTurnoCreado = (nuevoTurnoEvento) => {
-      console.log("onTurnoCreado - Nuevo evento:", nuevoTurnoEvento);
-      
-     
+   const onTurnoCreado = (nuevoTurnoEvento) => {
       const eventoVisual = { ...nuevoTurnoEvento };
       
-      // Si tiene fecha de inicio, le calculamos el fin a los 40 minutos
-      if (eventoVisual.start) {
-          const d = new Date(eventoVisual.start);
-          d.setMinutes(d.getMinutes() + 40); 
-          eventoVisual.end = d.toISOString();
-      }
-      // -----------------------------------------------------------
+      
+      const duracion = eventoVisual.extendedProps?.duracion || eventoVisual.duracion;
+      eventoVisual.end = calcularFechaFin(eventoVisual.start, duracion);
 
       if (calendarRef.current) {
         const calendarApi = calendarRef.current.getApi();
-        
         calendarApi.addEvent(eventoVisual);
         setCalendarEvents(prev => [...prev, eventoVisual]); 
       }
       handleCloseCreateModal(); 
   };
-
-
 
 
 const handleTurnoUpdate = (eventoFormateado) => {
@@ -329,52 +308,35 @@ const handleTurnoUpdate = (eventoFormateado) => {
       console.log(`Aplicando -> Color: ${nuevoColor}, Clase: ${nuevaClase}`);
 
      
-      
+      const duracion = props.duracion || eventoFormateado.duracion;
+        const fechaFin = calcularFechaFin(eventoFormateado.start, duracion);
+
+        eventoExistente.setStart(eventoFormateado.start);
+        eventoExistente.setEnd(fechaFin)
       
       eventoExistente.setProp('classNames', [nuevaClase]); 
-      
-     
       eventoExistente.setProp('backgroundColor', nuevoColor);
       eventoExistente.setProp('borderColor', nuevoColor);
-
-      
       eventoExistente.setExtendedProp('estado', estadoRaw);
       eventoExistente.setExtendedProp('asistencia', asistenciaRaw);
       
      
-      setCalendarEvents(prev => 
-        prev.map(ev => {
-          if (ev.id === eventoIdStr) {
-             return {
-                 ...ev, 
-             start: eventoFormateado.start, 
-                 end: eventoFormateado.end,
-                 backgroundColor: nuevoColor,
-                 borderColor: nuevoColor,
-                 classNames: [nuevaClase], 
-                 extendedProps: {
-                     ...ev.extendedProps,
-                     ...eventoFormateado.extendedProps,
-                     estado: estadoRaw,
-                     asistencia: asistenciaRaw
-                 }
-             };
-          }
-          return ev;
-        })
-      );
-
-    } else {
-    
-      console.warn("Evento no encontrado en DOM, recargando...");
-      fetchData();
+     setCalendarEvents(prev => 
+          prev.map(ev => ev.id === eventoIdStr ? {
+                   ...ev, 
+                   start: eventoFormateado.start, 
+                   end: fechaFin,
+                   backgroundColor: nuevoColor, borderColor: nuevoColor, classNames: [nuevaClase], 
+                   extendedProps: { ...ev.extendedProps, ...props, estado: estadoRaw, asistencia: asistenciaRaw }
+               } : ev)
+        );
+      } else {
+        fetchData();
+      }
     }
-  }
-  
-  handleCloseCreateModal();
-  handleCloseViewModal(); 
-};
-
+    handleCloseCreateModal();
+    handleCloseViewModal(); 
+  };
 
  const handleCloseCreateModal = () => {
 console.log("Cerrando Modal Crear/Editar."); 
@@ -517,7 +479,7 @@ const fechaParaModalCreacion = !isEditingMode ? selectedFullDate : null;
         slotMaxTime="23:00:00"
         scrollTime="16:00:00"
 
-        slotDuration="00:20:00"   
+        slotDuration="00:15:00"   
     slotLabelInterval="01:00"
 
          height="75vh"
@@ -559,6 +521,7 @@ const fechaParaModalCreacion = !isEditingMode ? selectedFullDate : null;
           onClose={onTimePickerClose}
           selectedDay={selectedDay}
           onTimeSelect={handleTimeSelect}
+          preselectedTime={preselectedTime}
         />
       )}
 

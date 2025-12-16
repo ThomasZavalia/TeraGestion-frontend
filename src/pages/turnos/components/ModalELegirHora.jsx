@@ -7,21 +7,37 @@ import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { turnoService } from '../../../services/TurnoService';
 
-const ModalElegirHora = ({ isOpen, onClose, selectedDay, onTimeSelect }) => {
+const ModalElegirHora = ({ isOpen, onClose, selectedDay, onTimeSelect, preselectedTime }) => {
   const [availableSlots, setAvailableSlots] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  useEffect(() => {
+ useEffect(() => {
     if (selectedDay) {
       setIsLoading(true);
       const fetchSlots = async () => {
-        const slots = await turnoService.getDisponibilidad(selectedDay);
-        setAvailableSlots(slots);
-        setIsLoading(false);
+        try {
+            const slots = await turnoService.getDisponibilidad(selectedDay);
+            setAvailableSlots(slots);
+
+           
+            if (preselectedTime && slots.includes(preselectedTime)) {
+                console.log("Auto-seleccionando hora clickeada:", preselectedTime);
+                
+             
+                onTimeSelect(preselectedTime); 
+                
+                onClose(); 
+            }
+            
+        } catch (error) {
+            console.error("Error buscando slots:", error);
+        } finally {
+            setIsLoading(false);
+        }
       };
       fetchSlots();
     }
-  }, [selectedDay]);
+  }, [selectedDay, preselectedTime]);
 
   const handleTimeClick = (time) => {
     onTimeSelect(time); 
@@ -29,7 +45,7 @@ const ModalElegirHora = ({ isOpen, onClose, selectedDay, onTimeSelect }) => {
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} isCentered>
+  <Modal isOpen={isOpen} onClose={onClose} isCentered size="lg">
       <ModalOverlay />
       <ModalContent>
         <ModalHeader>
@@ -42,23 +58,31 @@ const ModalElegirHora = ({ isOpen, onClose, selectedDay, onTimeSelect }) => {
         <ModalBody>
           {isLoading ? (
             <Center h="100px">
-              <Spinner />
+              <Spinner size="xl" color="blue.500" thickness="4px" />
             </Center>
           ) : (
-            <Wrap spacing="3">
+            <Wrap spacing="3" justify="center">
               {availableSlots.length > 0 ? (
-                availableSlots.map((time) => (
-                  <Button
-                    key={time}
-                    colorScheme="blue"
-                    variant="outline"
-                    onClick={() => handleTimeClick(time)}
-                  >
-                    {time} hs
-                  </Button>
-                ))
+                availableSlots.map((time) => {
+               
+                  const isPreselected = time === preselectedTime;
+                  
+                  return (
+                    <Button
+                      key={time}
+                      colorScheme={isPreselected ? "green" : "blue"} 
+                      variant={isPreselected ? "solid" : "outline"}
+                      onClick={() => handleTimeClick(time)}
+                      w="80px"
+                    >
+                      {time}
+                    </Button>
+                  );
+                })
               ) : (
-                <Text>No hay horarios disponibles para este día.</Text>
+                <VStack spacing={3}>
+                    <Text>No hay horarios disponibles para este día.</Text>
+                </VStack>
               )}
             </Wrap>
           )}

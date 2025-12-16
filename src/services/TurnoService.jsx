@@ -31,9 +31,9 @@ const formatTurnoForCalendar = (turno) => {
             estado: turno.estado,
             precio: turno.precio,
             asistencia: turno.asistencia,
-            
-            
-            obraSocialId: turno.obraSocialId 
+            obraSocialId: turno.obraSocialId ,
+            duracion: turno.duracion
+           
         }
   };
 };
