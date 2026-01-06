@@ -211,13 +211,18 @@ const handleTimeSelect = async (time) => {
 
     if (turnoAReprogramar) {
         try {
+            
             let turnoActualizado = await turnoService.reprogramarTurno(turnoAReprogramar.id, fullDate);
             
-            // Recalculamos fin dinámicamente al reprogramar
-            const duracion = turnoActualizado.extendedProps?.duracion || turnoActualizado.duracion;
+           
+            const duracion = turnoAReprogramar.extendedProps?.duracion || turnoAReprogramar.duracion || 40;
+            
+          
             turnoActualizado.end = calcularFechaFin(turnoActualizado.start, duracion);
             
+        
             handleTurnoUpdate(turnoActualizado);
+            
             toast({ title: "Turno Reprogramado", status: "success", duration: 3000 });
             setTurnoAReprogramar(null);
         } catch (error) {
@@ -229,8 +234,7 @@ const handleTimeSelect = async (time) => {
         setSelectedFullDate(fullDate); 
         onCreateOpen(); 
     }
-  };
-
+};
   
  const handleEditRequest = (datosDelTurno) => { 
   console.log("[handleEditRequest] Solicitud editar con datos:", datosDelTurno);
@@ -276,67 +280,54 @@ const handleTurnoUpdate = (eventoFormateado) => {
   
   if (calendarRef.current) {
     const calendarApi = calendarRef.current.getApi();
-    const eventoIdStr = eventoFormateado.id.toString();
+    const eventoIdStr = String(eventoFormateado.id); // Forzamos a String para evitar fallos
     const eventoExistente = calendarApi.getEventById(eventoIdStr);
 
+    // 1. Lógica de colores (la misma que ya tienes, está perfecta)
+    const estadoRaw = eventoFormateado.extendedProps?.estado || 'Pendiente';
+    const asistenciaRaw = eventoFormateado.extendedProps?.asistencia || '';
+    const estado = String(estadoRaw).trim().toLowerCase();
+    const asistencia = String(asistenciaRaw).trim().toLowerCase();
+
+    let nuevoColor = '#3182CE'; 
+    let nuevaClase = 'turno-pendiente';
+
+    if (estado === 'pagado') {
+        nuevoColor = '#48BB78';
+        nuevaClase = 'turno-pagado';
+    } else if (estado === 'cancelado') {
+        nuevoColor = '#E53E3E';
+        nuevaClase = 'turno-cancelado';
+    } else if (asistencia === 'ausente') {
+        nuevoColor = '#ED8936';
+        nuevaClase = 'turno-ausente';
+    }
+
+    // 2. Si el evento existe en el calendario, lo actualizamos visualmente YA
     if (eventoExistente) {
-     
-      const estadoRaw = eventoFormateado.extendedProps?.estado || eventoFormateado.estado || 'Pendiente';
-      const asistenciaRaw = eventoFormateado.extendedProps?.asistencia || eventoFormateado.asistencia || '';
-      
-      const estado = String(estadoRaw).trim().toLowerCase();
-      const asistencia = String(asistenciaRaw).trim().toLowerCase();
+      const duracion = eventoFormateado.extendedProps?.duracion || 40;
+      const fechaFin = calcularFechaFin(eventoFormateado.start, duracion);
 
       eventoExistente.setStart(eventoFormateado.start);
-      eventoExistente.setEnd(eventoFormateado.end);
-
-      
-      let nuevoColor = '#3182CE'; 
-      let nuevaClase = 'turno-pendiente';
-
-      if (estado === 'pagado') {
-          nuevoColor = '#48BB78'; // Verde
-          nuevaClase = 'turno-pagado';
-      } else if (estado === 'cancelado') {
-          nuevoColor = '#E53E3E'; // Rojo
-          nuevaClase = 'turno-cancelado';
-      } else if (asistencia === 'ausente') {
-          nuevoColor = '#ED8936'; // Naranja
-          nuevaClase = 'turno-ausente';
-      }
-
-      console.log(`Aplicando -> Color: ${nuevoColor}, Clase: ${nuevaClase}`);
-
-     
-      const duracion = props.duracion || eventoFormateado.duracion;
-        const fechaFin = calcularFechaFin(eventoFormateado.start, duracion);
-
-        eventoExistente.setStart(eventoFormateado.start);
-        eventoExistente.setEnd(fechaFin)
-      
-      eventoExistente.setProp('classNames', [nuevaClase]); 
+      eventoExistente.setEnd(fechaFin);
       eventoExistente.setProp('backgroundColor', nuevoColor);
       eventoExistente.setProp('borderColor', nuevoColor);
+      eventoExistente.setProp('classNames', [nuevaClase]); // Esto activa tu CSS
+      
+      // Actualizamos los datos internos por si vuelves a hacer click sin cerrar
       eventoExistente.setExtendedProp('estado', estadoRaw);
       eventoExistente.setExtendedProp('asistencia', asistenciaRaw);
-      
-     
-     setCalendarEvents(prev => 
-          prev.map(ev => ev.id === eventoIdStr ? {
-                   ...ev, 
-                   start: eventoFormateado.start, 
-                   end: fechaFin,
-                   backgroundColor: nuevoColor, borderColor: nuevoColor, classNames: [nuevaClase], 
-                   extendedProps: { ...ev.extendedProps, ...props, estado: estadoRaw, asistencia: asistenciaRaw }
-               } : ev)
-        );
-      } else {
-        fetchData();
-      }
     }
-    handleCloseCreateModal();
-    handleCloseViewModal(); 
-  };
+
+    // 3. ACTUALIZACIÓN DEL ESTADO Y BASE DE DATOS
+    // Llamamos a fetchData() para que traiga los datos frescos del servidor
+    // y React actualice el estado global de 'calendarEvents'.
+    fetchData(); 
+  }
+
+  handleCloseCreateModal();
+  handleCloseViewModal(); 
+};
 
  const handleCloseCreateModal = () => {
 console.log("Cerrando Modal Crear/Editar."); 

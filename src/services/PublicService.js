@@ -2,7 +2,7 @@ import axios from 'axios';
 
 
 const publicAxios = axios.create({
-  baseURL: 'https://localhost:7066/api/public', 
+  baseURL: 'http://localhost:5000/api/public', 
 });
 
 export const publicService = {

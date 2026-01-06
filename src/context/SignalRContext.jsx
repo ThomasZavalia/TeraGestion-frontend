@@ -34,7 +34,7 @@ export const SignalRProvider = ({ children }) => {
     fetchHistorial();
 
     const newConnection = new HubConnectionBuilder()
-      .withUrl("https://localhost:7066/hubs/notificaciones", { 
+      .withUrl("http://localhost:5000/hubs/notificaciones", { 
         accessTokenFactory: () => token 
       })
       .withAutomaticReconnect()

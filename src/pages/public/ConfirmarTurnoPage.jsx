@@ -19,9 +19,8 @@ const ConfirmarTurnoPage = () => {
       }
 
       try {
-        // Llama a tu API Pública
-        // Asegúrate de que la URL coincida con tu backend
-        await axios.post(`https://localhost:7066/api/public/turnos/confirmar?id=${id}&token=${token}`);
+      
+        await axios.post(`http://localhost:5000/api/public/turnos/confirmar?id=${id}&token=${token}`);
         setStatus('success');
       } catch (error) {
         console.error(error);

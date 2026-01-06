@@ -9,7 +9,7 @@ import {
 import { FiCalendar, FiCheckCircle, FiLogIn, FiUser, FiClock,FiCheck,FiMail } from 'react-icons/fi';
 import { Link as RouterLink } from 'react-router-dom';
 import { useGoogleReCaptcha } from 'react-google-recaptcha-v3';
-import { publicService } from '../../services/publicService';
+import { publicService } from '../../services/PublicService';
 
 
 const PublicHeader = () => {

@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Box, useBreakpointValue } from '@chakra-ui/react';
 import { Outlet } from 'react-router-dom';
 import Sidebar from './SideBar';
-import Navbar from './Navbar';
+import Navbar from './NavBar';
 
 const DashboardLayout = () => {
   const isDesktop = useBreakpointValue({ base: false, md: true });
