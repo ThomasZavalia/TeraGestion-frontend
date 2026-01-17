@@ -1,6 +1,11 @@
 import { extendTheme } from '@chakra-ui/react';
 
 
+const config = {
+  initialColorMode: 'light', 
+  useSystemColorMode: false, 
+};
+
 const colors = {
   brand: {
     900: '#1a365d',
@@ -11,4 +16,4 @@ const colors = {
 };
 
 
-export const theme = extendTheme({ colors });
+export const theme = extendTheme({ config,colors, });
