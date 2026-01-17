@@ -27,6 +27,7 @@ const ReportesPage = () => {
   const [turnosEstado, setTurnosEstado] = useState([]);
   const [turnosMes, setTurnosMes] = useState([]);
   const [ingresosMes, setIngresosMes] = useState([]);
+  const [turnosObraSocial, setTurnosObraSocial] = useState([]);
 
  
   const [loading, setLoading] = useState(true);
@@ -41,14 +42,16 @@ const ReportesPage = () => {
     const loadInitialData = async () => {
       setLoading(true);
       try {
-        const [pacientesData, metodosData, estadoData] = await Promise.all([
+        const [pacientesData, metodosData, estadoData,osData] = await Promise.all([
           reportesService.getTopPacientes(),
           reportesService.getMetodosPago(),
           reportesService.getTurnosPorEstado(),
+          reportesService.getTurnosPorObraSocial(),
         ]);
         setTopPacientes(pacientesData);
         setMetodosPago(metodosData);
         setTurnosEstado(estadoData);
+        setTurnosObraSocial(osData);
         
         await loadMonthlyData(); 
       } catch (error) {
@@ -157,6 +160,15 @@ const ReportesPage = () => {
             labelField="mes"
             valueField="valor"
             isLoading={loadingMes}
+          />
+
+          <HorizontalBarChartReport
+             title="Obras Sociales más Usadas"
+             data={turnosObraSocial}
+             dataLabel="Turnos"
+             labelField="estado" 
+             valueField="cantidad"
+             isLoading={loading}
           />
 
            

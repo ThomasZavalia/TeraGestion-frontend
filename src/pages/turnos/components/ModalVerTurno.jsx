@@ -27,7 +27,7 @@ const [detalle, setDetalle] = useState(null);
 
   const [notas, setNotas] = useState('');
   const [isSavingNotas, setIsSavingNotas] = useState(false);
-  //const [asistenciaRegistrada, setAsistenciaRegistrada] = useState(null); 
+ 
 
   const [metodoPago, setMetodoPago] = useState('Efectivo'); 
 
@@ -273,8 +273,7 @@ const handleGuardarNotas = async () => {
           <ModalBody py={4}> 
             {isLoading ? ( <Center h="150px"><Spinner /></Center> ) : !detalle ? ( <Text>Error</Text> ) : (
                 <VStack align="stretch" spacing={4}>
-                  
-                  {/* 1. DATOS PRINCIPALES (Compacto) */}
+                
                   <Box>
                     <Heading size="md" color={headingColor}>{detalle.pacienteNombre} {detalle.pacienteApellido}</Heading>
                     <Text fontSize="sm" color={secondaryTextColor} mt={1}> {fechaFormateada} </Text>
@@ -286,14 +285,13 @@ const handleGuardarNotas = async () => {
 
                   <Divider borderColor={modalBorder}/>
                   
-                  {/* 2. ASISTENCIA (Siempre visible) */}
+                
                   <Box>
                     <Text fontSize="xs" fontWeight="bold" color="gray.500" mb={2} textTransform="uppercase">Asistencia</Text>
                     {renderAsistencia()}
                   </Box>
 
-                  {/* 3. NOTAS (ACORDEÓN para ahorrar espacio) */}
-                  {/* Solo si hay sesión creada */}
+                
                   {detalle.sesionId && (
                     <Accordion allowToggle>
                       <AccordionItem border="none">
@@ -324,7 +322,6 @@ const handleGuardarNotas = async () => {
                     </Accordion>
                   )}
 
-                  {/* 4. PAGO (Abajo, siempre visible si falta pagar) */}
                   {!isPagado && !isCancelado && ( 
                      <Box pt={2}>
                          <Text fontSize="xs" fontWeight="bold" color="gray.500" mb={2} textTransform="uppercase">Pago</Text>
@@ -358,7 +355,7 @@ const handleGuardarNotas = async () => {
         <AlertDialogOverlay>
           <AlertDialogContent bg={modalBg}> 
             <AlertDialogHeader fontSize="lg" fontWeight="bold"> 
-              Cancelar Turno {/* <-- Texto cambiado */}
+              Cancelar Turno 
             </AlertDialogHeader>
             <AlertDialogBody>
               ¿Estás seguro que deseas cancelar este turno? Esta acción no se puede deshacer.

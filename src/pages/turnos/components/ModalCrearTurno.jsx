@@ -18,7 +18,7 @@ const {
     nombrePaciente, setNombrePaciente,
     apellidoPaciente, setApellidoPaciente,
     dni, setDni,
-    esParticular, setEsParticular,
+    
     obraSocialId, setObraSocialId,
     precio, setPrecio,
     obrasSocialesList,
@@ -28,8 +28,7 @@ const {
     handleSubmit,
     dniError,
     validateDni,
-
-  } = useTurnoForm(config); 
+  } = useTurnoForm(config);
  return (
     <Modal isOpen={isOpen} onClose={onClose} size="xl" isCentered>
       <ModalOverlay />
@@ -119,53 +118,34 @@ const {
   )}
 
              
-            <FormControl display="flex" alignItems="center" pt={2}>
-              <FormLabel htmlFor="es-particular" mb="0"> ¿Es particular? </FormLabel>
-          
-             <Switch 
-               id="es-particular" 
-               isChecked={esParticular} 
-               onChange={(e) => setEsParticular(e.target.checked)} />
+           <FormControl isRequired>
+              <FormLabel>Cobertura / Obra Social</FormLabel>
+              <Select
+                placeholder="Seleccione..."
+               
+                value={obraSocialId ? String(obraSocialId) : ''}
+                onChange={(e) => setObraSocialId(e.target.value ? parseInt(e.target.value) : null)}
+                isDisabled={isLoadingPrecio}
+                bg={inputBg}
+              >
+                {obrasSocialesList.map(os => (
+                  <option key={os.value} value={os.value}>{os.label}</option>
+                ))}
+              </Select>
             </FormControl>
-            
-      
-            {!esParticular && (
-              <VStack spacing={4} w="full">
-                <FormControl isRequired>
-                  <FormLabel>Obra Social</FormLabel>
-                 <Select
-                    placeholder="Seleccione una obra social"
-                  value={obraSocialId ? String(obraSocialId) : ''}
-                    onChange={(e) => setObraSocialId(e.target.value ? parseInt(e.target.value) : null)}>
-                    {obrasSocialesList.map(os => ( <option key={os.value} value={os.value}>{os.label}</option> ))}
-                  </Select>
-                </FormControl>
-                <FormControl>
-              
-                  <FormLabel>Precio {isEditingMode ? '(Guardado)' : '(Calculado)'}</FormLabel> 
-                  <InputGroup>
-                    <InputLeftAddon>$</InputLeftAddon>
-                   
-                    <Input value={precio} isDisabled={isLoadingPrecio || !esParticular} /> 
-                  </InputGroup>
-                </FormControl>
-              </VStack>
-            )}
-            
-           
-            {esParticular && (
-              <VStack spacing={4} w="full">
-                <FormControl> <FormLabel>Obra Social</FormLabel> <Select placeholder="N/A" isDisabled /> </FormControl>
-                <FormControl isRequired>
-                  <FormLabel>Precio (Manual)</FormLabel>
-                  <InputGroup>
-                    <InputLeftAddon>$</InputLeftAddon>
-                   
-                    <Input type="number" value={precio} onChange={(e) => setPrecio(parseFloat(e.target.value))} /> 
-                  </InputGroup>
-                </FormControl>
-              </VStack>
-            )}
+
+            <FormControl>
+              <FormLabel>Precio {isEditingMode ? '(Actual)' : '(Automático)'}</FormLabel>
+              <InputGroup>
+                <InputLeftAddon>$</InputLeftAddon>
+                <Input 
+                    value={precio} 
+                
+                    isDisabled={true} 
+                    bg={inputBg} 
+                /> 
+              </InputGroup>
+            </FormControl>
             
           </VStack>
         </ModalBody>

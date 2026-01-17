@@ -30,7 +30,7 @@ export const pacienteService = {
 checkDniExists: async (dni) => {
       try {
        
-        const { data } = await axiosInstance.get(`/Pacientes/check-dni?dni=${dni}`);
+        const { data } = await axiosInstance.get(`/Paciente/check-dni?dni=${dni}`);
         return data.exists;
       } catch (error) {
         console.error("Error al verificar DNI:", error);

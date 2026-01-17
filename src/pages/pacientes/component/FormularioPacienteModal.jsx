@@ -39,7 +39,7 @@ export const FormularioPacienteModal = ({ isOpen, onClose, onGuardado, pacienteA
         try {
          const lista = await obraSocialService.getObrasSocialesActivas(); 
          setObrasSociales(lista);
-        } catch (error) { console.error("Error cargando lista de OS", error); /* ... toast ... */ } 
+        } catch (error) { console.error("Error cargando lista de OS", error); } 
         finally { setIsLoadingOS(false); }
       };
       cargarObrasSociales();
@@ -47,37 +47,40 @@ export const FormularioPacienteModal = ({ isOpen, onClose, onGuardado, pacienteA
   }, [isOpen, toast]);
 
 
-  useEffect(() => {
+ useEffect(() => {
     if (isOpen) {
       if (isEditing && pacienteAEditar) { 
         const fechaParaInput = pacienteAEditar.fechaNacimiento ? pacienteAEditar.fechaNacimiento.split('T')[0] : '';
+        
         reset({
           nombre: pacienteAEditar.nombre || "",
           apellido: pacienteAEditar.apellido || "",
           dni: pacienteAEditar.dni || "",
           telefono: pacienteAEditar.telefono || "",
           email: pacienteAEditar.email || "",
-          obraSocialId: pacienteAEditar.obraSocialId || "",
+        
+          obraSocialId: pacienteAEditar.obraSocialId || "", 
           fechaNacimiento: fechaParaInput,
         });
       } else {
-      
+       
         reset({
           nombre: "", apellido: "", dni: "", telefono: "",
           email: "", obraSocialId: "", fechaNacimiento: "",
         });
       }
     }
-  }, [pacienteAEditar, isEditing, isOpen, reset]); 
+    
+  }, [pacienteAEditar, isEditing, isOpen, reset, obrasSociales]);
 
 
-  const onFormSubmit = async (data) => { 
-   
+ const onFormSubmit = async (data) => { 
     setSaving(true); 
 
     const datosParaEnviar = {
       ...data,
-      obraSocialId: data.obraSocialId ? parseInt(data.obraSocialId, 10) : null,
+     
+      obraSocialId: parseInt(data.obraSocialId, 10),
       fechaNacimiento: data.fechaNacimiento || null, 
       telefono: data.telefono || null, 
       email: data.email || null, 
@@ -220,14 +223,16 @@ export const FormularioPacienteModal = ({ isOpen, onClose, onGuardado, pacienteA
               />
             </FormControl>
 
-            <FormControl>
-              <FormLabel>Obra Social</FormLabel>
+          <FormControl isRequired isInvalid={errors.obraSocialId}>
+              <FormLabel>Obra Social / Cobertura</FormLabel>
               <Select
                 name="obraSocialId" 
-                placeholder="Sin Obra Social / Particular" 
+                placeholder="Seleccione una opción..." 
                 isDisabled={isLoadingOS}
                 bg={inputBg}
-                {...register('obraSocialId')} 
+                {...register('obraSocialId', { 
+                    required: 'Debe seleccionar una Obra Social o "Particular"' 
+                })} 
               >
                 {obrasSociales.map((os) => (
                   <option key={os.value} value={os.value}>
@@ -235,6 +240,7 @@ export const FormularioPacienteModal = ({ isOpen, onClose, onGuardado, pacienteA
                   </option>
                 ))}
               </Select>
+              <FormErrorMessage>{errors.obraSocialId?.message}</FormErrorMessage>
             </FormControl>
             
           </VStack>

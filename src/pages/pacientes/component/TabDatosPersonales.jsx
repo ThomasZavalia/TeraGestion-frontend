@@ -24,7 +24,7 @@ export const TabDatosPersonales = ({paciente}) => {
 
         return (
     <Box p={4}>
-      {/* SimpleGrid crea columnas responsivas automaticamente */}
+   
       <SimpleGrid columns={{ base: 1, md: 2 }} spacing={6}>
         <DatoItem label="Nombre" valor={paciente.nombre} />
         <DatoItem label="Apellido" valor={paciente.apellido} />

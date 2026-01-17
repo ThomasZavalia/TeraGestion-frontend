@@ -5,27 +5,60 @@ import ChartCard from './ChartCard';
 ChartJS.register(ArcElement, Tooltip, Legend);
 
 
-const defaultColors = [
-  'rgba(54, 162, 235, 0.7)', 
-  'rgba(75, 192, 192, 0.7)',
-  'rgba(255, 206, 86, 0.7)', 
-  'rgba(255, 99, 132, 0.7)', 
-  'rgba(153, 102, 255, 0.7)',
-  'rgba(255, 159, 64, 0.7)', 
+const SEMANTIC_COLORS = {
+ 
+  pagado: '#48BB78',  
+  pendiente: '#3182CE', 
+  cancelado: '#E53E3E', 
+  ausente: '#DD6B20',   
+  
+
+  efectivo: '#38A169',      
+  transferencia: '#805AD5', 
+  mercadopago: '#009EE3',   
+  tarjeta: '#2B6CB0',       
+  debito: '#2C5282',        
+  credito: '#2A4365',      
+};
+
+
+const defaultPalette = [
+  '#3182CE', '#38B2AC', '#805AD5', '#D69E2E', '#E53E3E', '#718096',
 ];
 
+
+const getColorForLabel = (label, index) => {
+  if (!label) return defaultPalette[index % defaultPalette.length];
+  
+  
+  const normalizedLabel = label.toString().toLowerCase().trim();
+
+ 
+  if (SEMANTIC_COLORS[normalizedLabel]) {
+    return SEMANTIC_COLORS[normalizedLabel];
+  }
+
+  
+  return defaultPalette[index % defaultPalette.length];
+};
+
 const PieChartReport = ({ title, data, labelField, valueField, isLoading }) => {
-   const isEmpty = !data || data.length === 0;
+  const isEmpty = !data || data.length === 0;
+
+
+  const backgroundColors = data?.map((item, index) => 
+    getColorForLabel(item[labelField], index)
+  ) || [];
 
   const chartData = {
     labels: data?.map(item => item[labelField]) || [],
     datasets: [
       {
-        label: title, 
+        label: title,
         data: data?.map(item => item[valueField]) || [],
-        backgroundColor: defaultColors.slice(0, data?.length || 0),
-        borderColor: defaultColors.map(color => color.replace('0.7', '1')), 
-        borderWidth: 1,
+        backgroundColor: backgroundColors, 
+        borderColor: 'white', 
+        borderWidth: 2,
       },
     ],
   };
@@ -33,18 +66,21 @@ const PieChartReport = ({ title, data, labelField, valueField, isLoading }) => {
   const options = {
     responsive: true,
     maintainAspectRatio: false,
-     plugins: {
+    plugins: {
       legend: {
-        position: 'top', 
+        position: 'right', 
+        labels: {
+            usePointStyle: true, 
+            padding: 20,
+        }
       },
       title: { display: false },
     },
   };
 
   return (
-     <ChartCard title={title} isLoading={isLoading} isEmpty={isEmpty}>
-      
-      <Pie options={options} data={chartData} /> 
+    <ChartCard title={title} isLoading={isLoading} isEmpty={isEmpty}>
+      <Pie options={options} data={chartData} />
     </ChartCard>
   );
 };
