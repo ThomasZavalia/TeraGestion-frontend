@@ -18,7 +18,7 @@ const {
     nombrePaciente, setNombrePaciente,
     apellidoPaciente, setApellidoPaciente,
     dni, setDni,
-    // esParticular, setEsParticular, 
+    
     obraSocialId, setObraSocialId,
     precio, setPrecio,
     obrasSocialesList,

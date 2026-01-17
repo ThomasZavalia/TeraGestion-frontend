@@ -49,11 +49,11 @@ export const SignalRProvider = ({ children }) => {
     if (connection) {
       connection.start()
         .then(() => {
-          console.log('✅ Conectado a SignalR Hub');
+          
 
           
           connection.on('RecibirNotificacion', (notif) => {
-            console.log('🔔 Notificación:', notif);
+          
             
             setNotificaciones(prev => [notif, ...prev]);
             setUnreadCount(prev => prev + 1);
@@ -73,7 +73,7 @@ export const SignalRProvider = ({ children }) => {
             });
           });
         })
-        .catch(e => console.log('❌ Error conectando SignalR: ', e));
+        .catch(e => console.log(' Error conectando SignalR: ', e));
     }
   }, [connection, toast]);
 

@@ -1,4 +1,4 @@
-/* * VARIABLES DE COLOR (Modo Claro) */
+
 :root {
   --fc-bg-color: var(--chakra-colors-white); 
   --fc-border-color: var(--chakra-colors-gray-200); 
@@ -6,7 +6,7 @@
   --fc-dayheader-text-color: var(--chakra-colors-gray-600); 
   --fc-today-bg-color: var(--chakra-colors-blue-50); 
   
-  /* --- Colores Eventos (Turnos) --- */
+ 
   --turno-pendiente-bg: var(--chakra-colors-blue-500);
   --turno-pendiente-border: var(--chakra-colors-blue-600);
   --turno-pendiente-text: var(--chakra-colors-white);
@@ -15,13 +15,13 @@
   --turno-pagado-border: var(--chakra-colors-green-600);
   --turno-pagado-text: var(--chakra-colors-white);
   
-  /* --- AÑADIDO --- */
+  
   --turno-cancelado-bg: var(--chakra-colors-red-500);
   --turno-cancelado-border: var(--chakra-colors-red-600);
   --turno-cancelado-text: var(--chakra-colors-white);
 }
 
-/* * --- Colores Modo Oscuro --- */
+
 .chakra-ui-dark {
   --fc-bg-color: var(--chakra-colors-gray-800); 
   --fc-border-color: var(--chakra-colors-gray-700); 
@@ -29,7 +29,7 @@
   --fc-dayheader-text-color: var(--chakra-colors-gray-400); 
   --fc-today-bg-color: var(--chakra-colors-blue-900); 
 
-  /* --- Colores Eventos (Modo Oscuro) --- */
+
   --turno-pendiente-bg: var(--chakra-colors-blue-400);
   --turno-pendiente-border: var(--chakra-colors-blue-500);
   --turno-pendiente-text: var(--chakra-colors-gray-900); 
@@ -38,51 +38,33 @@
   --turno-pagado-border: var(--chakra-colors-green-500);
   --turno-pagado-text: var(--chakra-colors-gray-900);
   
-  /* --- AÑADIDO --- */
+
   --turno-cancelado-bg: var(--chakra-colors-red-400);
   --turno-cancelado-border: var(--chakra-colors-red-500);
   --turno-cancelado-text: var(--chakra-colors-gray-900);
 }
 
 
-/*
-.fc-event.turno-pendiente {
-  background-color: var(--turno-pendiente-bg) !important;
-  border-color: var(--turno-pendiente-border) !important;
-  color: var(--turno-pendiente-text) !important;
-}
-.fc-event.turno-pagado {
-  background-color: var(--turno-pagado-bg) !important;
-  border-color: var(--turno-pagado-border) !important;
-  color: var(--turno-pagado-text) !important;
-}
 
-
-.fc-event.turno-cancelado {
-  background-color: var(--turno-cancelado-bg) !important;
-  border-color: var(--turno-cancelado-border) !important;
-  color: var(--turno-cancelado-text) !important;
-  text-decoration: line-through; 
-}*/
 
 .fc-event.turno-pagado {
     background-color: #48BB78 !important;
     border-color: #48BB78 !important;
 }
 
-/* Turno CANCELADO (Rojo) */
+
 .fc-event.turno-cancelado {
     background-color: #E53E3E !important;
     border-color: #E53E3E !important;
 }
 
-/* Turno PENDIENTE (Azul - por defecto, pero forzamos por si acaso) */
+
 .fc-event.turno-pendiente {
     background-color: #3182CE !important;
     border-color: #3182CE !important;
 }
 
-/* Ausencia (Naranja o Rojo suave) */
+
 .fc-event.turno-ausente,
 .fc-event.ausencia {
     background-color: #ED8936 !important;

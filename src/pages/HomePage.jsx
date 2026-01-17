@@ -69,7 +69,7 @@ const TurnosHoyLista = ({ turnos }) => {
   const itemHoverBg = useColorModeValue('gray.100', 'gray.600');
   const textColorPrimary = useColorModeValue('gray.800', 'whiteAlpha.900');
   const textColorSecondary = useColorModeValue('gray.600', 'gray.400');
-  // ----------------------------------------------------
+  
 
   if (turnos.length === 0) {
     return <Text color="gray.500" fontSize="sm">No hay turnos programados para hoy.</Text>;
@@ -99,7 +99,7 @@ const TurnosHoyLista = ({ turnos }) => {
     <List spacing={3}>
       {turnosOrdenados.map((turno) => {
         
-        // Obtenemos la fecha segura para renderizar
+        
         const fechaObj = getFechaValida(turno);
         const horaLegible = fechaObj 
             ? format(fechaObj, 'HH:mm', { locale: es }) 

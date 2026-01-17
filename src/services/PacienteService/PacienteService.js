@@ -18,7 +18,7 @@ export const pacienteService = {
       
       
       return data.map(paciente => ({
-        value: paciente.id, // El ID del paciente
+        value: paciente.id, 
         label: `${paciente.nombre} ${paciente.apellido} (DNI: ${paciente.dni})`, 
         obraSocialId: paciente.obraSocialId, 
       }));
@@ -130,4 +130,22 @@ export const pacienteService = {
         return false; 
       }
     },
+
+
+    getPacientesPaginados: async (pagina = 1, tamanio = 10) => {
+        try {
+          
+            const response = await axios.get(`${API_URL}/pacientes/paginated`, {
+                params: {
+                    pagina: pagina,
+                    tamanio: tamanio
+                }
+            });
+            return response.data; 
+        } catch (error) {
+            console.error("Error al obtener pacientes paginados", error);
+            throw error;
+        }
+    },
+
 };

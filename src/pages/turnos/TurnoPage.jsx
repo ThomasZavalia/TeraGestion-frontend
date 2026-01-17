@@ -78,7 +78,7 @@ const fetchData = async () => {
                 colorFinal = '#48BB78'; 
                 claseCss = 'turno-pagado';
             } else if (estado === 'cancelado') {
-                colorFinal = '#E53E3E'; // Rojo
+                colorFinal = '#E53E3E'; 
                 claseCss = 'turno-cancelado';
             } else if (asistencia === 'ausente') {
                 colorFinal = '#ED8936';
@@ -280,10 +280,10 @@ const handleTurnoUpdate = (eventoFormateado) => {
   
   if (calendarRef.current) {
     const calendarApi = calendarRef.current.getApi();
-    const eventoIdStr = String(eventoFormateado.id); // Forzamos a String para evitar fallos
+    const eventoIdStr = String(eventoFormateado.id); 
     const eventoExistente = calendarApi.getEventById(eventoIdStr);
 
-    // 1. Lógica de colores (la misma que ya tienes, está perfecta)
+  
     const estadoRaw = eventoFormateado.extendedProps?.estado || 'Pendiente';
     const asistenciaRaw = eventoFormateado.extendedProps?.asistencia || '';
     const estado = String(estadoRaw).trim().toLowerCase();
@@ -303,7 +303,7 @@ const handleTurnoUpdate = (eventoFormateado) => {
         nuevaClase = 'turno-ausente';
     }
 
-    // 2. Si el evento existe en el calendario, lo actualizamos visualmente YA
+ 
     if (eventoExistente) {
       const duracion = eventoFormateado.extendedProps?.duracion || 40;
       const fechaFin = calcularFechaFin(eventoFormateado.start, duracion);
@@ -312,16 +312,14 @@ const handleTurnoUpdate = (eventoFormateado) => {
       eventoExistente.setEnd(fechaFin);
       eventoExistente.setProp('backgroundColor', nuevoColor);
       eventoExistente.setProp('borderColor', nuevoColor);
-      eventoExistente.setProp('classNames', [nuevaClase]); // Esto activa tu CSS
+      eventoExistente.setProp('classNames', [nuevaClase]); 
       
-      // Actualizamos los datos internos por si vuelves a hacer click sin cerrar
+      
       eventoExistente.setExtendedProp('estado', estadoRaw);
       eventoExistente.setExtendedProp('asistencia', asistenciaRaw);
     }
 
-    // 3. ACTUALIZACIÓN DEL ESTADO Y BASE DE DATOS
-    // Llamamos a fetchData() para que traiga los datos frescos del servidor
-    // y React actualice el estado global de 'calendarEvents'.
+   
     fetchData(); 
   }
 

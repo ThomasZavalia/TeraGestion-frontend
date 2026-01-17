@@ -24,9 +24,9 @@ const ModalRegistrarAusencia = ({ isOpen, onClose, onAusenciaCreada }) => {
 
     if (result.success) {
       toast({ title: 'Día bloqueado correctamente', description: 'Se han notificado a los pacientes afectados.', status: 'success', duration: 5000 });
-      onAusenciaCreada(); // Recarga el calendario
+      onAusenciaCreada(); 
       onClose();
-      setFecha(''); setMotivo(''); // Limpia form
+      setFecha(''); setMotivo(''); 
     } else {
       toast({ title: 'Error', description: result.message, status: 'error' });
     }

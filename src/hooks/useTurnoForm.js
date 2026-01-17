@@ -53,12 +53,12 @@ useEffect(() => {
       setObraSocialId(turnoAEditar.obraSocialId);
       setPrecio(turnoAEditar.precio || 0);
       
-      // Limpiar campos nuevo paciente
+     
       setNombrePaciente(''); setApellidoPaciente(''); setDni(''); setDniError(null);
       
       setDidInitForEdit(true);
     } else if (!isEditingMode) {
-      // MODO CREACIÓN
+   
       setPacienteTipo('existente');
       setPacienteSeleccionado(null);
       setNombrePaciente(''); setApellidoPaciente(''); setDni(''); setDniError(null);
@@ -118,9 +118,7 @@ useEffect(() => {
 
 
   const handleSubmit = async () => {
-    // --- VALIDACIONES ---
-    
-    // 1. Validar Paciente
+
     if (!isEditingMode) {
         if (pacienteTipo === 'existente' && !pacienteSeleccionado) {
             toast({ title: 'Falta Paciente', description: 'Seleccione un paciente existente.', status: 'error' });
@@ -176,11 +174,11 @@ useEffect(() => {
         
         toast({ title: 'Turno Actualizado', status: 'success', duration: 3000 });
         
-        // Combina datos para la UI
+    
         onTurnoActualizado({ ...turnoActualizado, id: turnoAEditar.id }); 
 
       } else {
-        // --- CREACIÓN ---
+    
         if (!selectedDate) throw new Error("Falta fecha");
 
         const dtoCreacion = {
@@ -212,7 +210,7 @@ useEffect(() => {
     nombrePaciente, setNombrePaciente,
     apellidoPaciente, setApellidoPaciente,
     dni, setDni,
-    //esParticular, setEsParticular: () => {}, 
+  
     obraSocialId, setObraSocialId,
     precio, setPrecio,
     obrasSocialesList,

@@ -13,7 +13,7 @@ import { SesionService } from '../../../services/SesionService/SesionService';
 export const TabHistorialSesiones = ({ sesiones, onRecargar }) => {
   const toast = useToast();
 
-  // --- Lógica para el Modal de Edición ---
+ 
   const { 
     isOpen: isEditOpen, 
     onOpen: onEditOpen, 

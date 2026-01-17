@@ -26,7 +26,7 @@ export const sesionService = {
                          || "No se pudo registrar la asistencia.";
       
       
-      if (errorMessage.includes("Ya existe una sesión")) {
+      if (errorMessage.includes("Ya existe una sesion")) {
            return { success: false, message: errorMessage, alreadyExists: true };
       }
       return { success: false, message: errorMessage };
@@ -40,7 +40,7 @@ export const sesionService = {
       const { data } = await axiosInstance.put(`/Sesion/${id}`, sesionData);
       return { success: true, data };
     } catch (error) {
-      console.error("Error actualizando sesión:", error);
+      console.error("Error actualizando sesion:", error);
       return { success: false, message: "Error al guardar notas." };
     }
   },

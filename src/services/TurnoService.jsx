@@ -45,7 +45,7 @@ export const turnoService = {
   getTurnos: async () => {
     try {
       const { data } = await axiosInstance.get('/Turno'); 
-      console.log("DATOS CRUDOS DE LA API (/Turno):", data);
+
       return data.map(formatTurnoForCalendar); 
     } catch (error) {
       console.error("Error al obtener turnos:", error);
