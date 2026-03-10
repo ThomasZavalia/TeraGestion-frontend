@@ -4,6 +4,7 @@ import { useToast } from '@chakra-ui/react';
 import { turnoService } from '../services/TurnoService';
 import { pacienteService } from '../services/PacienteService';
 import { obraSocialService } from '../services/ObraSocialService';
+import { usuarioService } from '../services/UsuarioService';
 
 
 export const useTurnoForm = (config) => {
@@ -22,6 +23,8 @@ export const useTurnoForm = (config) => {
   const [dni, setDni] = useState('');
   const [obraSocialId, setObraSocialId] = useState(null); 
   const [precio, setPrecio] = useState(0);
+  const [terapeutaId, setTerapeutaId] = useState(config.terapeutaId || '');
+  const [terapeutasList, setTerapeutasList] = useState([]);
 
 
  const [dniError, setDniError] = useState(null);
@@ -31,19 +34,23 @@ export const useTurnoForm = (config) => {
   const [didInitForEdit, setDidInitForEdit] = useState(false);
   
 useEffect(() => {
+    
     obraSocialService.getObrasSocialesActivas()
       .then(data => {
-         
          const formattedList = data.map(os => ({ value: os.id, label: os.nombre }));
          setObrasSocialesList(formattedList);
       })
       .catch(error => { console.error("Error cargando OS:", error); setObrasSocialesList([]); });
+
+    usuarioService.getTerapeutas()
+      .then(data => setTerapeutasList(data))
+      .catch(error => console.error("Error cargando terapeutas:", error));
   }, []);
 
 
  useEffect(() => {
     if (isEditingMode && turnoAEditar && !didInitForEdit) {
-      // MODO EDICIÓN
+   
       setPacienteTipo('existente');
       setPacienteSeleccionado({
         value: turnoAEditar.pacienteId,
@@ -64,6 +71,7 @@ useEffect(() => {
       setNombrePaciente(''); setApellidoPaciente(''); setDni(''); setDniError(null);
       setObraSocialId(null);
       setPrecio(0);
+     setTerapeutaId(config.terapeutaId || '');
       setDidInitForEdit(false);
     }
   }, [isEditingMode, turnoAEditar, didInitForEdit]);
@@ -112,7 +120,7 @@ useEffect(() => {
         else setDniError(null);
     } catch (error) {
         console.error("Error validando DNI:", error);
-        // No bloqueamos por error de red, pero podríamos mostrar un warning
+    
     }
   }, [pacienteTipo, isEditingMode]);
 
@@ -120,6 +128,11 @@ useEffect(() => {
   const handleSubmit = async () => {
 
     if (!isEditingMode) {
+
+     if (!terapeutaId) {
+            toast({ title: 'Falta Profesional', description: 'Seleccione un profesional para este turno.', status: 'error' });
+            return;
+        }
         if (pacienteTipo === 'existente' && !pacienteSeleccionado) {
             toast({ title: 'Falta Paciente', description: 'Seleccione un paciente existente.', status: 'error' });
             return; 
@@ -187,6 +200,7 @@ useEffect(() => {
             nombrePaciente: pacienteTipo === 'nuevo' ? nombrePaciente : null,
             apellidoPaciente: pacienteTipo === 'nuevo' ? apellidoPaciente : null,
             dni: pacienteTipo === 'nuevo' ? dni : null,
+            terapeutaId: parseInt(terapeutaId, 10)
         };
 
         console.log('Create DTO:', dtoCreacion); 
@@ -220,5 +234,7 @@ useEffect(() => {
     handleSubmit,
     dniError,
     validateDni,
+    terapeutaId, setTerapeutaId,
+    terapeutasList
   };
 };

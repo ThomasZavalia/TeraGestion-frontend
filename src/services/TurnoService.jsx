@@ -32,7 +32,8 @@ const formatTurnoForCalendar = (turno) => {
             precio: turno.precio,
             asistencia: turno.asistencia,
             obraSocialId: turno.obraSocialId ,
-            duracion: turno.duracion
+            duracion: turno.duracion,
+            terapeutaId: turno.terapeutaId
            
         }
   };
@@ -77,11 +78,11 @@ export const turnoService = {
     return formatTurnoForCalendar(data); 
   },
   
-  getDisponibilidad: async (fecha) => {
+  getDisponibilidad: async (fecha, terapeutaId) => {
     try {
   
       const dateString = fecha.toISOString().split('T')[0];
-      const { data } = await axiosInstance.get(`/Turno/disponibilidad?fecha=${dateString}`);
+      const { data } = await axiosInstance.get(`/Turno/disponibilidad/${terapeutaId}?fecha=${dateString}`);
       return data; 
     } catch (error) {
       console.error("Error al obtener disponibilidad:", error);

@@ -1,11 +1,9 @@
-// src/router/ProtectedRoute.jsx
 import { Navigate, Outlet } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { Box, Spinner } from '@chakra-ui/react';
 
-const ProtectedRoute = () => {
-  const { isAuthenticated, loading } = useAuth();
-
+const ProtectedRoute = ({ allowedRoles }) => {
+  const { user, isAuthenticated, loading } = useAuth();
 
   if (loading) {
     return (
@@ -15,11 +13,13 @@ const ProtectedRoute = () => {
     );
   }
 
- 
   if (!isAuthenticated) {
     return <Navigate to="/login" replace />;
   }
 
+  if (allowedRoles && user && !allowedRoles.includes(user.rol)) {
+    return <Navigate to="/" replace />; 
+  }
 
   return <Outlet />;
 };

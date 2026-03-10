@@ -9,11 +9,13 @@ import {
   Text,
   Center, 
   useColorModeValue,
+  IconButton, Tooltip
 } from '@chakra-ui/react';
+import { FiXCircle } from 'react-icons/fi';
 import { format, parseISO } from 'date-fns'; 
 import { es } from 'date-fns/locale';
 
-const TablaPagos = ({ pagos }) => {
+const TablaPagos = ({ pagos,onAnular }) => {
 
   const headerBg = useColorModeValue('gray.50', 'gray.700');
   const emptyText = useColorModeValue('gray.500', 'gray.400');
@@ -46,7 +48,7 @@ const TablaPagos = ({ pagos }) => {
             <Th>Paciente</Th>
             <Th isNumeric>Monto</Th>
             <Th>Método de Pago</Th>
-            {/* <Th>Acciones</Th> */}
+            <Th textAlign="center">Acciones</Th>
           </Tr>
         </Thead>
         <Tbody>
@@ -56,7 +58,20 @@ const TablaPagos = ({ pagos }) => {
               <Td>{`${pago.pacienteNombre} ${pago.pacienteApellido}`}</Td>
               <Td isNumeric>${pago.monto?.toLocaleString('es-AR') || '-'}</Td>
               <Td>{pago.metodoPago}</Td>
-              
+
+          <Td textAlign="center">
+                <Tooltip label="Anular Pago" fontSize="xs">
+                  <IconButton 
+                    icon={<FiXCircle />} 
+                    size="sm" 
+                    variant="ghost" 
+                    colorScheme="red" 
+                    onClick={() => onAnular(pago)} 
+                    aria-label="Anular pago"
+                  />
+                  
+                </Tooltip>
+              </Td>
             </Tr>
           ))}
         </Tbody>

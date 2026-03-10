@@ -1,6 +1,7 @@
 import React from 'react';
 import { Routes, Route } from 'react-router-dom';
 import DashboardLayout from '../layouts/DashboardLayout';
+import { Box } from '@chakra-ui/react';
 import ProtectedRoute from './ProtectedRoute';
 import LoginPage from '../pages/LoginPage';
 import HomePage from '../pages/HomePage';
@@ -12,6 +13,9 @@ import PerfilPage from '../pages/perfil/PerfilPage';
 import ReservaPage from '../pages/public/ReservaPage';
 import ConfirmarTurnoPage from '../pages/public/ConfirmarTurnoPage';
 import { SignalRProvider } from '../context/SignalRContext';
+import ForgotPasswordPage from '../pages/auth/ForgotPasswordPage';
+import ResetPasswordPage from '../pages/auth/ResetPasswordPage';
+import ObrasSocialesCRUD from '../pages/perfil/components/ObrasSocialesCrud';
 
 
 import { PacienteDetallePage } from '../pages/pacientes/PacienteDetallePage';
@@ -31,8 +35,8 @@ const AppRouter = () => {
       <Route path="/reservar" element={<ReservaPage />} />
       <Route path="/confirmar-turno" element={<ConfirmarTurnoPage />} />
 
-      <Route path="/forgot-password" element={<div>Olvidé contraseña (Pendiente)</div>} />
-      <Route path="/reset-password" element={<div>Resetear (Pendiente)</div>} />
+     <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+      <Route path="/reset-password" element={<ResetPasswordPage />} />
 
      
       <Route element={<ProtectedRoute />}>
@@ -47,9 +51,18 @@ const AppRouter = () => {
        
           <Route path="/turnos" element={<TurnosPage />} />
           
-        <Route path="/pagos" element={<PagosPage />} />
-        <Route path="/reportes" element={<ReportesPage />} />
-        <Route path="/configuracion" element={<PerfilPage />} />
+    <Route element={<ProtectedRoute allowedRoles={['Admin', 'Terapeuta']} />}>
+            <Route path="/reportes" element={<ReportesPage />} />
+          </Route>
+
+        <Route element={<ProtectedRoute allowedRoles={['Admin', 'Secretaria']} />}>
+            <Route path="/pagos" element={<PagosPage />} />
+            <Route path="/obras-sociales" element={<Box p={6}><ObrasSocialesCRUD /></Box>} />
+          </Route>
+
+          <Route element={<ProtectedRoute allowedRoles={['Admin']} />}>
+            <Route path="/configuracion" element={<PerfilPage />} />
+          </Route>
           
         </Route>
       </Route>

@@ -28,6 +28,8 @@ const {
     handleSubmit,
     dniError,
     validateDni,
+    terapeutaId, setTerapeutaId, 
+    terapeutasList,
   } = useTurnoForm(config);
  return (
     <Modal isOpen={isOpen} onClose={onClose} size="xl" isCentered>
@@ -47,8 +49,21 @@ const {
         
         <ModalBody>
           <VStack spacing={4}>
-           
-            <FormControl isDisabled={isEditingMode}> 
+          {!isEditingMode && (
+              <FormControl isRequired>
+                <FormLabel>Profesional Asignado</FormLabel>
+                <Select
+                  value={terapeutaId}
+                  isDisabled={true} 
+                  bg={useColorModeValue('gray.100', 'gray.600')} 
+                >
+                  {terapeutasList.map(t => (
+                    <option key={t.id} value={t.id}>{t.nombreCompleto}</option>
+                  ))}
+                </Select>
+              </FormControl>
+            )}
+            <FormControl isDisabled={isEditingMode}>
               <FormLabel>Paciente</FormLabel>
               <RadioGroup value={pacienteTipo} onChange={setPacienteTipo}>
                 <Stack direction="row" spacing={5}>

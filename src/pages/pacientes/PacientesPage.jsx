@@ -25,6 +25,7 @@ import {
   Alert,AlertIcon,
   Input,
   useColorModeValue,
+  Tag,
 } from '@chakra-ui/react';
 import { AddIcon} from "@chakra-ui/icons"; 
 import { FiFilter } from "react-icons/fi";
@@ -35,10 +36,15 @@ import { FormularioPacienteModal } from './component/FormularioPacienteModal';
 import { ComfirmarEliminarModal } from './component/ComfirmarEliminarModal';
 import { pacienteService } from '../../services/PacienteService/PacienteService';
 import { obraSocialService } from '../../services/ObraSocialService';
+import { usePacientesPaginados } from '../../hooks/usePacientesPaginados';
+import Pagination from '../../components/ui/Pagination';
 
 const PacientesPage = () => {
 
-  const { pacientes, loading, error, recargarPacientes, eliminarPaciente } = usePacientes();
+const { 
+      pacientes, loading, error, currentPage, totalPages, totalItems, pageSize, filtros,
+      cambiarPagina, aplicarFiltros, cambiarTamanio, eliminarPaciente, reactivarPaciente, recargarPacientes 
+  } = usePacientesPaginados();
   const toast = useToast();
 
   const [busqueda, setBusqueda] = useState('');
@@ -54,7 +60,7 @@ const PacientesPage = () => {
   const navigate = useNavigate();
 
   const { isOpen: isFilterOpen, onOpen: onFilterOpen, onClose: onFilterClose } = useDisclosure();
- const [filtros, setFiltros] = useState({ obraSocialId: '', activo: '', tienePagosPendientes: '' });
+ const [filtrosLocales, setFiltrosLocales] = useState({ obraSocialId: '', activo: 'true', tienePagosPendientes: '' });
   const [obrasSociales, setObrasSociales] = useState([]);
   const [isLoadingOS, setIsLoadingOS] = useState(false);
 
@@ -70,8 +76,15 @@ const PacientesPage = () => {
   }, []);
 
   useEffect(() => {
-     recargarPacientes({ activo: 'true' }); 
-  }, [recargarPacientes]);
+
+  if (isFilterOpen) {
+    setFiltrosLocales({
+      obraSocialId: filtros.obraSocialId || '',
+      activo: filtros.activo || 'true',
+      tienePagosPendientes: filtros.tienePagosPendientes || ''
+    });
+  }
+}, [isFilterOpen, filtros]);
 
   useEffect(() => {
     
@@ -107,14 +120,12 @@ const PacientesPage = () => {
     onAlertOpen(); 
   };
 
-  const handleReactivar = async (paciente) => {
-      
+  const handleReactivarClick = async (paciente) => {
       try {
-          await pacienteService.actualizarPaciente(paciente.id, { ...paciente, activo: true });
+          await reactivarPaciente(paciente);
           toast({ title: "Paciente Reactivado", status: "success", duration: 3000 });
-          recargarPacientes(filtros);
       } catch (error) {
-          toast({ title: "Error al reactivar", description: error.message, status: "error" });
+          toast({ title: "Error al reactivar", status: "error" });
       }
   };
 
@@ -144,21 +155,22 @@ const PacientesPage = () => {
     }
   };
 
-  const handleFiltroChange = (e) => {
+  const handleFiltroLocalChange = (e) => {
     const { name, value } = e.target;
-    setFiltros(prev => ({ ...prev, [name]: value }));
+    setFiltrosLocales(prev => ({ ...prev, [name]: value }));
   };
 
-  const handleAplicarFiltros = () => {
-    recargarPacientes(filtros); 
+ const handleAplicarFiltros = () => {
+    aplicarFiltros(filtrosLocales); 
     onFilterClose(); 
   };
 
- const handleLimpiarFiltros = () => {
-        setFiltros({ obraSocialId: '', activo: 'true', tienePagosPendientes: '' }); 
-        recargarPacientes({activo:'true'}); 
-        onFilterClose();
-    };
+const handleLimpiarFiltros = () => {
+      const filtrosLimpios = { obraSocialId: '', activo: 'true', tienePagosPendientes: '' };
+      setFiltrosLocales(filtrosLimpios); 
+      aplicarFiltros(filtrosLimpios); 
+      onFilterClose();
+  };
 
     const boxBg = useColorModeValue('white', 'gray.800');
   const inputBg = useColorModeValue('white', 'gray.700');
@@ -218,16 +230,93 @@ const PacientesPage = () => {
       </HStack>
 
      <Input 
-          placeholder="Buscar en la lista por nombre, apellido o DNI..." 
-          value={busqueda}
-          onChange={(e) => setBusqueda(e.target.value)}
+          placeholder="Buscar en el servidor por nombre, apellido o DNI..." 
+          value={filtros.busqueda}
+          onChange={(e) => aplicarFiltros({ busqueda: e.target.value })}
           mb={4}
           bg={inputBg}
       />
+
+      {(filtros.obraSocialId || filtros.tienePagosPendientes || filtros.activo !== 'true') && (
+  <Box mb={4} p={3} bg="blue.50" borderRadius="md" borderLeftWidth="4px" borderLeftColor="blue.500">
+    <HStack justify="space-between" align="start">
+      <VStack align="start" spacing={1}>
+        <Text fontSize="sm" fontWeight="bold" color="blue.700">
+          Filtros Activos:
+        </Text>
+        
+        {filtros.obraSocialId && (
+          <Tag size="sm" colorScheme="blue">
+            Obra Social: {obrasSociales.find(os => os.value === filtros.obraSocialId)?.label}
+          </Tag>
+        )}
+        
+        {filtros.activo === 'false' && (
+          <Tag size="sm" colorScheme="blue">
+            Inactivos
+          </Tag>
+        )}
+        
+        {filtros.tienePagosPendientes === 'true' && (
+          <Tag size="sm" colorScheme="blue">
+            Con Pagos Pendientes
+          </Tag>
+        )}
+      </VStack>
+      
+      <Button 
+        size="xs" 
+        variant="ghost" 
+        colorScheme="blue"
+        onClick={() => {
+          const filtrosLimpios = { busqueda: '', obraSocialId: '', activo: 'true', tienePagosPendientes: '' };
+          aplicarFiltros(filtrosLimpios);
+          setFiltrosLocales(filtrosLimpios);
+        }}
+      >
+        Limpiar Todos
+      </Button>
+    </HStack>
+  </Box>
+)}
       
 
-      <Box bg={boxBg} p={4} borderRadius="md" shadow="md"> 
-        {contenido()}
+     <Box bg={boxBg} p={4} borderRadius="md" shadow="md"> 
+        {error && <Alert status='error' mb={4}><AlertIcon />Error al cargar los pacientes.</Alert>}
+        
+       {loading && pacientes.length === 0 ? (
+            <Center p={10}><Spinner size="xl" /></Center>
+        ) : (
+            <Box position="relative">
+                {loading && (
+                    <Box 
+                        position="absolute" top="0" left="0" right="0" bottom="0" 
+                        bg={useColorModeValue('whiteAlpha.700', 'blackAlpha.600')} 
+                        zIndex="2" display="flex" justifyContent="center" pt="10"
+                    >
+                        <Spinner size="lg" color="blue.500" />
+                    </Box>
+                )}
+                
+                <Box opacity={loading ? 0.4 : 1} pointerEvents={loading ? "none" : "auto"} transition="opacity 0.2s">
+                    <TablaPacientes 
+                        pacientes={pacientes} 
+                        onEditar={handleEditar} 
+                        onEliminar={handleEliminar} 
+                        onReactivar={handleReactivarClick} 
+                    />
+                    
+                    <Pagination 
+                        currentPage={currentPage}
+                        totalPages={totalPages}
+                        totalItems={totalItems}
+                        pageSize={pageSize}
+                        onPageChange={cambiarPagina}
+                        onPageSizeChange={cambiarTamanio}
+                    />
+                </Box>
+            </Box>
+        )}
       </Box>
 
       
@@ -256,75 +345,36 @@ const PacientesPage = () => {
         <DrawerContent>
           <DrawerCloseButton />
           <DrawerHeader borderBottomWidth="1px">Filtrar Pacientes</DrawerHeader>
-
           <DrawerBody>
             <VStack spacing={4}>
-              
               <FormControl>
                 <FormLabel fontSize="sm">Obra Social</FormLabel>
-                <Select
-                  name="obraSocialId"
-                  value={filtros.obraSocialId}
-                  onChange={handleFiltroChange}
-                  placeholder={isLoadingOS ? "Cargando..." : "Todas"} 
-                  size="sm"
-                 
-                  isDisabled={isLoadingOS} 
-                >
-                
-                  {!isLoadingOS && obrasSociales.map(os => (
-                   
-                    <option key={os.value} value={os.value}> 
-                      {os.label}
-                    </option>
-                  ))}
-                 
+                <Select name="obraSocialId" value={filtrosLocales.obraSocialId} onChange={handleFiltroLocalChange} placeholder={isLoadingOS ? "Cargando..." : "Todas"}>
+                  {!isLoadingOS && obrasSociales.map(os => (<option key={os.value} value={os.value}>{os.label}</option>))}
                 </Select>
               </FormControl>
-              
-             
               <FormControl>
                 <FormLabel fontSize="sm">Estado</FormLabel>
-                <Select
-                  name="activo"
-                  value={filtros.activo}
-                  onChange={handleFiltroChange}
-                  placeholder="Todos"
-                  size="sm"
-                >
+                <Select name="activo" value={filtrosLocales.activo} onChange={handleFiltroLocalChange} placeholder="Todos">
                   <option value="true">Activo</option>
                   <option value="false">Inactivo</option>
                 </Select>
               </FormControl>
-
               <FormControl>
-                             <FormLabel fontSize="sm">Pagos</FormLabel>
-                                <Select
-                                  name="tienePagosPendientes"
-                                  value={filtros.tienePagosPendientes}
-                                  onChange={handleFiltroChange}
-                                  placeholder="Todos"
-                                  size="sm"
-                                >
-                                    <option value="true">Con pagos pendientes</option>
-                                    <option value="false">Sin pagos pendientes</option>
-                                </Select>
-                            </FormControl>
-
+                <FormLabel fontSize="sm">Pagos</FormLabel>
+                <Select name="tienePagosPendientes" value={filtrosLocales.tienePagosPendientes} onChange={handleFiltroLocalChange} placeholder="Todos">
+                    <option value="true">Con pagos pendientes</option>
+                    <option value="false">Sin pagos pendientes</option>
+                </Select>
+              </FormControl>
             </VStack>
           </DrawerBody>
-
           <DrawerFooter borderTopWidth="1px">
-            <Button variant="outline" mr={3} onClick={handleLimpiarFiltros} size="sm">
-              Limpiar
-            </Button>
-            <Button colorScheme="blue" onClick={handleAplicarFiltros} size="sm">
-              Aplicar Filtros
-            </Button>
+            <Button variant="outline" mr={3} onClick={handleLimpiarFiltros} size="sm">Limpiar</Button>
+            <Button colorScheme="blue" onClick={handleAplicarFiltros} size="sm">Aplicar Filtros</Button>
           </DrawerFooter>
         </DrawerContent>
       </Drawer>
-      
     </Box>
   );
 };

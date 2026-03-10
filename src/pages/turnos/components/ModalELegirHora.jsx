@@ -7,28 +7,29 @@ import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { turnoService } from '../../../services/TurnoService';
 
-const ModalElegirHora = ({ isOpen, onClose, selectedDay, onTimeSelect, preselectedTime }) => {
+const ModalElegirHora = ({ isOpen, onClose, selectedDay, onTimeSelect, preselectedTime, terapeutaId }) => {
   const [availableSlots, setAvailableSlots] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
 
  useEffect(() => {
+   
+    if (!terapeutaId) {
+        setIsLoading(false);
+        setAvailableSlots([]);
+        return; 
+    }
+
     if (selectedDay) {
       setIsLoading(true);
       const fetchSlots = async () => {
         try {
-            const slots = await turnoService.getDisponibilidad(selectedDay);
+            const slots = await turnoService.getDisponibilidad(selectedDay, terapeutaId);
             setAvailableSlots(slots);
 
-           
             if (preselectedTime && slots.includes(preselectedTime)) {
-                console.log("Auto-seleccionando hora clickeada:", preselectedTime);
-                
-             
                 onTimeSelect(preselectedTime); 
-                
                 onClose(); 
             }
-            
         } catch (error) {
             console.error("Error buscando slots:", error);
         } finally {
@@ -37,7 +38,7 @@ const ModalElegirHora = ({ isOpen, onClose, selectedDay, onTimeSelect, preselect
       };
       fetchSlots();
     }
-  }, [selectedDay, preselectedTime]);
+  }, [selectedDay, preselectedTime, terapeutaId]);
 
   const handleTimeClick = (time) => {
     onTimeSelect(time); 

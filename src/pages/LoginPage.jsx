@@ -5,6 +5,8 @@ import {
 } from '@chakra-ui/react';
 import { AiOutlineEye, AiOutlineEyeInvisible } from 'react-icons/ai';
 import { useLoginForm } from '../hooks/useLoginForm'; 
+import { Link as RouterLink } from 'react-router-dom';
+import { Link as ChakraLink } from '@chakra-ui/react';
 
 const LoginPage = () => {
   const {
@@ -74,6 +76,12 @@ const LoginPage = () => {
                     />
                   </InputRightElement>
                 </InputGroup>
+         <Box textAlign="right" mt={2}>
+        <ChakraLink as={RouterLink} to="/forgot-password" color="blue.500" fontSize="sm">
+            ¿Olvidaste tu contraseña?
+        </ChakraLink>
+          </Box>
+
               </FormControl>
               <Button
                 type="submit"

@@ -92,4 +92,38 @@ export const reportesService = {
             return [];
         }
     },
+
+
+    exportarExcel: async (filtros = {}) => {
+        try {
+            const params = new URLSearchParams();
+            const fechaDesde = formatDateQuery(filtros.fechaDesde);
+            const fechaHasta = formatDateQuery(filtros.fechaHasta);
+            
+            if (fechaDesde) params.append('fechaDesde', fechaDesde);
+            if (fechaHasta) params.append('fechaHasta', fechaHasta);
+
+            const response = await axiosInstance.get('/Reportes/exportar-excel', { 
+                params,
+                responseType: 'blob' 
+            });
+            
+            return response.data; 
+        } catch (error) {
+            console.error("Error exportando excel:", error);
+            throw error;
+        }
+    },
+    
+    getMiRendimiento: async () => {
+        try {
+            const { data } = await axiosInstance.get('/Reportes/mi-rendimiento');
+            return data;
+        } catch (error) {
+            console.error("Error fetching rendimiento terapeuta:", error);
+            return null;
+        }
+    }
+
+
 };

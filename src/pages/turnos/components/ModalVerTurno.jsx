@@ -276,6 +276,9 @@ const handleGuardarNotas = async () => {
                 
                   <Box>
                     <Heading size="md" color={headingColor}>{detalle.pacienteNombre} {detalle.pacienteApellido}</Heading>
+                   <Text fontSize="sm" fontWeight="bold" color="blue.500" mt={1}> 
+    Profesional: {detalle.terapeutaNombreCompleto || detalle.terapeutaNombre || "No asignado"} 
+                   </Text>
                     <Text fontSize="sm" color={secondaryTextColor} mt={1}> {fechaFormateada} </Text>
                     <HStack mt={2}>
                         <Tag colorScheme={isCancelado ? 'red' : (isPagado ? 'green' : 'blue')} size="sm">{detalle.estado}</Tag>
@@ -329,7 +332,7 @@ const handleGuardarNotas = async () => {
                             <Select size="sm" value={metodoPago} onChange={(e) => setMetodoPago(e.target.value)} isDisabled={isPaying} bg={inputBg}>
                                 <option value="Efectivo">Efectivo</option>
                                 <option value="Transferencia">Transferencia</option>
-                                <option value="MercadoPago">MercadoPago</option>
+                               
                             </Select>
                             <Button leftIcon={<FiCheckCircle />} colorScheme="green" onClick={handleMarcarPagado} isLoading={isPaying} size="sm" px={6}>
                                 Cobrar

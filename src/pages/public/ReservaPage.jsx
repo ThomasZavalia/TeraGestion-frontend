@@ -71,6 +71,8 @@ const ReservaPage = () => {
   const [horarios, setHorarios] = useState([]);
   const [horaSeleccionada, setHoraSeleccionada] = useState(null);
   const [obrasSociales, setObrasSociales] = useState([]);
+  const [terapeutas, setTerapeutas] = useState([]);
+  const [terapeutaSeleccionado, setTerapeutaSeleccionado] = useState('');
   
   const [formData, setFormData] = useState({
     nombre: '', apellido: '', dni: '', email: '', telefono: '', obraSocialId: ''
@@ -84,6 +86,8 @@ const ReservaPage = () => {
 
   useEffect(() => {
     publicService.getObrasSociales().then(setObrasSociales);
+    
+    publicService.getTerapeutas().then(setTerapeutas);
   }, []);
 
   const handleFechaChange = async (e) => {
@@ -91,13 +95,17 @@ const ReservaPage = () => {
     setFecha(nuevaFecha);
     setHorarios([]);
     setHoraSeleccionada(null);
+    if (!terapeutaSeleccionado) {
+        toast({ title: "Selecciona un profesional primero", status: "warning" });
+        return;
+    }
     if (nuevaFecha) {
       setLoading(true);
       try {
         const dateObj = new Date(nuevaFecha);
         const userTimezoneOffset = dateObj.getTimezoneOffset() * 60000;
         const adjustedDate = new Date(dateObj.getTime() + userTimezoneOffset);
-        const slots = await publicService.getDisponibilidad(adjustedDate);
+       const slots = await publicService.getDisponibilidad(adjustedDate, terapeutaSeleccionado);
         setHorarios(slots);
       } catch (error) {
         toast({ title: "Error al cargar horarios", status: "error" });
@@ -147,6 +155,7 @@ const ReservaPage = () => {
         fechaHora: new Date(fechaCompleta).toISOString(),
         ...formData,
         obraSocialId: formData.obraSocialId ? parseInt(formData.obraSocialId) : null,
+        terapeutaId: parseInt(terapeutaSeleccionado),
         recaptchaToken: token 
       };
       
@@ -179,18 +188,38 @@ const ReservaPage = () => {
               <StepIndicator currentStep={step} />
               
              
-              {step === 1 && (
+            {step === 1 && (
                 <VStack w="full" spacing={6} align="stretch">
-                  <FormControl>
-                    <FormLabel fontWeight="bold">1. ¿Qué día quieres venir?</FormLabel>
-                    <Input type="date" size="lg" min={new Date().toISOString().split('T')[0]} onChange={handleFechaChange} />
+                  
+                  {/* ⭐ NUEVO SELECT DE PROFESIONAL ⭐ */}
+                  <FormControl isRequired>
+                    <FormLabel fontWeight="bold">1. ¿Con qué profesional te atenderás?</FormLabel>
+                    <Select 
+                        placeholder="Selecciona un profesional..." 
+                        size="lg"
+                        value={terapeutaSeleccionado}
+                        onChange={(e) => {
+                            setTerapeutaSeleccionado(e.target.value);
+                            setFecha(''); // Limpiamos fecha si cambia de médico
+                            setHorarios([]);
+                        }}
+                    >
+                        {terapeutas.map(t => (
+                            <option key={t.id} value={t.id}>{t.nombreCompleto}</option>
+                        ))}
+                    </Select>
                   </FormControl>
 
-                  {fecha && (
+                  <FormControl isDisabled={!terapeutaSeleccionado}>
+                    <FormLabel fontWeight="bold">2. ¿Qué día quieres venir?</FormLabel>
+                    <Input type="date" size="lg" value={fecha} min={new Date().toISOString().split('T')[0]} onChange={handleFechaChange} />
+                  </FormControl>
+
+                  {fecha && terapeutaSeleccionado && (
                       <Box>
-                        <Text fontWeight="bold" mb={3}>2. Horarios disponibles para el {fecha}:</Text>
+                        <Text fontWeight="bold" mb={3}>3. Horarios disponibles para el {fecha}:</Text>
                         {loading ? <Text>Cargando horarios...</Text> : null}
-                        {!loading && horarios.length === 0 && <Text color="red.500">No hay turnos disponibles.</Text>}
+                        {!loading && horarios.length === 0 && <Text color="red.500">No hay turnos disponibles para este profesional hoy.</Text>}
                         
                         <SimpleGrid columns={3} spacing={3}>
                         {horarios.map(hora => (

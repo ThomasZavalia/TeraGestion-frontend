@@ -132,20 +132,28 @@ export const pacienteService = {
     },
 
 
-    getPacientesPaginados: async (pagina = 1, tamanio = 10) => {
-        try {
-          
-            const response = await axios.get(`${API_URL}/pacientes/paginated`, {
-                params: {
-                    pagina: pagina,
-                    tamanio: tamanio
-                }
-            });
-            return response.data; 
-        } catch (error) {
-            console.error("Error al obtener pacientes paginados", error);
-            throw error;
-        }
-    },
+   
+  getPacientesPaginados: async (params) => {
+    try {
+      const queryParams = new URLSearchParams();
+      
+      queryParams.append('pagina', params.pagina || 1);
+      queryParams.append('tamanio', params.tamanio || 10);
+
+      if (params.obraSocialId) queryParams.append('obraSocialId', params.obraSocialId);
+      if (params.activo) queryParams.append('activo', params.activo);
+      if (params.tienePagosPendientes) queryParams.append('tienePagosPendientes', params.tienePagosPendientes);
+      
+      if (params.busqueda && params.busqueda.trim() !== '') {
+          queryParams.append('busqueda', params.busqueda);
+      }
+
+      const { data } = await axiosInstance.get(`${API_URL}/paginated`, { params: queryParams });
+      return data; 
+    } catch (error) {
+      console.error("Error al obtener pacientes:", error);
+      throw error;
+    }
+  },
 
 };

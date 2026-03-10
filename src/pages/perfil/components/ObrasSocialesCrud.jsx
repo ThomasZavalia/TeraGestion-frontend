@@ -39,6 +39,7 @@ import {
 import { FiPlus, FiEdit, FiTrash2, FiEye, FiEyeOff } from 'react-icons/fi';
 import { useForm } from 'react-hook-form';
 import { obraSocialService } from '../../../services/ObraSocialService'; 
+import { useAuth } from '../../../context/AuthContext';
 
 const ObrasSocialesCRUD = () => {
   const [obrasSociales, setObrasSociales] = useState([]);
@@ -46,6 +47,7 @@ const ObrasSocialesCRUD = () => {
   const [selectedOS, setSelectedOS] = useState(null); 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const toast = useToast();
+  const { user } = useAuth();
   
 
   const { isOpen: isModalOpen, onOpen: onModalOpen, onClose: onModalClose } = useDisclosure();
@@ -184,9 +186,11 @@ const handleReactivar = async (os) => {
     <Box>
       <HStack justify="space-between" mb={4}>
         <Text>Gestiona las obras sociales y sus precios.</Text>
-        <Button leftIcon={<FiPlus />} colorScheme="blue" size="sm" onClick={handleCrear}>
-          Nueva Obra Social
-        </Button>
+       {user?.rol === 'Admin' && (
+            <Button leftIcon={<FiPlus />} colorScheme="blue" size="sm" onClick={handleCrear}>
+              Nueva Obra Social
+            </Button>
+        )}
       </HStack>
 
      
@@ -198,7 +202,8 @@ const handleReactivar = async (os) => {
               <Th>Nombre</Th>
               <Th isNumeric>Precio Turno</Th>
               <Th>Estado</Th>
-              <Th>Acciones</Th>
+              {user?.rol === 'Admin' && <Th>Acciones</Th>}
+             
             </Tr>
           </Thead>
           <Tbody>
@@ -214,6 +219,7 @@ const handleReactivar = async (os) => {
                       {os.activa ? 'Activa' : 'Inactiva'}
                     </Tag>
                   </Td>
+                  {user?.rol === 'Admin' && (
                   <Td>
                     <HStack spacing={1}>
                      <Tooltip label="Editar" fontSize="xs">
@@ -242,6 +248,7 @@ const handleReactivar = async (os) => {
                       )}
                     </HStack>
                   </Td>
+                  )}
                 </Tr>
               ))
             )}

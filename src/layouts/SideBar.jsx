@@ -1,4 +1,5 @@
 import { Box, VStack, Heading, Text, Link } from '@chakra-ui/react';
+import { useAuth } from '../context/AuthContext';
 import { Link as RouterLink, useLocation } from 'react-router-dom';
 import {
   FiHome,
@@ -7,6 +8,7 @@ import {
   FiDollarSign,
   FiSettings,
   FiBarChart2,
+  FiBriefcase,
 } from 'react-icons/fi';
 
 const NavItem = ({ icon, children, to, isOpen, onClose, isDesktop }) => {
@@ -59,6 +61,10 @@ const NavItem = ({ icon, children, to, isOpen, onClose, isDesktop }) => {
 
 
 const Sidebar = ({ width, isOpen, display, onClose, isDesktop }) => {
+  
+  const { user } = useAuth();
+
+  console.log("Usuario en el SideBar:", user);
   return (
     <Box
       as="nav"
@@ -96,23 +102,37 @@ const Sidebar = ({ width, isOpen, display, onClose, isDesktop }) => {
           <NavItem to="/pacientes" icon={FiUsers} isOpen={isOpen} onClose={onClose} isDesktop={isDesktop}>
             Pacientes
           </NavItem>
-          <NavItem to="/pagos" icon={FiDollarSign} isOpen={isOpen} onClose={onClose} isDesktop={isDesktop}>
-            Pagos
-          </NavItem>
-          <NavItem to="/reportes" icon={FiBarChart2} isOpen={isOpen} onClose={onClose} isDesktop={isDesktop}>
-            Reportes
-          </NavItem>
+
+          {(user?.rol === 'Admin' || user?.rol === 'Secretaria') && (
+              <NavItem to="/obras-sociales" icon={FiBriefcase} isOpen={isOpen} onClose={onClose} isDesktop={isDesktop}>
+                Obras Sociales
+              </NavItem>
+          )}
+       {(user?.rol === 'Admin' || user?.rol === 'Secretaria') && (
+              <NavItem to="/pagos" icon={FiDollarSign} isOpen={isOpen} onClose={onClose} isDesktop={isDesktop}>
+                Pagos
+              </NavItem>
+          )}
+            {(user?.rol === 'Admin' || user?.rol === 'Terapeuta') && (
+              <NavItem to="/reportes" icon={FiBarChart2} isOpen={isOpen} onClose={onClose} isDesktop={isDesktop}>
+                {user?.rol === 'Admin' ? 'Reportes' : 'Mi Rendimiento'}
+              </NavItem>
+          )}
         </VStack>
 
      
-       <VStack spacing="2" align="stretch" mb="4" as="nav">
-          <NavItem to="/configuracion" icon={FiSettings} isOpen={isOpen} onClose={onClose} isDesktop={isDesktop}>
-            Configuración
-          </NavItem>
-        </VStack>
+  
+        {user?.rol === 'Admin' && (
+          <VStack spacing="2" align="stretch" mb="4" as="nav">
+            <NavItem to="/configuracion" icon={FiSettings} isOpen={isOpen} onClose={onClose} isDesktop={isDesktop}>
+              Configuración
+            </NavItem>
+          </VStack>
+        )}
       </VStack>
     </Box>
   );
 };
+
 
 export default Sidebar;

@@ -39,6 +39,15 @@ export const usuarioService = {
       return { success: false, message: error.response?.data?.message || "Error al cambiar contraseña" }; 
     }
   },
+  getTerapeutas: async () => {
+    try {
+      const { data } = await axiosInstance.get('/Usuario/terapeutas');
+      return data;
+    } catch (error) {
+      console.error("Error al traer terapeutas:", error);
+      return [];
+    }
+  }
   
   
 };

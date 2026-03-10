@@ -38,6 +38,22 @@ getCurrentUser: () => {
   isAuthenticated: () => {
     return !!localStorage.getItem('token');
   },
+
+
+  forgotPassword: async (email) => {
+   
+    const response = await axiosInstance.post('/Auth/forgot-password', { email });
+    return response.data;
+  },
+
+ resetPassword: async (token, newPassword) => {
+    const response = await axiosInstance.post('/Auth/reset-password', { 
+      Token: token,              
+      NuevaPassword: newPassword, 
+      ConfirmarPassword: newPassword 
+    });
+    return response.data;
+  },
 };
 
 export default authService;

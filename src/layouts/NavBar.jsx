@@ -146,21 +146,20 @@ const selectStyles = {
        <NotificationMenu />
        
        
-        <Menu>
+     <Menu>
           <MenuButton as={Box} cursor="pointer">
             <Avatar size={'sm'} name={user?.username || '?'} /> 
-            <Text 
-              fontSize="sm" 
-              display={{ base: 'none', md: 'inline' }} 
-              ml={2}
-            >
-             {user?.username}
+            <Text fontSize="sm" display={{ base: 'none', md: 'inline' }} ml={2}>
+              {user?.username}
             </Text>
           </MenuButton>
           <MenuList>
-            <MenuItem onClick={() => navigate('/configuracion')}>
-              Configuración
-            </MenuItem>
+            
+            {user?.rol === 'Admin' && (
+               <MenuItem onClick={() => navigate('/configuracion')}>
+                 Configuración
+               </MenuItem>
+            )}
             <MenuItem onClick={handleLogout}>
               Cerrar Sesión
             </MenuItem>

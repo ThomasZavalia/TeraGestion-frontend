@@ -4,15 +4,18 @@ import dayGridPlugin from '@fullcalendar/daygrid';
 import timeGridPlugin from '@fullcalendar/timegrid';
 import interactionPlugin from '@fullcalendar/interaction';
 import esLocale from '@fullcalendar/core/locales/es';
-import { Box, useDisclosure, Spinner, Center,useColorModeValue, useToast,Flex,Button,AlertDialog,AlertDialogOverlay,AlertDialogContent,AlertDialogHeader,AlertDialogBody,AlertDialogFooter, } from '@chakra-ui/react';
+import { Box, useDisclosure, Spinner, Center,useColorModeValue, useToast,Flex,Button,AlertDialog,AlertDialogOverlay,AlertDialogContent,AlertDialogHeader,AlertDialogBody,AlertDialogFooter,FormControl,FormLabel,Select} from '@chakra-ui/react';
 import { turnoService } from '../../services/TurnoService';
 import ModalCrearTurno from './components/ModalCrearTurno';
 import ModalVerTurno from './components/ModalVerTurno'; 
 import ModalElegirHora from './components/ModalELegirHora'; 
-import { FiSlash } from 'react-icons/fi';
+import { FiSlash, FiUser, FiClock } from 'react-icons/fi';
 import { ausenciaService } from '../../services/AusenciaService';
 import ModalRegistrarAusencia from './components/ModalRegistrarAusencia';
+import { usuarioService } from '../../services/UsuarioService';
 import { useSignalR } from '../../context/SignalRContext';
+import { useAuth } from '../../context/AuthContext'; 
+import ModalVerHorarios from './components/ModalVerHorarios';
 
 
 
@@ -31,6 +34,12 @@ const TurnosPage = () => {
   const [ausenciaAEliminar, setAusenciaAEliminar] = useState(null);
   const { ultimaNotificacion } = useSignalR();
   const [preselectedTime, setPreselectedTime] = useState(null);
+  const { user } = useAuth();
+
+
+  const [terapeutas, setTerapeutas] = useState([]);
+  const [terapeutaSeleccionado, setTerapeutaSeleccionado] = useState('');
+  const [todosLosEventos, setTodosLosEventos] = useState([]);
 
   const toast = useToast();
 
@@ -40,6 +49,7 @@ const TurnosPage = () => {
   const { isOpen: isViewOpen, onOpen: onViewOpen, onClose: onViewClose } = useDisclosure();
   const { isOpen: isAusenciaOpen, onOpen: onAusenciaOpen, onClose: onAusenciaClose } = useDisclosure();
   const { isOpen: isDeleteAusenciaOpen, onOpen: onDeleteAusenciaOpen, onClose: onDeleteAusenciaClose } = useDisclosure();
+  const { isOpen: isHorariosOpen, onOpen: onHorariosOpen, onClose: onHorariosClose } = useDisclosure();
 
   const modalBg = useColorModeValue('white', 'gray.800');
   const modalBorder = useColorModeValue('gray.200', 'gray.700');
@@ -56,10 +66,27 @@ const TurnosPage = () => {
 const fetchData = async () => {
     setLoading(true);
     try {
-        const [turnosData, ausenciasData] = await Promise.all([
+
+      
+        const [turnosData, ausenciasData, terapeutasData] = await Promise.all([
             turnoService.getTurnos(),
-            ausenciaService.getAusencias()
+            ausenciaService.getAusencias(),
+            usuarioService.getTerapeutas()
         ]);
+
+        setTerapeutas(terapeutasData);
+        
+      
+        let terapeutaActual = terapeutaSeleccionado;
+        if (user?.rol === 'Terapeuta') {
+           
+            terapeutaActual = String(user.id);
+            setTerapeutaSeleccionado(terapeutaActual);
+        } else if (!terapeutaActual && terapeutasData.length > 0) {
+           
+            terapeutaActual = String(terapeutasData[0].id);
+            setTerapeutaSeleccionado(terapeutaActual);
+        }
 
         console.log("---- RECARGANDO DATOS (V3) ----");
 
@@ -80,7 +107,14 @@ const fetchData = async () => {
             } else if (estado === 'cancelado') {
                 colorFinal = '#E53E3E'; 
                 claseCss = 'turno-cancelado';
-            } else if (asistencia === 'ausente') {
+            } 
+            else if (estado === 'vencido') {
+              
+                colorFinal = '#A0AEC0'; 
+                claseCss = 'turno-vencido';
+        }
+
+            else if (asistencia === 'ausente') {
                 colorFinal = '#ED8936';
                 claseCss = 'turno-ausente';
             }
@@ -114,7 +148,7 @@ const fetchData = async () => {
              };
         });
 
-        setCalendarEvents([...eventosTurnos, ...eventosAusencias]);
+      setTodosLosEventos([...eventosTurnos, ...eventosAusencias]);
         setTurnos(eventosTurnos); 
         setAusencias(eventosAusencias);
 
@@ -134,6 +168,21 @@ const fetchData = async () => {
         fetchData(); 
     }
   }, [ultimaNotificacion]);
+
+  useEffect(() => {
+      if (!terapeutaSeleccionado) return;
+      
+      const eventosFiltrados = todosLosEventos.filter(ev => {
+      
+          if (ev.extendedProps?.tipo === 'ausencia') {
+              return String(ev.extendedProps.usuarioId) === terapeutaSeleccionado;
+          }
+         
+          return String(ev.extendedProps?.terapeutaId) === terapeutaSeleccionado;
+      });
+
+      setCalendarEvents(eventosFiltrados);
+  }, [terapeutaSeleccionado, todosLosEventos]);
   
 const handleDateClick = (arg) => {
    
@@ -297,10 +346,18 @@ const handleTurnoUpdate = (eventoFormateado) => {
         nuevaClase = 'turno-pagado';
     } else if (estado === 'cancelado') {
         nuevoColor = '#E53E3E';
-        nuevaClase = 'turno-cancelado';
-    } else if (asistencia === 'ausente') {
+        nuevaClase = 'turno-cancelado'; 
+    } 
+    else if (estado === 'vencido') {
+                
+                colorFinal = '#A0AEC0'; 
+                claseCss = 'turno-vencido';
+              }
+
+    else if (asistencia === 'ausente') {
         nuevoColor = '#ED8936';
         nuevaClase = 'turno-ausente';
+        
     }
 
  
@@ -374,7 +431,7 @@ const handleConfirmarEliminarAusencia = async () => {
   };
 
   const handleEventDrop = (info) => {
-      // 1. Obtener datos
+     
       const turnoArrastrado = {
           id: info.event.id,
           title: info.event.title,
@@ -426,7 +483,38 @@ const fechaParaModalCreacion = !isEditingMode ? selectedFullDate : null;
 
   return(
     <Box>
-      <Flex justify="flex-end" mb={4}>
+     <Flex justify="space-between" align="flex-end" mb={4} p={4} bg={modalBg} borderRadius="lg" shadow="sm">
+        <Flex gap={4} align="flex-end">
+              <FormControl w="300px">
+                  <FormLabel mb="1" fontSize="sm" color="gray.500" fontWeight="bold">
+                      Viendo la Agenda de:
+                  </FormLabel>
+                  <Select 
+                      icon={<FiUser />}
+                      value={terapeutaSeleccionado} 
+                      onChange={(e) => setTerapeutaSeleccionado(e.target.value)}
+                      fontWeight="bold"
+                      size="lg"
+                      isDisabled={user?.rol === 'Terapeuta'} 
+                      bg={user?.rol === 'Terapeuta' ? 'gray.100' : 'white'} 
+                  >
+                      {terapeutas.map(t => (
+                          <option key={t.id} value={t.id}>{t.nombreCompleto}</option>
+                      ))}
+                  </Select>
+              </FormControl>
+
+              <Button 
+                leftIcon={<FiClock />} 
+                colorScheme="blue" 
+                variant="solid" 
+                size="lg"
+                onClick={onHorariosOpen}
+                isDisabled={!terapeutaSeleccionado}
+              >
+                Ver Horarios
+              </Button>
+          </Flex>
           <Button 
             leftIcon={<FiSlash />} 
             colorScheme="red" 
@@ -496,7 +584,8 @@ const fechaParaModalCreacion = !isEditingMode ? selectedFullDate : null;
               onTurnoCreado: onTurnoCreado,
               onTurnoActualizado: handleTurnoUpdate,
          
-              isEditingMode: isEditingMode 
+              isEditingMode: isEditingMode ,
+              terapeutaId: terapeutaSeleccionado
           }}
          
           isEditingMode={isEditingMode} 
@@ -511,6 +600,7 @@ const fechaParaModalCreacion = !isEditingMode ? selectedFullDate : null;
           selectedDay={selectedDay}
           onTimeSelect={handleTimeSelect}
           preselectedTime={preselectedTime}
+          terapeutaId={terapeutaSeleccionado}
         />
       )}
 
@@ -532,6 +622,13 @@ const fechaParaModalCreacion = !isEditingMode ? selectedFullDate : null;
         isOpen={isAusenciaOpen}
         onClose={onAusenciaClose}
         onAusenciaCreada={recargarCalendario} 
+      />
+      
+      <ModalVerHorarios 
+        isOpen={isHorariosOpen} 
+        onClose={onHorariosClose} 
+        terapeutaId={terapeutaSeleccionado} 
+        nombreTerapeuta={terapeutas.find(t => String(t.id) === terapeutaSeleccionado)?.nombreCompleto} 
       />
 
       <AlertDialog

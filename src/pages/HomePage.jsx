@@ -23,6 +23,7 @@ import {
 import { FiCalendar, FiClock, FiDollarSign, FiPlusCircle, FiUserPlus, FiAlertCircle } from 'react-icons/fi';
 import { useNavigate } from 'react-router-dom'; 
 import { turnoService } from '../services/TurnoService'; 
+import { useAuth } from '../context/AuthContext'; 
 
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -80,7 +81,7 @@ const TurnosHoyLista = ({ turnos }) => {
       if (!rawDate) return null;
       
       const dateObj = new Date(rawDate);
-      // Verificamos si es una fecha válida
+      
       return isNaN(dateObj.getTime()) ? null : dateObj;
   };
 
@@ -145,6 +146,7 @@ const TurnosHoyLista = ({ turnos }) => {
 
 const HomePage = () => {
   const [turnosHoy, setTurnosHoy] = useState([]);
+  const { user } = useAuth();
   const [stats, setStats] = useState({ 
       ingresosHoy: 0, 
     
@@ -161,7 +163,11 @@ const HomePage = () => {
 
       try {
        
-        const turnos = await turnoService.getTurnosDeHoy(); 
+        let turnos = await turnoService.getTurnosDeHoy(); 
+       if (user?.rol === 'Terapeuta') {
+           
+            turnos = turnos.filter(t => String(t.terapeutaId) === String(user.id));
+        }
         setTurnosHoy(turnos);
 
         
@@ -187,7 +193,7 @@ const HomePage = () => {
       }
     };
     cargarDatos();
-  }, []);
+  }, [user]);
 
   const handleNuevoPacienteClick = () => {
     navigate('/pacientes', { state: { abrirModalNuevo: true } });
@@ -202,19 +208,21 @@ const HomePage = () => {
       <Heading mb={6}>Inicio</Heading>
 
       
-     <SimpleGrid columns={{ base: 1, md: 2, lg: 3 }} spacing={6} mb={8}>
+    <SimpleGrid columns={{ base: 1, md: 2, lg: user?.rol === 'Terapeuta' ? 2 : 3 }} spacing={6} mb={8}>
         <StatCard
           title={'Turnos de Hoy'}
           stat={loadingTurnos ? <Spinner size="sm"/> : turnosHoy.length}
           helpText={format(new Date(), "eeee, dd MMMM", { locale: es })}
           icon={FiCalendar}
         />
-        <StatCard
-          title={'Ingresos del Día'}
-          stat={loadingStats ? <Spinner size="sm"/> : `$ ${stats.ingresosHoy.toLocaleString('es-AR')}`}
-          helpText="Solo turnos pagados hoy"
-          icon={FiDollarSign}
-        />
+        {user?.rol !== 'Terapeuta' && (
+            <StatCard
+              title={'Ingresos del Día'}
+              stat={loadingStats ? <Spinner size="sm"/> : `$ ${stats.ingresosHoy.toLocaleString('es-AR')}`}
+              helpText="Solo turnos pagados hoy"
+              icon={FiDollarSign}
+            />
+        )}
         <StatCard 
           title={'Turnos Pendientes (Hoy)'} 
           stat={loadingStats ? <Spinner size="sm"/> : stats.turnosPendientesHoy}

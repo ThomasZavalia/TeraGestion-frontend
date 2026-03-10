@@ -12,84 +12,155 @@ import {
   Input,
   Button,
   useColorModeValue,
+Stat, StatLabel, StatNumber, StatHelpText, Icon, Divider
 } from '@chakra-ui/react';
-import { FiFilter } from 'react-icons/fi';
+import { FiFilter,FiDownload,FiUsers,FiCheckCircle,FiActivity } from 'react-icons/fi';
 import { reportesService } from '../../services/ReportesService';
 
 import BarChartReport from './components/BarChartReport';
 import PieChartReport from './components/PieChartReport';
 import HorizontalBarChartReport from './components/HorizontalBarChartReport';
+import { useAuth } from '../../context/AuthContext';
 
+
+
+const StatCard = ({ title, stat, helpText, icon }) => {
+  const bgColor = useColorModeValue('white', 'gray.800');
+  const textColor = useColorModeValue('gray.800', 'white');
+  const borderColor = useColorModeValue('gray.200', 'gray.700');
+
+  return (
+    <Stat px={8} py={5} shadow="md" border="1px solid" borderColor={borderColor} rounded="lg" bg={bgColor}>
+      <StatLabel fontWeight="medium" color="gray.500">{title}</StatLabel>
+      <StatNumber fontSize="2xl" fontWeight="medium" color={textColor}>{stat}</StatNumber>
+      {helpText && (
+        <StatHelpText>
+          {icon && <Icon as={icon} mr={1} w={4} h={4} />}
+          {helpText}
+        </StatHelpText>
+      )}
+    </Stat>
+  );
+};
 const ReportesPage = () => {
-
+const { user } = useAuth();
   const [topPacientes, setTopPacientes] = useState([]);
   const [metodosPago, setMetodosPago] = useState([]);
   const [turnosEstado, setTurnosEstado] = useState([]);
   const [turnosMes, setTurnosMes] = useState([]);
   const [ingresosMes, setIngresosMes] = useState([]);
   const [turnosObraSocial, setTurnosObraSocial] = useState([]);
-
+  
+const [rendimientoTerapeuta, setRendimientoTerapeuta] = useState(null);
  
   const [loading, setLoading] = useState(true);
   const [loadingMes, setLoadingMes] = useState(false); 
+  const [downloading, setDownloading] = useState(false);
 
 
   const [fechaDesde, setFechaDesde] = useState('');
   const [fechaHasta, setFechaHasta] = useState('');
 
 
-  useEffect(() => {
+ useEffect(() => {
     const loadInitialData = async () => {
       setLoading(true);
       try {
-        const [pacientesData, metodosData, estadoData,osData] = await Promise.all([
-          reportesService.getTopPacientes(),
-          reportesService.getMetodosPago(),
-          reportesService.getTurnosPorEstado(),
-          reportesService.getTurnosPorObraSocial(),
-        ]);
-        setTopPacientes(pacientesData);
-        setMetodosPago(metodosData);
-        setTurnosEstado(estadoData);
-        setTurnosObraSocial(osData);
-        
-        await loadMonthlyData(); 
-      } catch (error) {
-        console.error("Error cargando reportes iniciales:", error);
-       
-      } finally {
-        setLoading(false);
-      }
+        if (user?.rol === 'Admin') {
+           
+            const [pacientesData, metodosData, estadoData, osData] = await Promise.all([
+              reportesService.getTopPacientes(),
+              reportesService.getMetodosPago(),
+              reportesService.getTurnosPorEstado(),
+              reportesService.getTurnosPorObraSocial(),
+            ]);
+            setTopPacientes(pacientesData); setMetodosPago(metodosData); setTurnosEstado(estadoData); setTurnosObraSocial(osData);
+            await loadMonthlyData(); 
+        } else if (user?.rol === 'Terapeuta') {
+      
+            const rendimiento = await reportesService.getMiRendimiento();
+            setRendimientoTerapeuta(rendimiento);
+        }
+      } catch (error) { console.error("Error cargando reportes:", error); } 
+      finally { setLoading(false); }
     };
     loadInitialData();
-  
-  }, []); 
+  }, [user]); 
 
    
-   const loadMonthlyData = async (currentFilters = { fechaDesde, fechaHasta }) => {
+  const loadMonthlyData = async (currentFilters = { fechaDesde, fechaHasta }) => {
+      if (user?.rol !== 'Admin') return; 
       setLoadingMes(true);
       try {
            const [turnosData, ingresosData] = await Promise.all([
               reportesService.getTurnosPorMes(currentFilters),
               reportesService.getIngresosPorMes(currentFilters),
            ]);
-           setTurnosMes(turnosData);
-           setIngresosMes(ingresosData);
-      } catch (error) {
-          console.error("Error cargando reportes mensuales:", error);
-        
-      } finally {
-          setLoadingMes(false);
-      }
+           setTurnosMes(turnosData); setIngresosMes(ingresosData);
+      } catch (error) { console.error(error); } 
+      finally { setLoadingMes(false); }
    };
 
    const handleFiltrar = () => {
        loadMonthlyData({ fechaDesde, fechaHasta });
    };
 
+   const handleDescargarExcel = async () => {
+    setDownloading(true);
+    try {
+
+      const blob = await reportesService.exportarExcel({ fechaDesde, fechaHasta });
+
+      const url = window.URL.createObjectURL(blob);
+      
+      const link = document.createElement('a');
+      link.href = url;
+      
+      const fechaHoy = new Date().toISOString().split('T')[0];
+      link.setAttribute('download', `Reporte_TeraGestion_${fechaHoy}.xlsx`);
+      
+     
+      document.body.appendChild(link);
+      link.click();
+      link.parentNode.removeChild(link);
+      window.URL.revokeObjectURL(url);
+
+    } catch (error) {
+      console.error("Falló la descarga", error);
+     
+    } finally {
+      setDownloading(false);
+    }
+  };
+
    const filterBg = useColorModeValue('white', 'gray.800');
   const inputBg = useColorModeValue('white', 'gray.700');
+if (user?.rol === 'Terapeuta' && rendimientoTerapeuta) {
+      return (
+          <Box>
+            <Heading mb={6}>Mi Rendimiento Mensual</Heading>
+            <SimpleGrid columns={{ base: 1, md: 3 }} spacing={6} mb={8}>
+                <StatCard title="Pacientes Únicos Atendidos" stat={rendimientoTerapeuta.pacientesUnicosMes} icon={FiUsers} helpText="En el mes actual" />
+                <StatCard title="Turnos Concluidos" stat={rendimientoTerapeuta.turnosAtendidosMes} icon={FiCheckCircle} helpText="Sesiones dadas" />
+                <StatCard title="Tasa de Asistencia" stat={`${rendimientoTerapeuta.tasaAsistencia}%`} icon={FiActivity} helpText="De los turnos agendados" />
+            </SimpleGrid>
 
+            <Divider my={8} />
+
+            <SimpleGrid columns={{ base: 1, lg: 2 }} spacing={6}>
+               
+                 <HorizontalBarChartReport
+                     title="Mis Pacientes más Frecuentes"
+                     data={rendimientoTerapeuta.topPacientes}
+                     dataLabel="Turnos Atendidos"
+                     labelField="nombreCompleto" 
+                     valueField="cantidadTurnos"
+                     isLoading={false}
+                 />
+            </SimpleGrid>
+          </Box>
+      );
+  }
   return (
     <Box>
       <Heading mb={6}>Reportes</Heading>
@@ -134,6 +205,16 @@ const ReportesPage = () => {
          >
             Filtrar Meses
          </Button>
+         <Button 
+            leftIcon={<FiDownload />} 
+            colorScheme="green" 
+            size="sm" 
+            onClick={handleDescargarExcel}
+            isLoading={downloading}
+            loadingText="Generando..."
+          >
+             Exportar Excel
+          </Button>
       </HStack>
 
      

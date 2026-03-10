@@ -27,6 +27,16 @@ export const disponibilidadService = {
     }
   },
 
+  getDisponibilidadTerapeuta: async (terapeutaId) => {
+    try {
+      const { data } = await axiosInstance.get(`/usuario/me/disponibilidad/terapeuta/${terapeutaId}`); 
+      return data.sort(ordenarPorDia) || []; 
+    } catch (error) {
+      console.error("Error fetching disponibilidad del terapeuta:", error);
+      throw error;
+    }
+  },
+
  
   updateDisponibilidad: async (disponibilidadSemanal) => {
    
