@@ -2,7 +2,7 @@ import  axiosInstance  from './axiosInstance';
 
 
 const formatTurnoForCalendar = (turno) => {
-  let className = 'turno-pendiente'; 
+ /* let className = 'turno-pendiente'; 
   if (turno.estado) {
    const estadoLower = turno.estado.toLowerCase();
    if (estadoLower === 'pagado') {
@@ -10,7 +10,7 @@ const formatTurnoForCalendar = (turno) => {
    } else if (estadoLower === 'cancelado') {
     className = 'turno-cancelado';
     }
-  }
+  }*/
 
 
  const title = (turno.pacienteApellido 
@@ -22,7 +22,7 @@ const formatTurnoForCalendar = (turno) => {
    id: turno.id.toString(), 
    title: title, 
    start: turno.fecha || turno.fechaHora, 
-   className: className, 
+  // className: className, 
    extendedProps: {
             id: turno.id,
             pacienteId: turno.pacienteId,
@@ -33,7 +33,8 @@ const formatTurnoForCalendar = (turno) => {
             asistencia: turno.asistencia,
             obraSocialId: turno.obraSocialId ,
             duracion: turno.duracion,
-            terapeutaId: turno.terapeutaId
+            terapeutaId: turno.terapeutaId,
+            estaPagado: turno.estaPagado
            
         }
   };

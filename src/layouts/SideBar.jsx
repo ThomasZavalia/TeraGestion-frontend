@@ -9,6 +9,8 @@ import {
   FiSettings,
   FiBarChart2,
   FiBriefcase,
+  FiShield,
+  FiUserCheck,
 } from 'react-icons/fi';
 
 const NavItem = ({ icon, children, to, isOpen, onClose, isDesktop }) => {
@@ -122,13 +124,26 @@ const Sidebar = ({ width, isOpen, display, onClose, isDesktop }) => {
 
      
   
-        {user?.rol === 'Admin' && (
-          <VStack spacing="2" align="stretch" mb="4" as="nav">
+        <VStack spacing="2" align="stretch" mb="4" as="nav">
+            
+            {/* Todos pueden entrar a Configuración */}
             <NavItem to="/configuracion" icon={FiSettings} isOpen={isOpen} onClose={onClose} isDesktop={isDesktop}>
               Configuración
             </NavItem>
-          </VStack>
-        )}
+
+            {user?.rol === 'Admin' && (
+              <>
+                <NavItem to="/auditoria" icon={FiShield} isOpen={isOpen} onClose={onClose} isDesktop={isDesktop}>
+                  Auditoría
+                </NavItem>
+                 <NavItem to="/usuarios" icon={FiUserCheck} isOpen={isOpen} onClose={onClose} isDesktop={isDesktop}>
+                  Usuarios
+                </NavItem>
+              </>
+            )}
+            
+        </VStack>
+        
       </VStack>
     </Box>
   );

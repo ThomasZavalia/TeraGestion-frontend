@@ -13,7 +13,7 @@ import {
   VStack,
 } from '@chakra-ui/react';
 import { usuarioService } from '../../services/UsuarioService'; 
-
+import { useAuth } from '../../context/AuthContext';
 import PerfilForm from './components/PerfilForm';
 import ContrasenaForm from './components/ContraseñaForm';
 import DisponibilidadForm from './components/DisponibilidadForm';
@@ -23,6 +23,7 @@ const PerfilPage = () => {
   const [userData, setUserData] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const toast = useToast();
+  const { user } = useAuth();
 
 
   useEffect(() => {
@@ -43,48 +44,52 @@ const PerfilPage = () => {
   if (isLoading) {
     return <Center h="300px"><Spinner size="xl" /></Center>;
   }
+const isTerapeuta = user?.rol === 'Terapeuta';
+  const isAdmin = user?.rol === 'Admin';
 
-  return (
+ return (
     <Box>
       <Heading mb={6}>Configuración</Heading>
 
       <Tabs isLazy colorScheme='blue'> 
         <TabList>
+        
           <Tab>Mi Perfil</Tab>
           <Tab>Cambiar Contraseña</Tab>
-          <Tab>Disponibilidad Horaria</Tab>
-           <Tab>Agenda</Tab>
+          
+          {/* {isTerapeuta && <Tab>Mis Horarios</Tab>} */}
+          
+          {/*{isAdmin && <Tab>Reglas de la Agenda</Tab>}*/}
         </TabList>
 
         <TabPanels>
-          
           <TabPanel>
             <Box maxW="lg">
               <PerfilForm initialData={userData} />
             </Box>
           </TabPanel>
 
-        
           <TabPanel>
              <Box maxW="lg">
                <ContrasenaForm />
              </Box>
           </TabPanel>
 
-        
-          <TabPanel>
-             <Box maxW="xl"> 
-               <DisponibilidadForm />
-             </Box>
-          </TabPanel>
-          
-          
+          {isTerapeuta && (
+             <TabPanel>
+                <Box maxW="xl"> 
+                  <DisponibilidadForm />
+                </Box>
+             </TabPanel>
+          )}
 
-           <TabPanel> 
-             <Box maxW="lg">
-                <ConfiguracionAgendaForm />
-             </Box>
-          </TabPanel>
+          {isAdmin && (
+             <TabPanel> 
+               <Box maxW="lg">
+                  <ConfiguracionAgendaForm />
+               </Box>
+            </TabPanel>
+          )}
 
         </TabPanels>
       </Tabs>

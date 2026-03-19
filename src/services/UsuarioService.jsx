@@ -47,6 +47,32 @@ export const usuarioService = {
       console.error("Error al traer terapeutas:", error);
       return [];
     }
+  },
+  getUsuarios: async () => {
+    const { data } = await axiosInstance.get('/Usuario');
+    return data;
+  },
+
+  crearUsuario: async (usuario) => {
+    const { data } = await axiosInstance.post('/Usuario', usuario);
+    return data;
+  },
+
+  actualizarUsuario: async (id, usuario) => {
+    const { data } = await axiosInstance.put(`/Usuario/${id}`, usuario);
+    return data;
+  },
+
+  toggleEstadoUsuario: async (id) => {
+    await axiosInstance.delete(`/Usuario/${id}`);
+    return true;
+  },
+
+  blanquearClave: async (id, nuevaClave) => {
+    const { data } = await axiosInstance.put(`/Usuario/${id}/blanquear-clave`, {
+      contraseñaNueva: nuevaClave 
+    });
+    return data;
   }
   
   

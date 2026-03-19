@@ -16,7 +16,8 @@ import { SignalRProvider } from '../context/SignalRContext';
 import ForgotPasswordPage from '../pages/auth/ForgotPasswordPage';
 import ResetPasswordPage from '../pages/auth/ResetPasswordPage';
 import ObrasSocialesCRUD from '../pages/perfil/components/ObrasSocialesCrud';
-
+import AuditoriaPage from '../pages/auditoria/AuditoriaPage';
+import UsuariosPage from '../pages/usuarios/UsuariosPage';
 
 import { PacienteDetallePage } from '../pages/pacientes/PacienteDetallePage';
 
@@ -50,6 +51,7 @@ const AppRouter = () => {
           
        
           <Route path="/turnos" element={<TurnosPage />} />
+           <Route path="/configuracion" element={<PerfilPage />} />
           
     <Route element={<ProtectedRoute allowedRoles={['Admin', 'Terapeuta']} />}>
             <Route path="/reportes" element={<ReportesPage />} />
@@ -60,8 +62,13 @@ const AppRouter = () => {
             <Route path="/obras-sociales" element={<Box p={6}><ObrasSocialesCRUD /></Box>} />
           </Route>
 
+          
+
           <Route element={<ProtectedRoute allowedRoles={['Admin']} />}>
-            <Route path="/configuracion" element={<PerfilPage />} />
+           
+            <Route path="/auditoria" element={<AuditoriaPage />} />
+            <Route path="/usuarios" element={<UsuariosPage />} />
+
           </Route>
           
         </Route>

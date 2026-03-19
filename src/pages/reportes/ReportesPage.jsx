@@ -14,7 +14,7 @@ import {
   useColorModeValue,
 Stat, StatLabel, StatNumber, StatHelpText, Icon, Divider
 } from '@chakra-ui/react';
-import { FiFilter,FiDownload,FiUsers,FiCheckCircle,FiActivity } from 'react-icons/fi';
+import { FiFilter,FiDownload,FiUsers,FiCheckCircle,FiActivity,FiDollarSign, } from 'react-icons/fi';
 import { reportesService } from '../../services/ReportesService';
 
 import BarChartReport from './components/BarChartReport';
@@ -137,12 +137,20 @@ const [rendimientoTerapeuta, setRendimientoTerapeuta] = useState(null);
   const inputBg = useColorModeValue('white', 'gray.700');
 if (user?.rol === 'Terapeuta' && rendimientoTerapeuta) {
       return (
-          <Box>
+         <Box>
             <Heading mb={6}>Mi Rendimiento Mensual</Heading>
-            <SimpleGrid columns={{ base: 1, md: 3 }} spacing={6} mb={8}>
+          
+            <SimpleGrid columns={{ base: 1, md: 4 }} spacing={6} mb={8}>
                 <StatCard title="Pacientes Únicos Atendidos" stat={rendimientoTerapeuta.pacientesUnicosMes} icon={FiUsers} helpText="En el mes actual" />
                 <StatCard title="Turnos Concluidos" stat={rendimientoTerapeuta.turnosAtendidosMes} icon={FiCheckCircle} helpText="Sesiones dadas" />
                 <StatCard title="Tasa de Asistencia" stat={`${rendimientoTerapeuta.tasaAsistencia}%`} icon={FiActivity} helpText="De los turnos agendados" />
+                
+                <StatCard 
+                    title="Mis Ganancias Estimadas" 
+                    stat={`$ ${rendimientoTerapeuta.gananciasEstimadasMes?.toLocaleString('es-AR')}`} 
+                    icon={FiDollarSign} 
+                    helpText="Mes actual" 
+                />
             </SimpleGrid>
 
             <Divider my={8} />
@@ -223,17 +231,26 @@ if (user?.rol === 'Terapeuta' && rendimientoTerapeuta) {
       ) : (
         <SimpleGrid columns={{ base: 1, md: 2 }} spacing={6}>
          
-          <BarChartReport
-            title="Ingresos por Mes"
+         <BarChartReport
+            title="Total Facturado (Bruto)"
             data={ingresosMes}
             dataLabel="Ingresos ($)"
             labelField="mes"
-            valueField="valor" 
+            valueField="totalFacturado" 
             isLoading={loadingMes}
             formatValue={(value) => `$ ${value.toLocaleString('es-AR')}`} 
           />
 
-       
+          <BarChartReport
+            title="Ganancia Neta de la Clínica"
+            data={ingresosMes}
+            dataLabel="Ganancia ($)"
+            labelField="mes"
+            valueField="gananciaClinica" 
+            isLoading={loadingMes}
+            formatValue={(value) => `$ ${value.toLocaleString('es-AR')}`} 
+          />
+
           <BarChartReport
             title="Cantidad de Turnos por Mes"
             data={turnosMes}

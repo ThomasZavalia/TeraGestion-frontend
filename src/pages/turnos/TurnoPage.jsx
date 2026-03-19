@@ -90,45 +90,38 @@ const fetchData = async () => {
 
         console.log("---- RECARGANDO DATOS (V3) ----");
 
-        const eventosTurnos = turnosData.map(turno => {
-            
+       const eventosTurnos = turnosData.map(turno => {
             const props = turno.extendedProps || {};
-
-    
             const estado = String(props.estado || '').trim().toLowerCase();
-            const asistencia = String(props.asistencia || '').trim().toLowerCase();
+            const estaPagado = props.estaPagado; 
 
             let colorFinal = '#3182CE'; 
-            let claseCss = 'turno-pendiente';
+            let claseCss = 'turno-reservado';
 
-            if (estado === 'pagado') {
+            if (estado === 'atendido') {
                 colorFinal = '#48BB78'; 
-                claseCss = 'turno-pagado';
+                claseCss = 'turno-atendido';
             } else if (estado === 'cancelado') {
                 colorFinal = '#E53E3E'; 
                 claseCss = 'turno-cancelado';
-            } 
-            else if (estado === 'vencido') {
-              
+            } else if (estado === 'vencido') {
                 colorFinal = '#A0AEC0'; 
                 claseCss = 'turno-vencido';
-        }
-
-            else if (asistencia === 'ausente') {
+            } else if (estado === 'ausente') {
                 colorFinal = '#ED8936';
                 claseCss = 'turno-ausente';
             }
 
-            
-          const duracionReal = props.duracion || turno.duracion; 
+         const tituloVisual = estaPagado ? `💵 ${turno.title}` : turno.title;
+
+            const duracionReal = props.duracion || turno.duracion; 
             const fechaFinCalculada = calcularFechaFin(turno.start, duracionReal);
-           
 
             return {
                 id: turno.id, 
                 start: turno.start, 
                 end: fechaFinCalculada, 
-                title: turno.title,
+                title: tituloVisual, 
                 backgroundColor: colorFinal, 
                 borderColor: colorFinal,     
                 textColor: 'white',
@@ -333,50 +326,53 @@ const handleTurnoUpdate = (eventoFormateado) => {
     const eventoExistente = calendarApi.getEventById(eventoIdStr);
 
   
-    const estadoRaw = eventoFormateado.extendedProps?.estado || 'Pendiente';
-    const asistenciaRaw = eventoFormateado.extendedProps?.asistencia || '';
+   const estadoRaw = eventoFormateado.extendedProps?.estado || 'Pendiente';
     const estado = String(estadoRaw).trim().toLowerCase();
-    const asistencia = String(asistenciaRaw).trim().toLowerCase();
+    const estaPagado = eventoFormateado.extendedProps?.estaPagado;
 
     let nuevoColor = '#3182CE'; 
-    let nuevaClase = 'turno-pendiente';
+    let nuevaClase = 'turno-reservado';
 
-    if (estado === 'pagado') {
+    if (estado === 'atendido') {
         nuevoColor = '#48BB78';
-        nuevaClase = 'turno-pagado';
+        nuevaClase = 'turno-atendido';
     } else if (estado === 'cancelado') {
-        nuevoColor = '#E53E3E';
-        nuevaClase = 'turno-cancelado'; 
-    } 
-    else if (estado === 'vencido') {
-                
-                colorFinal = '#A0AEC0'; 
-                claseCss = 'turno-vencido';
-              }
-
-    else if (asistencia === 'ausente') {
-        nuevoColor = '#ED8936';
+        nuevoColor = '#E53E3E'; 
+        nuevaClase = 'turno-cancelado';
+    } else if (estado === 'vencido') {
+        nuevoColor = '#A0AEC0'; 
+        nuevaClase = 'turno-vencido';
+    } else if (estado === 'ausente') {
+        nuevoColor = '#ED8936'; 
         nuevaClase = 'turno-ausente';
-        
     }
 
- 
     if (eventoExistente) {
       const duracion = eventoFormateado.extendedProps?.duracion || 40;
       const fechaFin = calcularFechaFin(eventoFormateado.start, duracion);
 
+      let titleBase = (eventoFormateado.extendedProps?.pacienteApellido 
+        ? `${eventoFormateado.extendedProps.pacienteNombre} ${eventoFormateado.extendedProps.pacienteApellido}` 
+        : eventoFormateado.extendedProps?.pacienteNombre || eventoFormateado.title).trim();
+      
+      titleBase = titleBase.replace('💵 ', '');
+
+    
+      const tituloVisual = estaPagado ? `💵 ${titleBase}` : titleBase;
+   
+     
+
       eventoExistente.setStart(eventoFormateado.start);
       eventoExistente.setEnd(fechaFin);
+      eventoExistente.setProp('title', tituloVisual); 
       eventoExistente.setProp('backgroundColor', nuevoColor);
       eventoExistente.setProp('borderColor', nuevoColor);
       eventoExistente.setProp('classNames', [nuevaClase]); 
       
-      
       eventoExistente.setExtendedProp('estado', estadoRaw);
-      eventoExistente.setExtendedProp('asistencia', asistenciaRaw);
+      eventoExistente.setExtendedProp('estaPagado', estaPagado); 
     }
 
-   
     fetchData(); 
   }
 
@@ -489,9 +485,10 @@ const fechaParaModalCreacion = !isEditingMode ? selectedFullDate : null;
                   <FormLabel mb="1" fontSize="sm" color="gray.500" fontWeight="bold">
                       Viendo la Agenda de:
                   </FormLabel>
-                  <Select 
+                 <Select 
                       icon={<FiUser />}
-                      value={terapeutaSeleccionado} 
+     
+                      value={user?.rol === 'Terapeuta' ? String(user.id) : terapeutaSeleccionado} 
                       onChange={(e) => setTerapeutaSeleccionado(e.target.value)}
                       fontWeight="bold"
                       size="lg"
@@ -510,9 +507,10 @@ const fechaParaModalCreacion = !isEditingMode ? selectedFullDate : null;
                 variant="solid" 
                 size="lg"
                 onClick={onHorariosOpen}
-                isDisabled={!terapeutaSeleccionado}
+            
+                isDisabled={user?.rol !== 'Terapeuta' && !terapeutaSeleccionado}
               >
-                Ver Horarios
+                Ver Mis Horarios
               </Button>
           </Flex>
           <Button 
@@ -624,11 +622,11 @@ const fechaParaModalCreacion = !isEditingMode ? selectedFullDate : null;
         onAusenciaCreada={recargarCalendario} 
       />
       
-      <ModalVerHorarios 
+    <ModalVerHorarios 
         isOpen={isHorariosOpen} 
-        onClose={onHorariosClose} 
-        terapeutaId={terapeutaSeleccionado} 
-        nombreTerapeuta={terapeutas.find(t => String(t.id) === terapeutaSeleccionado)?.nombreCompleto} 
+        onClose={onHorariosClose}
+        terapeutaId={user?.rol === 'Terapeuta' ? String(user.id) : terapeutaSeleccionado} 
+        nombreTerapeuta={user?.rol === 'Terapeuta' ? user.nombreCompleto : terapeutas.find(t => String(t.id) === terapeutaSeleccionado)?.nombreCompleto} 
       />
 
       <AlertDialog

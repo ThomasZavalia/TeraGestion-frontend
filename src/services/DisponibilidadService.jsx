@@ -51,4 +51,15 @@ export const disponibilidadService = {
       return { success: false, message: error.response?.data?.error || error.message || "Error al actualizar" };
     }
   },
+
+  updateDisponibilidadTerapeuta: async (terapeutaId, disponibilidadSemanal) => {
+    try {
+      const dto = { dias: disponibilidadSemanal };
+      
+      const { data } = await axiosInstance.put(`/usuario/me/disponibilidad/terapeuta/${terapeutaId}`, dto); 
+      return { success: true, message: data.message || "Horarios actualizados correctamente" };
+    } catch (error) {
+      return { success: false, message: error.response?.data?.message || "Error al actualizar" };
+    }
+  },
 };

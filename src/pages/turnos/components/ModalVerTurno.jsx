@@ -97,7 +97,7 @@ if (detalle && detalle.fechaHora) {
     }
     
     isCancelado = detalle?.estado?.toLowerCase() === 'cancelado';
-    isPagado = detalle.estado?.toLowerCase() === 'pagado';
+    isPagado = detalle?.estaPagado === true;
 }
 
 const handleMarcarPagado = async () => {
@@ -190,6 +190,7 @@ const handleAsistencia = async (estadoAsistencia) => {
       const datosFrescos = await turnoService.getTurnoDetalle(detalle.id);
       setDetalle(datosFrescos); 
       setNotas(datosFrescos.notasSesion || '');
+      onTurnoUpdate(turnoService.formatTurnoForCalendar(datosFrescos));
       
     } else {
       toast({ title: 'Error al registrar', description: result.message, status: result.alreadyExists ? 'warning' : 'error' });
@@ -280,8 +281,20 @@ const handleGuardarNotas = async () => {
     Profesional: {detalle.terapeutaNombreCompleto || detalle.terapeutaNombre || "No asignado"} 
                    </Text>
                     <Text fontSize="sm" color={secondaryTextColor} mt={1}> {fechaFormateada} </Text>
-                    <HStack mt={2}>
-                        <Tag colorScheme={isCancelado ? 'red' : (isPagado ? 'green' : 'blue')} size="sm">{detalle.estado}</Tag>
+                  <HStack mt={2}>
+                     
+                        <Tag colorScheme={
+                            detalle.estado === 'Atendido' ? 'green' : 
+                            detalle.estado === 'Cancelado' ? 'red' : 
+                            detalle.estado === 'Ausente' ? 'orange' : 'blue'
+                        } size="sm">
+                            {detalle.estado}
+                        </Tag>
+
+                        <Tag colorScheme={isPagado ? 'green' : 'yellow'} size="sm" variant={isPagado ? "solid" : "subtle"}>
+                            {isPagado ? '✔ Pagado' : '⏳ Debe'}
+                        </Tag>
+
                         <Text fontSize="sm" fontWeight="bold">${detalle.precio?.toLocaleString('es-AR')}</Text>
                     </HStack>
                   </Box>

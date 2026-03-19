@@ -107,14 +107,15 @@ const TurnosHoyLista = ({ turnos }) => {
             : '--:--';
 
         return (
-        <ListItem
+      <ListItem
           key={turno.id}
           p={3}
           bg={itemBg} 
           shadow="sm"
           borderRadius="md"
           borderLeft="4px solid"
-          borderColor={turno.estado?.toLowerCase() === 'pagado' ? 'green.400' : 'blue.400'}
+        
+          borderColor={turno.estaPagado ? 'green.400' : 'blue.400'}
           onClick={() => handleTurnoClick(turno)}
           cursor="pointer"
           _hover={{ bg: itemHoverBg, shadow: 'md' }} 
@@ -127,13 +128,12 @@ const TurnosHoyLista = ({ turnos }) => {
                 </Text>
                 <Text fontSize="xs" color={textColorSecondary}> 
                     <ListIcon as={FiClock} color="gray.500" />
-                   
                     {horaLegible} hs 
                 </Text>
                 </Box>
           
-            <Text fontSize="xs" color={turno.estado?.toLowerCase() === 'pagado' ? 'green.500' : 'gray.500'} fontWeight="medium">
-              {turno.estado}
+            <Text fontSize="xs" color={turno.estaPagado ? 'green.500' : 'orange.500'} fontWeight="medium">
+              {turno.estado} {turno.estaPagado ? '(✔ Pagado)' : '(⏳ Debe)'}
            </Text>
             </Box>
             </ListItem>
@@ -171,13 +171,13 @@ const HomePage = () => {
         setTurnosHoy(turnos);
 
         
-      const ingresos = turnos
-            .filter(t => t.estado?.toLowerCase() === 'pagado')
+     const ingresos = turnos
+            .filter(t => t.estaPagado === true)
             .reduce((sum, t) => sum + (t.precio || 0), 0);
             
        
         const pendientes = turnos
-            .filter(t => t.estado?.toLowerCase() === 'pendiente')
+            .filter(t => t.estado?.toLowerCase() === 'reservado' && !t.estaPagado)
             .length;
       
       setStats({ 
