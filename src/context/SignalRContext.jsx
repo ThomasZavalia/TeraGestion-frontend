@@ -30,7 +30,6 @@ export const SignalRProvider = ({ children }) => {
     const token = localStorage.getItem('token');
     if (!token) return; 
 
-
     fetchHistorial();
 
     const newConnection = new HubConnectionBuilder()
@@ -42,26 +41,25 @@ export const SignalRProvider = ({ children }) => {
       .build();
 
     setConnection(newConnection);
+
+    return () => {
+      if (newConnection) {
+        newConnection.stop();
+        console.log("Conexión de SignalR cerrada correctamente.");
+      }
+    };
   }, []);
 
   
-  useEffect(() => {
+ useEffect(() => {
     if (connection) {
       connection.start()
         .then(() => {
-          
-
-          
           connection.on('RecibirNotificacion', (notif) => {
-          
-            
             setNotificaciones(prev => [notif, ...prev]);
             setUnreadCount(prev => prev + 1);
-      
             setUltimaNotificacion(notif); 
-           
-
-          
+            
             toast({
               title: notif.titulo,
               description: notif.mensaje,
@@ -74,6 +72,10 @@ export const SignalRProvider = ({ children }) => {
           });
         })
         .catch(e => console.log(' Error conectando SignalR: ', e));
+
+      return () => {
+        connection.off('RecibirNotificacion');
+      };
     }
   }, [connection, toast]);
 

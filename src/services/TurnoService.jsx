@@ -44,15 +44,10 @@ export const turnoService = {
 
 
   
-  getTurnos: async () => {
-    try {
-      const { data } = await axiosInstance.get('/Turno'); 
-
-      return data.map(formatTurnoForCalendar); 
-    } catch (error) {
-      console.error("Error al obtener turnos:", error);
-      return [];
-    }
+ getTurnos: async (start, end) => {
+    
+    const response = await axiosInstance.get(`/Turno?start=${start}&end=${end}`);
+    return response.data;
   },
 
 

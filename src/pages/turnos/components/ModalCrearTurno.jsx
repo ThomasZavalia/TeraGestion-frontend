@@ -58,7 +58,9 @@ const {
                   bg={useColorModeValue('gray.100', 'gray.600')} 
                 >
                   {terapeutasList.map(t => (
-                    <option key={t.id} value={t.id}>{t.nombreCompleto}</option>
+                    <option key={t.id} value={t.id}>
+        {t.nombreCompletoProfesional || t.nombreCompleto} {t.especialidad ? `- ${t.especialidad}` : ''}
+     </option>
                   ))}
                 </Select>
               </FormControl>

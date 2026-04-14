@@ -137,33 +137,103 @@ const [rendimientoTerapeuta, setRendimientoTerapeuta] = useState(null);
   const inputBg = useColorModeValue('white', 'gray.700');
 if (user?.rol === 'Terapeuta' && rendimientoTerapeuta) {
       return (
-         <Box>
-            <Heading mb={6}>Mi Rendimiento Mensual</Heading>
+          <Box>
+            <Heading mb={6}>Mi Rendimiento Histórico</Heading>
+            
+            <HStack 
+              spacing={4} 
+              mb={8} 
+              wrap="wrap" 
+              bg={filterBg} 
+              p={4} 
+              borderRadius="md" 
+              shadow="sm"
+              align="flex-end" 
+            >
+               <FormControl>
+                 <FormLabel fontSize="sm">Desde Mes</FormLabel>
+                 <Input 
+                   type="month" 
+                   size="sm" 
+                   value={fechaDesde} 
+                   onChange={(e) => setFechaDesde(e.target.value)} 
+                   bg={inputBg} 
+                  />
+               </FormControl>
+               <FormControl>
+                 <FormLabel fontSize="sm">Hasta Mes</FormLabel>
+                 <Input 
+                   type="month" 
+                   size="sm" 
+                   value={fechaHasta} 
+                   onChange={(e) => setFechaHasta(e.target.value)} 
+                   bg={inputBg} 
+                  />
+               </FormControl>
+               <Button 
+                  leftIcon={<FiFilter />} 
+                  colorScheme="blue" 
+                  size="sm" 
+                  onClick={async () => {
+                    setLoadingMes(true);
+                    try {
+                        const rendimiento = await reportesService.getMiRendimiento({ fechaDesde, fechaHasta });
+                        setRendimientoTerapeuta(rendimiento);
+                    } catch (error) {
+                        console.error(error);
+                    } finally {
+                        setLoadingMes(false);
+                    }
+                  }}
+                  isLoading={loadingMes}
+               >
+                  Filtrar Meses
+               </Button>
+            </HStack>
           
             <SimpleGrid columns={{ base: 1, md: 4 }} spacing={6} mb={8}>
-                <StatCard title="Pacientes Únicos Atendidos" stat={rendimientoTerapeuta.pacientesUnicosMes} icon={FiUsers} helpText="En el mes actual" />
+                <StatCard title="Pacientes Únicos Atendidos" stat={rendimientoTerapeuta.pacientesUnicosMes} icon={FiUsers} helpText="En el periodo" />
                 <StatCard title="Turnos Concluidos" stat={rendimientoTerapeuta.turnosAtendidosMes} icon={FiCheckCircle} helpText="Sesiones dadas" />
                 <StatCard title="Tasa de Asistencia" stat={`${rendimientoTerapeuta.tasaAsistencia}%`} icon={FiActivity} helpText="De los turnos agendados" />
-                
                 <StatCard 
                     title="Mis Ganancias Estimadas" 
                     stat={`$ ${rendimientoTerapeuta.gananciasEstimadasMes?.toLocaleString('es-AR')}`} 
                     icon={FiDollarSign} 
-                    helpText="Mes actual" 
+                    helpText="En el periodo" 
                 />
             </SimpleGrid>
 
             <Divider my={8} />
 
+         
             <SimpleGrid columns={{ base: 1, lg: 2 }} spacing={6}>
-               
+                 
+                 {/* Gráfico Histórico de Ganancias */}
+                 <BarChartReport
+                   title="Evolución de Mis Ganancias"
+                   data={rendimientoTerapeuta.evolucionGanancias}
+                   dataLabel="Ganancia ($)"
+                   labelField="mes"
+                   valueField="valor" 
+                   isLoading={loadingMes}
+                   formatValue={(value) => `$ ${value.toLocaleString('es-AR')}`} 
+                 />
+
+                 <PieChartReport
+                   title="Mis Turnos por Estado (Tasa de Ausentismo)"
+                   data={rendimientoTerapeuta.distribucionEstados}
+                   labelField="estado"
+                   valueField="cantidad"
+                   isLoading={loadingMes} 
+                 />
+
                  <HorizontalBarChartReport
                      title="Mis Pacientes más Frecuentes"
                      data={rendimientoTerapeuta.topPacientes}
                      dataLabel="Turnos Atendidos"
                      labelField="nombreCompleto" 
                      valueField="cantidadTurnos"
-                     isLoading={false}
+                     isLoading={loadingMes}
                  />
             </SimpleGrid>
           </Box>

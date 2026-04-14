@@ -1,7 +1,8 @@
 import { useState, useEffect,useRef } from 'react';
 import {
   Box, Heading, HStack, FormControl, FormLabel, Input, Select, Spinner, Center, Alert, AlertIcon, useColorModeValue,
-  useToast, useDisclosure, AlertDialog, AlertDialogOverlay, AlertDialogContent, AlertDialogHeader, AlertDialogBody, AlertDialogFooter, Button // ⭐ Nuevos imports
+  useToast, useDisclosure, AlertDialog, AlertDialogOverlay, AlertDialogContent, AlertDialogHeader, AlertDialogBody, AlertDialogFooter, Button,
+  Text 
 } from '@chakra-ui/react';
 import { FiDownload } from 'react-icons/fi';
 import { pagoService } from '../../services/PagosService';
@@ -146,6 +147,19 @@ const toast = useToast();
                   onPageChange={cambiarPagina}
                   onPageSizeChange={cambiarTamanio}
               />
+
+              {!filtros.fechaDesde && !filtros.fechaHasta && !filtros.busqueda && (
+                <Alert status="info" mt={4} borderRadius="md" size="sm" variant="left-accent">
+                  <AlertIcon />
+                  <Box>
+                    <Text fontWeight="bold" fontSize="sm">Vista rápida de actividad reciente</Text>
+                    <Text fontSize="sm">
+                      Por rendimiento, solo se muestran los pagos de los <strong>últimos 3 días</strong>. 
+                      Utilice los filtros de fecha en la parte superior para ver registros más antiguos.
+                    </Text>
+                  </Box>
+                </Alert>
+              )}
             </Box>
           </Box>
         )}

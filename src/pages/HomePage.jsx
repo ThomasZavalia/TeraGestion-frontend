@@ -65,26 +65,21 @@ const StatCard = ({ title, stat, helpText, icon }) => {
 const TurnosHoyLista = ({ turnos }) => {
   const navigate = useNavigate();
 
- 
   const itemBg = useColorModeValue('white', 'gray.700');
   const itemHoverBg = useColorModeValue('gray.100', 'gray.600');
   const textColorPrimary = useColorModeValue('gray.800', 'whiteAlpha.900');
   const textColorSecondary = useColorModeValue('gray.600', 'gray.400');
-  
 
   if (turnos.length === 0) {
     return <Text color="gray.500" fontSize="sm">No hay turnos programados para hoy.</Text>;
   }
+
   const getFechaValida = (t) => {
-     
       const rawDate = t.fecha || t.fechaHora || t.start || t.Start;
       if (!rawDate) return null;
-      
       const dateObj = new Date(rawDate);
-      
       return isNaN(dateObj.getTime()) ? null : dateObj;
   };
-
 
   const turnosOrdenados = [...turnos].sort((a, b) => {
       const dateA = getFechaValida(a) || new Date(0);
@@ -92,54 +87,70 @@ const TurnosHoyLista = ({ turnos }) => {
       return dateA - dateB;
   });
 
+  const MAX_TURNOS = 5;
+  const turnosAMostrar = turnosOrdenados.slice(0, MAX_TURNOS);
+  const turnosOcultos = turnosOrdenados.length - MAX_TURNOS;
+
   const handleTurnoClick = (turno) => {
     navigate('/turnos'); 
   };
 
   return (
-    <List spacing={3}>
-      {turnosOrdenados.map((turno) => {
-        
-        
-        const fechaObj = getFechaValida(turno);
-        const horaLegible = fechaObj 
-            ? format(fechaObj, 'HH:mm', { locale: es }) 
-            : '--:--';
+    <Box>
+        <List spacing={3}>
+          {turnosAMostrar.map((turno) => {
+            const fechaObj = getFechaValida(turno);
+            const horaLegible = fechaObj 
+                ? format(fechaObj, 'HH:mm', { locale: es }) 
+                : '--:--';
 
-        return (
-      <ListItem
-          key={turno.id}
-          p={3}
-          bg={itemBg} 
-          shadow="sm"
-          borderRadius="md"
-          borderLeft="4px solid"
-        
-          borderColor={turno.estaPagado ? 'green.400' : 'blue.400'}
-          onClick={() => handleTurnoClick(turno)}
-          cursor="pointer"
-          _hover={{ bg: itemHoverBg, shadow: 'md' }} 
-          transition="all 0.2s ease"
-        >
-         <Box display="flex" justifyContent="space-between" alignItems="center">
-                <Box>
-                <Text fontWeight="bold" fontSize="sm" color={textColorPrimary}>
-                    {`${turno.pacienteNombre || ''} ${turno.pacienteApellido || ''}`}
-                </Text>
-                <Text fontSize="xs" color={textColorSecondary}> 
-                    <ListIcon as={FiClock} color="gray.500" />
-                    {horaLegible} hs 
-                </Text>
+            return (
+              <ListItem
+                key={turno.id}
+                p={3}
+                bg={itemBg} 
+                shadow="sm"
+                borderRadius="md"
+                borderLeft="4px solid"
+                borderColor={turno.estaPagado ? 'green.400' : 'blue.400'}
+                onClick={() => handleTurnoClick(turno)}
+                cursor="pointer"
+                _hover={{ bg: itemHoverBg, shadow: 'md' }} 
+                transition="all 0.2s ease"
+              >
+                <Box display="flex" justifyContent="space-between" alignItems="center">
+                    <Box>
+                        <Text fontWeight="bold" fontSize="sm" color={textColorPrimary}>
+                            {`${turno.pacienteNombre || ''} ${turno.pacienteApellido || ''}`}
+                        </Text>
+                        <Text fontSize="xs" color={textColorSecondary}> 
+                            <ListIcon as={FiClock} color="gray.500" />
+                            {horaLegible} hs 
+                        </Text>
+                    </Box>
+              
+                    <Text fontSize="xs" color={turno.estaPagado ? 'green.500' : 'orange.500'} fontWeight="medium">
+                      {turno.estado} {turno.estaPagado ? '(✔ Pagado)' : '(⏳ Debe)'}
+                    </Text>
                 </Box>
-          
-            <Text fontSize="xs" color={turno.estaPagado ? 'green.500' : 'orange.500'} fontWeight="medium">
-              {turno.estado} {turno.estaPagado ? '(✔ Pagado)' : '(⏳ Debe)'}
-           </Text>
-            </Box>
-            </ListItem>
-        );
-      })}
-    </List>
+              </ListItem>
+            );
+          })}
+        </List>
+
+        {turnosOcultos > 0 && (
+            <Button
+                mt={4}
+                w="full"
+                size="sm"
+                variant="ghost"
+                colorScheme="blue"
+                onClick={() => navigate('/turnos')}
+            >
+                Y {turnosOcultos} turnos más... (Ir al Calendario)
+            </Button>
+        )}
+    </Box>
   );
 };
 

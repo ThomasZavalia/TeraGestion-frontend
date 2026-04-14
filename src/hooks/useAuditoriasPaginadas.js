@@ -11,7 +11,12 @@ export const useAuditoriasPaginadas = () => {
   const [totalItems, setTotalItems] = useState(0);
   const [pageSize, setPageSize] = useState(10);
   
-  const [filtros, setFiltros] = useState({ modulo: '', accion: '' });
+const [filtros, setFiltros] = useState({ 
+    modulo: '', 
+    accion: '', 
+    fechaDesde: '', 
+    fechaHasta: '' 
+  });
   
   const cargarAuditorias = useCallback(async () => {
     setLoading(true);

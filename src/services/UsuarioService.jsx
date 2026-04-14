@@ -73,7 +73,19 @@ export const usuarioService = {
       contraseñaNueva: nuevaClave 
     });
     return data;
-  }
+  },
+
+  getUsuariosPaginados: async (pagina = 1, tamanio = 10, busqueda = '', mostrarInactivos = false) => {
+    try {
+      const { data } = await axiosInstance.get('/Usuario/paginados', {
+        params: { pagina, tamanio, busqueda, mostrarInactivos }
+      });
+      return data; 
+    } catch (error) {
+      console.error("Error al traer usuarios paginados:", error);
+      return { items: [], total: 0 };
+    }
+  },
   
   
 };

@@ -9,7 +9,8 @@ import {
   Text,
   Center, 
   useColorModeValue,
-  IconButton, Tooltip
+  IconButton, Tooltip,
+  Box
 } from '@chakra-ui/react';
 import { FiXCircle } from 'react-icons/fi';
 import { format, parseISO } from 'date-fns'; 
@@ -45,6 +46,7 @@ const TablaPagos = ({ pagos,onAnular }) => {
         <Thead bg={headerBg}>
           <Tr>
             <Th>Fecha</Th>
+            <Th>Turno Asociado</Th>
             <Th>Paciente</Th>
             <Th isNumeric>Monto</Th>
             <Th>Método de Pago</Th>
@@ -55,6 +57,20 @@ const TablaPagos = ({ pagos,onAnular }) => {
           {pagos.map((pago) => (
             <Tr key={pago.id} borderBottomWidth="1px" borderColor={rowBorder}>
               <Td>{formatFecha(pago.fecha)}</Td>
+              <Td>
+                {pago.fechaTurno ? (
+                    <Box>
+                        <Text fontWeight="bold" fontSize="sm" color={useColorModeValue('blue.600', 'blue.300')}>
+                            {formatFecha(pago.fechaTurno)} hs
+                        </Text>
+                        <Text fontSize="xs" color="gray.500">
+                             {pago.terapeutaTurno}
+                        </Text>
+                    </Box>
+                ) : (
+                    <Text color="gray.400" fontSize="sm" fontStyle="italic">Sin turno asociado</Text>
+                )}
+              </Td>
               <Td>{`${pago.pacienteNombre} ${pago.pacienteApellido}`}</Td>
               <Td isNumeric>${pago.monto?.toLocaleString('es-AR') || '-'}</Td>
               <Td>{pago.metodoPago}</Td>

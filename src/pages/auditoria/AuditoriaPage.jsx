@@ -1,7 +1,7 @@
 import React from 'react';
 import {
   Box, Heading, Table, Thead, Tbody, Tr, Th, Td, TableContainer,
-  Text, Center, Spinner, Badge, HStack, Select, useColorModeValue, Alert, AlertIcon
+  Text, Center, Spinner, Badge, HStack, Select, useColorModeValue, Alert, AlertIcon,Input
 } from '@chakra-ui/react';
 import { format, parseISO } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -18,6 +18,7 @@ const AuditoriaPage = () => {
   const boxBg = useColorModeValue('white', 'gray.800');
   const headerBg = useColorModeValue('gray.50', 'gray.700');
   const rowBorder = useColorModeValue('gray.100', 'gray.700');
+  const inputBg = useColorModeValue('white', 'gray.700');
 
   const getColorAccion = (accion) => {
     const acc = accion?.toUpperCase() || '';
@@ -38,15 +39,23 @@ const AuditoriaPage = () => {
       <Heading mb={6}>Registro de Auditoría</Heading>
 
       <Box bg={boxBg} p={4} borderRadius="md" shadow="sm" mb={6}>
-        <HStack spacing={4}>
-          <Box w="200px">
-            <Text fontSize="xs" fontWeight="bold" mb={1} color="gray.500" textTransform="uppercase">Módulo</Text>
-            <Select size="sm" value={filtros.modulo} onChange={(e) => aplicarFiltros({ modulo: e.target.value })}>
-              <option value="">Todos los módulos</option>
-              <option value="Pagos">Pagos</option>
-              <option value="Pacientes">Pacientes</option>
-              <option value="Turnos">Turnos</option>
-            </Select>
+        <HStack spacing={4} wrap="wrap">
+        
+          <Box w="150px">
+            <Text fontSize="xs" fontWeight="bold" mb={1} color="gray.500" textTransform="uppercase">Fecha Desde</Text>
+            <Input 
+              type="date" size="sm" bg={inputBg} 
+              value={filtros.fechaDesde || ''}
+              onChange={(e) => aplicarFiltros({ fechaDesde: e.target.value })}
+            />
+          </Box>
+          <Box w="150px">
+            <Text fontSize="xs" fontWeight="bold" mb={1} color="gray.500" textTransform="uppercase">Fecha Hasta</Text>
+            <Input 
+              type="date" size="sm" bg={inputBg} 
+              value={filtros.fechaHasta || ''}
+              onChange={(e) => aplicarFiltros({ fechaHasta: e.target.value })} 
+            />
           </Box>
           <Box w="200px">
             <Text fontSize="xs" fontWeight="bold" mb={1} color="gray.500" textTransform="uppercase">Acción</Text>
@@ -116,6 +125,18 @@ const AuditoriaPage = () => {
                 currentPage={currentPage} totalPages={totalPages} totalItems={totalItems} pageSize={pageSize}
                 onPageChange={cambiarPagina} onPageSizeChange={cambiarTamanio}
               />
+          {!filtros.fechaDesde && !filtros.fechaHasta && (
+                <Alert status="info" mt={4} borderRadius="md" size="sm" variant="left-accent">
+                  <AlertIcon />
+                  <Box>
+                    <Text fontWeight="bold" fontSize="sm">Mostrando actividad reciente</Text>
+                    <Text fontSize="sm">
+                      Por motivos de rendimiento, solo se visualizan los movimientos de los <strong>últimos 3 días</strong>. 
+                      Utilice los filtros de fecha superiores para inspeccionar el historial completo.
+                    </Text>
+                  </Box>
+                </Alert>
+              )}
             </Box>
           </Box>
         )}
@@ -123,5 +144,4 @@ const AuditoriaPage = () => {
     </Box>
   );
 };
-
 export default AuditoriaPage;

@@ -13,6 +13,7 @@ import { es } from 'date-fns/locale';
 import { FiEdit, FiTrash2, FiCheckCircle, FiCheck, FiX,FiClock,FiSave } from 'react-icons/fi';
 import { turnoService } from '../../../services/TurnoService';
 import { sesionService } from '../../../services/SesionService';
+import { useAuth } from '../../../context/AuthContext';
 
 const ModalVerTurno = ({ isOpen, onClose, turno, onTurnoUpdate, onEdit, onDelete,onReprogramar }) => { 
   const toast = useToast();
@@ -27,6 +28,7 @@ const [detalle, setDetalle] = useState(null);
 
   const [notas, setNotas] = useState('');
   const [isSavingNotas, setIsSavingNotas] = useState(false);
+  const { user } = useAuth();
  
 
   const [metodoPago, setMetodoPago] = useState('Efectivo'); 
@@ -84,6 +86,7 @@ let fechaFormateada = 'Cargando...';
 let esTurnoFuturo = false;
 let isCancelado = false;
 let isPagado = false;
+let isTurnoCerrado = false;
 
 
 if (detalle && detalle.fechaHora) { 
@@ -98,6 +101,11 @@ if (detalle && detalle.fechaHora) {
     
     isCancelado = detalle?.estado?.toLowerCase() === 'cancelado';
     isPagado = detalle?.estaPagado === true;
+
+   isTurnoCerrado = 
+        detalle?.estado === 'Atendido' || 
+        detalle?.estado === 'Ausente' || 
+        isCancelado;
 }
 
 const handleMarcarPagado = async () => {
@@ -257,15 +265,28 @@ const handleGuardarNotas = async () => {
             <Flex justify="space-between" align="center">
               <Heading size="md" mr={4} color={textColor}>Detalles</Heading>
               <HStack spacing={1} mr="8">
-                 <Tooltip label="Reprogramar">
-                     <IconButton icon={<FiClock />} variant="ghost" size="sm" onClick={handleReprogramarClick} isDisabled={isPagado || isCancelado} onFocus={(e) => e.preventDefault()} />
-                 </Tooltip>
+                <Tooltip label="Reprogramar">
+        <IconButton 
+            icon={<FiClock />} 
+            variant="ghost" 
+            size="sm" 
+            onClick={handleReprogramarClick} 
+            isDisabled={isTurnoCerrado}
+            onFocus={(e) => e.preventDefault()} 
+        /></Tooltip>
                  <Tooltip label="Editar">
                      <IconButton icon={<FiEdit />} variant="ghost" size="sm" onClick={handleEditar} isDisabled={isPagado || isCancelado} />
                  </Tooltip>
-                 <Tooltip label="Cancelar">
-                     <IconButton icon={<FiTrash2 />} colorScheme="red" variant="ghost" size="sm" onClick={onAlertOpen} isDisabled={isPagado || isCancelado} />
-                 </Tooltip>
+                <Tooltip label="Cancelar">
+        <IconButton 
+            icon={<FiTrash2 />} 
+            colorScheme="red" 
+            variant="ghost" 
+            size="sm" 
+            onClick={onAlertOpen} 
+            isDisabled={isTurnoCerrado || isPagado} 
+        />
+    </Tooltip>
               </HStack>
             </Flex>
           </ModalHeader>
@@ -277,16 +298,19 @@ const handleGuardarNotas = async () => {
                 
                   <Box>
                     <Heading size="md" color={headingColor}>{detalle.pacienteNombre} {detalle.pacienteApellido}</Heading>
-                   <Text fontSize="sm" fontWeight="bold" color="blue.500" mt={1}> 
-    Profesional: {detalle.terapeutaNombreCompleto || detalle.terapeutaNombre || "No asignado"} 
-                   </Text>
+                  <Text fontSize="sm" fontWeight="bold" color="blue.500" mt={1}> 
+    Profesional: {detalle.terapeutaNombreCompletoProfesional || detalle.terapeutaNombreCompleto || detalle.terapeutaNombre || "No asignado"} 
+ </Text>
                     <Text fontSize="sm" color={secondaryTextColor} mt={1}> {fechaFormateada} </Text>
                   <HStack mt={2}>
                      
                         <Tag colorScheme={
                             detalle.estado === 'Atendido' ? 'green' : 
                             detalle.estado === 'Cancelado' ? 'red' : 
-                            detalle.estado === 'Ausente' ? 'orange' : 'blue'
+                            detalle.estado === 'Ausente' ? 'orange' :
+                            detalle.estado === 'Pendiente de Cierre' ? 'gray' : 'blue'
+                            
+                            
                         } size="sm">
                             {detalle.estado}
                         </Tag>
@@ -338,7 +362,7 @@ const handleGuardarNotas = async () => {
                     </Accordion>
                   )}
 
-                  {!isPagado && !isCancelado && ( 
+                 {!isPagado && !isCancelado && user?.rol !== 'Terapeuta' && (
                      <Box pt={2}>
                          <Text fontSize="xs" fontWeight="bold" color="gray.500" mb={2} textTransform="uppercase">Pago</Text>
                          <HStack>

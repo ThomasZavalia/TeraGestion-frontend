@@ -34,15 +34,10 @@ const Navbar = ({ onToggleSidebar, isDesktop }) => {
   const selectBg = useColorModeValue('gray.50', 'gray.700');
   const selectBorderColor = useColorModeValue('gray.200', 'gray.600');
 
-  const handleLogout = () => {
-    logout();
-    navigate('/login');
-    toast({
-      title: 'Sesión cerrada',
-      status: 'success',
-      duration: 3000,
-      isClosable: true,
-    });
+const handleLogout = () => {
+    logout(); 
+   
+    window.location.href = '/login'; 
   };
 
   const loadPacienteOptions = async (inputValue) => {

@@ -4,7 +4,7 @@ import dayGridPlugin from '@fullcalendar/daygrid';
 import timeGridPlugin from '@fullcalendar/timegrid';
 import interactionPlugin from '@fullcalendar/interaction';
 import esLocale from '@fullcalendar/core/locales/es';
-import { Box, useDisclosure, Spinner, Center,useColorModeValue, useToast,Flex,Button,AlertDialog,AlertDialogOverlay,AlertDialogContent,AlertDialogHeader,AlertDialogBody,AlertDialogFooter,FormControl,FormLabel,Select} from '@chakra-ui/react';
+import { Box, useDisclosure, Spinner, Center,useColorModeValue, useToast,Flex,Button,AlertDialog,AlertDialogOverlay,AlertDialogContent,AlertDialogHeader,AlertDialogBody,AlertDialogFooter,FormControl,FormLabel,Select,Switch,} from '@chakra-ui/react';
 import { turnoService } from '../../services/TurnoService';
 import ModalCrearTurno from './components/ModalCrearTurno';
 import ModalVerTurno from './components/ModalVerTurno'; 
@@ -35,11 +35,13 @@ const TurnosPage = () => {
   const { ultimaNotificacion } = useSignalR();
   const [preselectedTime, setPreselectedTime] = useState(null);
   const { user } = useAuth();
+  const [rangoVisible, setRangoVisible] = useState({ start: null, end: null });
 
 
   const [terapeutas, setTerapeutas] = useState([]);
   const [terapeutaSeleccionado, setTerapeutaSeleccionado] = useState('');
   const [todosLosEventos, setTodosLosEventos] = useState([]);
+  const [mostrarCancelados, setMostrarCancelados] = useState(true);
 
   const toast = useToast();
 
@@ -63,14 +65,13 @@ const TurnosPage = () => {
     return d.toISOString();
   };
   
-const fetchData = async () => {
+const fetchData = async (startStr, endStr) => {
+    if (!startStr || !endStr) return; 
     setLoading(true);
     try {
-
-      
         const [turnosData, ausenciasData, terapeutasData] = await Promise.all([
-            turnoService.getTurnos(),
-            ausenciaService.getAusencias(),
+            turnoService.getTurnos(startStr, endStr), 
+            ausenciaService.getAusencias(), 
             usuarioService.getTerapeutas()
         ]);
 
@@ -90,10 +91,10 @@ const fetchData = async () => {
 
         console.log("---- RECARGANDO DATOS (V3) ----");
 
-       const eventosTurnos = turnosData.map(turno => {
-            const props = turno.extendedProps || {};
-            const estado = String(props.estado || '').trim().toLowerCase();
-            const estaPagado = props.estaPagado; 
+      const eventosTurnos = turnosData.map(turno => {
+         
+            const estado = String(turno.estado || '').trim().toLowerCase();
+            const estaPagado = turno.estaPagado; 
 
             let colorFinal = '#3182CE'; 
             let claseCss = 'turno-reservado';
@@ -104,7 +105,7 @@ const fetchData = async () => {
             } else if (estado === 'cancelado') {
                 colorFinal = '#E53E3E'; 
                 claseCss = 'turno-cancelado';
-            } else if (estado === 'vencido') {
+            } else if (estado === 'pendiente de cierre') {
                 colorFinal = '#A0AEC0'; 
                 claseCss = 'turno-vencido';
             } else if (estado === 'ausente') {
@@ -112,34 +113,36 @@ const fetchData = async () => {
                 claseCss = 'turno-ausente';
             }
 
-         const tituloVisual = estaPagado ? `💵 ${turno.title}` : turno.title;
+            const tituloVisual = estaPagado ? `💵 ${turno.title}` : turno.title;
 
-            const duracionReal = props.duracion || turno.duracion; 
+            const duracionReal = turno.duracion || 40; 
             const fechaFinCalculada = calcularFechaFin(turno.start, duracionReal);
 
             return {
                 id: turno.id, 
                 start: turno.start, 
-                end: fechaFinCalculada, 
+                end: turno.end || fechaFinCalculada, 
                 title: tituloVisual, 
                 backgroundColor: colorFinal, 
                 borderColor: colorFinal,     
                 textColor: 'white',
                 classNames: [claseCss], 
-                extendedProps: props
+                extendedProps: { ...turno } 
             };
         });
         
-        const eventosAusencias = ausenciasData.map(aus => {
-             const fechaBase = aus.fecha.split('T')[0];
-             return {
-                 id: `ausencia-${aus.id}`,
-                 start: `${fechaBase}T00:00:00`, end: `${fechaBase}T23:59:59`,
-                 allDay: true,
-                 display: 'background', backgroundColor: '#FEB2B2',
-                 extendedProps: { tipo: 'ausencia', ...aus }
-             };
-        });
+    const eventosAusencias = ausenciasData.map(aus => {
+    const fechaBase = aus.fecha.split('T')[0];
+    return {
+        id: `ausencia-${aus.id}`,
+       
+        start: `${fechaBase}T00:00:00`, 
+        end: `${fechaBase}T23:59:59`,
+        display: 'background', 
+        backgroundColor: '#FEB2B2',
+        extendedProps: { tipo: 'ausencia', ...aus }
+    };
+});
 
       setTodosLosEventos([...eventosTurnos, ...eventosAusencias]);
         setTurnos(eventosTurnos); 
@@ -150,62 +153,55 @@ const fetchData = async () => {
 };
  
 
-  useEffect(() => {
-    fetchData();
-  }, []);
-
-  useEffect(() => {
-    if (ultimaNotificacion) {
-       
-        console.log("Turno nuevo detectado, recargando calendario...");
-        fetchData(); 
+ 
+ useEffect(() => {
+    if (ultimaNotificacion && rangoVisible.start && rangoVisible.end) {
+        console.log("Turno nuevo detectado, recargando calendario...", rangoVisible);
+        fetchData(rangoVisible.start, rangoVisible.end); 
     }
   }, [ultimaNotificacion]);
 
-  useEffect(() => {
-      if (!terapeutaSeleccionado) return;
-      
-      const eventosFiltrados = todosLosEventos.filter(ev => {
-      
-          if (ev.extendedProps?.tipo === 'ausencia') {
-              return String(ev.extendedProps.usuarioId) === terapeutaSeleccionado;
-          }
-         
-          return String(ev.extendedProps?.terapeutaId) === terapeutaSeleccionado;
-      });
+useEffect(() => {
+    if (!terapeutaSeleccionado) return;
+    const eventosFiltrados = todosLosEventos.filter(ev => {
+        
+        if (ev.extendedProps?.tipo === 'ausencia') {
+            if (!ev.extendedProps.usuarioId) return true; 
+            return String(ev.extendedProps.usuarioId) === String(terapeutaSeleccionado);
+        }
+        
+      const esDelTerapeuta = String(ev.extendedProps?.terapeutaId) === terapeutaSeleccionado;
+        
 
-      setCalendarEvents(eventosFiltrados);
-  }, [terapeutaSeleccionado, todosLosEventos]);
+        const estado = String(ev.extendedProps?.estado || '').toLowerCase();
+        if (!mostrarCancelados && estado === 'cancelado') {
+            return false;
+        }
+        
+        return esDelTerapeuta;
+    });
+    setCalendarEvents(eventosFiltrados);
+}, [terapeutaSeleccionado, todosLosEventos, mostrarCancelados]);
   
 const handleDateClick = (arg) => {
-   
     const fechaClickeada = arg.date.toISOString().split('T')[0]; 
-
- 
     const ausenciaEncontrada = ausencias.find(a => a.start.startsWith(fechaClickeada));
     
- 
     if (ausenciaEncontrada) {
-  
         setAusenciaAEliminar(ausenciaEncontrada.extendedProps); 
         onDeleteAusenciaOpen();
         return; 
     }
-   
 
-  
     setIsEditingMode(false); 
     setTurnoParaEditar(null);
     setSelectedDay(arg.date);
-    const horaClickeada = arg.date.getHours().toString().padStart(2, '0') + ':' + 
-                          arg.date.getMinutes().toString().padStart(2, '0');
-    setPreselectedTime(horaClickeada);
+    
+    setPreselectedTime(null);
     setSelectedFullDate(null); 
 
-    
     onTimePickerOpen();
   };
-
   const handleReprogramarRequest = (turnoData) => {
       setTurnoAReprogramar(turnoData); 
       handleCloseViewModal(); 
@@ -298,7 +294,9 @@ const handleTimeSelect = async (time) => {
 };
 
 const recargarCalendario = () => {
-      fetchData();
+      if (rangoVisible.start && rangoVisible.end) {
+         fetchData(rangoVisible.start, rangoVisible.end);
+      }
   };
  
    const onTurnoCreado = (nuevoTurnoEvento) => {
@@ -307,6 +305,10 @@ const recargarCalendario = () => {
       
       const duracion = eventoVisual.extendedProps?.duracion || eventoVisual.duracion;
       eventoVisual.end = calcularFechaFin(eventoVisual.start, duracion);
+
+      setTodosLosEventos(prev => [...prev, eventoVisual]);
+
+      handleCloseCreateModal();
 
       if (calendarRef.current) {
         const calendarApi = calendarRef.current.getApi();
@@ -320,61 +322,49 @@ const recargarCalendario = () => {
 const handleTurnoUpdate = (eventoFormateado) => {
   console.log("handleTurnoUpdate - Recibiendo evento:", eventoFormateado);
   
-  if (calendarRef.current) {
-    const calendarApi = calendarRef.current.getApi();
-    const eventoIdStr = String(eventoFormateado.id); 
-    const eventoExistente = calendarApi.getEventById(eventoIdStr);
+  const estadoRaw = eventoFormateado.extendedProps?.estado || 'Pendiente';
+  const estado = String(estadoRaw).trim().toLowerCase();
+  const estaPagado = eventoFormateado.extendedProps?.estaPagado;
 
-  
-   const estadoRaw = eventoFormateado.extendedProps?.estado || 'Pendiente';
-    const estado = String(estadoRaw).trim().toLowerCase();
-    const estaPagado = eventoFormateado.extendedProps?.estaPagado;
+  let nuevoColor = '#3182CE'; 
+  let nuevaClase = 'turno-reservado';
 
-    let nuevoColor = '#3182CE'; 
-    let nuevaClase = 'turno-reservado';
-
-    if (estado === 'atendido') {
-        nuevoColor = '#48BB78';
-        nuevaClase = 'turno-atendido';
-    } else if (estado === 'cancelado') {
-        nuevoColor = '#E53E3E'; 
-        nuevaClase = 'turno-cancelado';
-    } else if (estado === 'vencido') {
-        nuevoColor = '#A0AEC0'; 
-        nuevaClase = 'turno-vencido';
-    } else if (estado === 'ausente') {
-        nuevoColor = '#ED8936'; 
-        nuevaClase = 'turno-ausente';
-    }
-
-    if (eventoExistente) {
-      const duracion = eventoFormateado.extendedProps?.duracion || 40;
-      const fechaFin = calcularFechaFin(eventoFormateado.start, duracion);
-
-      let titleBase = (eventoFormateado.extendedProps?.pacienteApellido 
-        ? `${eventoFormateado.extendedProps.pacienteNombre} ${eventoFormateado.extendedProps.pacienteApellido}` 
-        : eventoFormateado.extendedProps?.pacienteNombre || eventoFormateado.title).trim();
-      
-      titleBase = titleBase.replace('💵 ', '');
-
-    
-      const tituloVisual = estaPagado ? `💵 ${titleBase}` : titleBase;
-   
-     
-
-      eventoExistente.setStart(eventoFormateado.start);
-      eventoExistente.setEnd(fechaFin);
-      eventoExistente.setProp('title', tituloVisual); 
-      eventoExistente.setProp('backgroundColor', nuevoColor);
-      eventoExistente.setProp('borderColor', nuevoColor);
-      eventoExistente.setProp('classNames', [nuevaClase]); 
-      
-      eventoExistente.setExtendedProp('estado', estadoRaw);
-      eventoExistente.setExtendedProp('estaPagado', estaPagado); 
-    }
-
-    fetchData(); 
+  if (estado === 'atendido') {
+      nuevoColor = '#48BB78';
+      nuevaClase = 'turno-atendido';
+  } else if (estado === 'cancelado') {
+      nuevoColor = '#E53E3E'; 
+      nuevaClase = 'turno-cancelado';
+  } else if (estado === 'pendiente de cierre') {
+      nuevoColor = '#A0AEC0'; 
+      nuevaClase = 'turno-vencido';
+  } else if (estado === 'ausente') {
+      nuevoColor = '#ED8936'; 
+      nuevaClase = 'turno-ausente';
   }
+
+  const duracion = eventoFormateado.extendedProps?.duracion || 40;
+  const fechaFin = calcularFechaFin(eventoFormateado.start, duracion);
+
+  let titleBase = (eventoFormateado.extendedProps?.pacienteApellido 
+    ? `${eventoFormateado.extendedProps.pacienteNombre} ${eventoFormateado.extendedProps.pacienteApellido}` 
+    : eventoFormateado.extendedProps?.pacienteNombre || eventoFormateado.title).trim();
+  
+  titleBase = titleBase.replace('💵 ', '');
+  const tituloVisual = estaPagado ? `💵 ${titleBase}` : titleBase;
+
+  const eventoVisualActualizado = {
+      ...eventoFormateado,
+      end: fechaFin,
+      title: tituloVisual,
+      backgroundColor: nuevoColor,
+      borderColor: nuevoColor,
+      classNames: [nuevaClase]
+  };
+
+  setTodosLosEventos(prev => prev.map(ev => 
+      String(ev.id) === String(eventoFormateado.id) ? eventoVisualActualizado : ev
+  ));
 
   handleCloseCreateModal();
   handleCloseViewModal(); 
@@ -392,42 +382,38 @@ onViewClose();
 setSelectedTurnoEvent(null); 
       
 };
-
-const handleConfirmarEliminarAusencia = async () => {
-      if (!ausenciaAEliminar) return;
-      
-      setLoading(true); 
-      try {
-          
-          await ausenciaService.eliminarAusencia(ausenciaAEliminar.id);
-          
-          toast({ title: "Día desbloqueado", description: "Ahora se pueden asignar turnos nuevamente.", status: "success" });
-          
-          
-          const [turnosData, ausenciasData] = await Promise.all([
-              turnoService.getTurnos(),
-              ausenciaService.getAusencias()
-          ]);
-         
-          fetchData(); 
-
-      } catch (error) {
-          toast({ title: "Error al desbloquear", status: "error" });
-      } finally {
-          setLoading(false);
-          onDeleteAusenciaClose();
-          setAusenciaAEliminar(null);
-      }
+const handleCloseTimePicker = () => {
+      onTimePickerClose();
+      recargarCalendario(); 
+      setTurnoAReprogramar(null); 
   };
 
+const handleConfirmarEliminarAusencia = async () => {
+    if (!ausenciaAEliminar) return;
+    
+    setLoading(true); 
+    try {
+        await ausenciaService.eliminarAusencia(ausenciaAEliminar.id);
+        
+        toast({ title: "Día desbloqueado", description: "Ahora se pueden asignar turnos nuevamente.", status: "success" });
+      
+        recargarCalendario(); 
+
+    } catch (error) {
+        toast({ title: "Error al desbloquear", status: "error" });
+    } finally {
+        setLoading(false);
+        onDeleteAusenciaClose();
+        setAusenciaAEliminar(null);
+    }
+};
   const allowDrop = (dropInfo) => {
       const hoy = new Date();
       hoy.setHours(0, 0, 0, 0);
       return dropInfo.start >= hoy; 
   };
 
-  const handleEventDrop = (info) => {
-     
+ const handleEventDrop = (info) => {
       const turnoArrastrado = {
           id: info.event.id,
           title: info.event.title,
@@ -437,7 +423,6 @@ const handleConfirmarEliminarAusencia = async () => {
       const nuevaFecha = info.event.start;
       const hoy = new Date();
 
-     
       if (nuevaFecha < hoy) {
           toast({ 
               title: "Acción no permitida", 
@@ -448,14 +433,13 @@ const handleConfirmarEliminarAusencia = async () => {
           return;
       }
 
-     
       info.revert(); 
 
-     
       setTurnoAReprogramar(turnoArrastrado);
-      
-
       setSelectedDay(nuevaFecha);
+      
+      setPreselectedTime(null);
+      
       onTimePickerOpen();
       
       toast({
@@ -468,7 +452,6 @@ const handleConfirmarEliminarAusencia = async () => {
   };
 
 
-  if (loading) { return ( <Center h="200px"> <Spinner size="xl" /> </Center> ); }
 
 const fechaParaModalCreacion = !isEditingMode ? selectedFullDate : null; 
  
@@ -496,7 +479,9 @@ const fechaParaModalCreacion = !isEditingMode ? selectedFullDate : null;
                       bg={user?.rol === 'Terapeuta' ? 'gray.100' : 'white'} 
                   >
                       {terapeutas.map(t => (
-                          <option key={t.id} value={t.id}>{t.nombreCompleto}</option>
+                         <option key={t.id} value={t.id}>
+    {t.nombreCompletoProfesional || t.nombreCompleto} {t.especialidad ? `- ${t.especialidad}` : ''}
+ </option>
                       ))}
                   </Select>
               </FormControl>
@@ -512,6 +497,18 @@ const fechaParaModalCreacion = !isEditingMode ? selectedFullDate : null;
               >
                 Ver Mis Horarios
               </Button>
+
+              <FormControl display="flex" alignItems="center" bg={useColorModeValue('white', 'gray.700')} px={3} borderRadius="md" borderWidth="1px" h="48px" w="auto">
+                  <FormLabel htmlFor="toggle-cancelados" mb="0" fontSize="sm" color="gray.500" cursor="pointer" fontWeight="bold" mr={3}>
+                      Ver Cancelados
+                  </FormLabel>
+                  <Switch 
+                      id="toggle-cancelados" 
+                      colorScheme="red" 
+                      isChecked={mostrarCancelados} 
+                      onChange={(e) => setMostrarCancelados(e.target.checked)} 
+                  />
+              </FormControl>
           </Flex>
           <Button 
             leftIcon={<FiSlash />} 
@@ -523,11 +520,32 @@ const fechaParaModalCreacion = !isEditingMode ? selectedFullDate : null;
             Registrar Ausencia (Bloquear Día)
           </Button>
       </Flex>
+       {loading && (
+        <Center 
+            position="absolute" 
+            top="100px" 
+            left="0" 
+            right="0" 
+            bottom="0" 
+            bg="whiteAlpha.600" 
+            zIndex="10"
+        >
+            <Spinner size="xl" color="blue.500" thickness="4px" />
+        </Center>
+      )}
+
+
       <FullCalendar 
          ref={calendarRef}
          plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
-       
+     datesSet={(dateInfo) => {
+             const start = dateInfo.startStr.split('T')[0]; 
+             const end = dateInfo.endStr.split('T')[0];   
+             setRangoVisible({ start, end });
+             fetchData(start, end); 
+         }}
          events={calendarEvents} 
+         slotEventOverlap={false}
          eventDisplay='block' 
        // eventColor='#3182CE' 
        editable={true} 
@@ -594,7 +612,7 @@ const fechaParaModalCreacion = !isEditingMode ? selectedFullDate : null;
       {isTimePickerOpen && selectedDay && (
         <ModalElegirHora
           isOpen={isTimePickerOpen}
-          onClose={onTimePickerClose}
+         onClose={handleCloseTimePicker}
           selectedDay={selectedDay}
           onTimeSelect={handleTimeSelect}
           preselectedTime={preselectedTime}

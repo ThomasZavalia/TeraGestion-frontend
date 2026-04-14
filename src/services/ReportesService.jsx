@@ -115,15 +115,21 @@ export const reportesService = {
         }
     },
     
-    getMiRendimiento: async () => {
-        try {
-            const { data } = await axiosInstance.get('/Reportes/mi-rendimiento');
-            return data;
-        } catch (error) {
-            console.error("Error fetching rendimiento terapeuta:", error);
-            return null;
-        }
-    }
+
+  getMiRendimiento: async (filtros = {}) => {
+     
+      const queryParams = new URLSearchParams();
+      if (filtros.fechaDesde) queryParams.append('fechaDesde', `${filtros.fechaDesde}-01`);
+      if (filtros.fechaHasta) {
+      
+          const [year, month] = filtros.fechaHasta.split('-');
+          const lastDay = new Date(year, month, 0).getDate();
+          queryParams.append('fechaHasta', `${filtros.fechaHasta}-${lastDay}`);
+      }
+
+      const { data } = await axiosInstance.get(`/reportes/mi-rendimiento?${queryParams.toString()}`);
+      return data;
+  }
 
 
 };

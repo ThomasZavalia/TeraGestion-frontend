@@ -7,38 +7,36 @@ ChartJS.register(ArcElement, Tooltip, Legend);
 
 const SEMANTIC_COLORS = {
  
-  pagado: '#48BB78',  
-  pendiente: '#3182CE', 
-  cancelado: '#E53E3E', 
-  ausente: '#DD6B20',   
-  
+  'reservado': '#3182CE',               
+  'atendido': '#48BB78',               
+  'cancelado': '#E53E3E',            
+  'ausente': '#DD6B20',               
+  'pendiente de cierre': '#A0AEC0',    
+  'pendienteconfirmacion': '#D69E2E', 
 
-  efectivo: '#38A169',      
-  transferencia: '#805AD5', 
-  mercadopago: '#009EE3',   
-  tarjeta: '#2B6CB0',       
-  debito: '#2C5282',        
-  credito: '#2A4365',      
+  'pagado': '#48BB78',  
+  'pendiente': '#3182CE', 
+  'efectivo': '#38A169',      
+  'transferencia': '#805AD5', 
+  'mercadopago': '#009EE3',  
+  'tarjeta': '#2B6CB0',       
+  'debito': '#2C5282',        
+  'credito': '#2A4365',      
 };
-
 
 const defaultPalette = [
   '#3182CE', '#38B2AC', '#805AD5', '#D69E2E', '#E53E3E', '#718096',
 ];
 
-
 const getColorForLabel = (label, index) => {
   if (!label) return defaultPalette[index % defaultPalette.length];
   
-  
   const normalizedLabel = label.toString().toLowerCase().trim();
 
- 
   if (SEMANTIC_COLORS[normalizedLabel]) {
     return SEMANTIC_COLORS[normalizedLabel];
   }
 
-  
   return defaultPalette[index % defaultPalette.length];
 };
 
