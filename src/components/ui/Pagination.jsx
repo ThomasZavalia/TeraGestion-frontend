@@ -1,4 +1,4 @@
-// components/Pagination.jsx
+
 import {
   HStack, Button, Text, Select, IconButton, 
   useColorModeValue

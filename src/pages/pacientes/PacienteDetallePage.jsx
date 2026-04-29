@@ -9,11 +9,15 @@ import { TabDatosPersonales } from "./component/TabDatosPersonales";
 import { TabHistorialPagos } from "./component/TabHistorialPagos";
 import { TabHistorialSesiones } from "./component/TabHistorialSesiones";
 
+import { useAuth } from "../../context/AuthContext";
+
 
 export const PacienteDetallePage = () => {
 
     const navigate = useNavigate();
     const { detalles, loading, error, recargarDetalles } = usePacienteDetalles();
+
+    const { user } = useAuth();
 
     if(loading){
         return(
@@ -36,6 +40,7 @@ export const PacienteDetallePage = () => {
 
     const paciente = detalles;
 
+const esTerapeuta = user?.rol === 'Terapeuta';
 
     return(
         <Box p={4}>
@@ -48,8 +53,8 @@ export const PacienteDetallePage = () => {
             <Tabs colorScheme="teal">
                 <TabList>
                     <Tab>Datos Personales</Tab>
-                    <Tab>Historial de Sesiones</Tab>
-                    <Tab>Historial de Pagos</Tab>
+                    {esTerapeuta && <Tab>Historial de Sesiones</Tab>}
+                   {!esTerapeuta && <Tab>Historial de Pagos</Tab>}
                 </TabList>
 
                 <TabPanels>
@@ -57,13 +62,17 @@ export const PacienteDetallePage = () => {
                         <TabDatosPersonales paciente={paciente} />
                     </TabPanel>
 
-                    <TabPanel>
-                        <TabHistorialSesiones sesiones={paciente?.sesiones} onRecargar={recargarDetalles}/>
-                    </TabPanel>
+                   {esTerapeuta && (
+                            <TabPanel>
+                                <TabHistorialSesiones pacienteId={paciente?.id} />
+                            </TabPanel>
+                        )}
 
-                    <TabPanel>
-                        <TabHistorialPagos pagos={detalles?.pagos} />
-                    </TabPanel>
+                   {!esTerapeuta && (
+                            <TabPanel>
+                                <TabHistorialPagos pacienteId={paciente?.id} />
+                            </TabPanel>
+                        )}
                 </TabPanels>
             </Tabs>
             </Box>

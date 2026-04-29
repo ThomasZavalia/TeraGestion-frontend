@@ -10,7 +10,7 @@ import {
 import { useState,useRef,useEffect } from 'react';
 import { format, parseISO,isFuture } from 'date-fns';
 import { es } from 'date-fns/locale';
-import { FiEdit, FiTrash2, FiCheckCircle, FiCheck, FiX,FiClock,FiSave } from 'react-icons/fi';
+import { FiEdit, FiTrash2, FiCheckCircle, FiCheck, FiX,FiClock,FiSave,FiRefreshCcw } from 'react-icons/fi';
 import { turnoService } from '../../../services/TurnoService';
 import { sesionService } from '../../../services/SesionService';
 import { useAuth } from '../../../context/AuthContext';
@@ -28,6 +28,7 @@ const [detalle, setDetalle] = useState(null);
 
   const [notas, setNotas] = useState('');
   const [isSavingNotas, setIsSavingNotas] = useState(false);
+  const [isReverting, setIsReverting] = useState(false);
   const { user } = useAuth();
  
 
@@ -231,18 +232,59 @@ const handleGuardarNotas = async () => {
     setIsSavingNotas(false);
   };
 
-  const renderAsistencia = () => {
-   
+  const handleRevertirTurno = async () => {
+    if (!detalle) return;
+    setIsReverting(true);
+    try {
+      const result = await turnoService.revertirTurno(detalle.id);
+      if (result.success) {
+        toast({ title: 'Turno revertido a Pendiente', status: 'info' });
+    
+        const datosFrescos = await turnoService.getTurnoDetalle(detalle.id);
+        setDetalle(datosFrescos);
+        onTurnoUpdate(turnoService.formatTurnoForCalendar(datosFrescos));
+      } else {
+        toast({ title: 'Error al revertir', description: result.message, status: 'error' });
+      }
+    } catch (error) {
+      toast({ title: 'Error', description: error.message, status: 'error' });
+    } finally {
+      setIsReverting(false);
+    }
+};
+
+ const renderAsistencia = () => {
     if (esTurnoFuturo) {
       return <Text fontSize="sm" color="gray.500">(La asistencia se registra el día del turno)</Text>;
     }
     
-    
+    const puedeRevertir = user?.rol === 'Admin' || user?.rol === 'Secretaria';
+
+    const botonRevertir = puedeRevertir && (
+      <Tooltip label="Deshacer asistencia y volver a Pendiente">
+        <IconButton 
+          icon={<FiRefreshCcw />} 
+          size="xs" variant="ghost" colorScheme="blue" ml={2} 
+          onClick={handleRevertirTurno} isLoading={isReverting} 
+        />
+      </Tooltip>
+    );
+
     switch (detalle.asistencia) {
       case 'Presente':
-        return <Tag colorScheme='green' size="md"><FiCheckCircle />&nbsp; Asistencia Confirmada</Tag>;
+        return (
+          <Flex align="center">
+            <Tag colorScheme='green' size="md"><FiCheckCircle />&nbsp; Asistencia Confirmada</Tag>
+            {botonRevertir}
+          </Flex>
+        );
       case 'Ausente':
-        return <Tag colorScheme='orange' size="md"><FiX />&nbsp; Ausencia Registrada</Tag>;
+        return (
+          <Flex align="center">
+            <Tag colorScheme='orange' size="md"><FiX />&nbsp; Ausencia Registrada</Tag>
+            {botonRevertir}
+          </Flex>
+        );
       case null: 
       default:
         return (
@@ -252,7 +294,7 @@ const handleGuardarNotas = async () => {
           </ButtonGroup>
         );
     }
-  };
+};
   if (!isOpen) return null;
  
  return (

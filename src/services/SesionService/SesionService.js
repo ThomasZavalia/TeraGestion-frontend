@@ -71,4 +71,15 @@ export const SesionService = {
     }
   },
 
+  getSesionesPaginadas: async (pacienteId, params) => {
+    try {
+      
+      const { data } = await axiosInstance.get(`/Sesion/paciente/${pacienteId}`, { params });
+      return data;
+    } catch (error) {
+      console.error("Error al obtener sesiones paginadas:", error);
+      throw error;
+    }
+  },
+
 };

@@ -27,6 +27,8 @@ export const pagoService = {
     }
   },
 
+
+
   
   getPagosPaginados: async (params) => {
     try {
@@ -87,7 +89,6 @@ exportarExcel: async (params) => {
       document.body.appendChild(link);
       link.click();
       
-      // Limpieza
       link.parentNode.removeChild(link);
       window.URL.revokeObjectURL(url);
 
@@ -95,6 +96,16 @@ exportarExcel: async (params) => {
     } catch (error) {
       console.error("Error al exportar Excel:", error);
       return { success: false, message: "Hubo un error al intentar descargar el archivo." };
+    }
+  },
+
+  getPagosPaginadosPaciente: async (pacienteId, params) => {
+    try {
+      const { data } = await axiosInstance.get(`/Pago/paciente/${pacienteId}`, { params });
+      return data;
+    } catch (error) {
+      console.error("Error al obtener pagos paginados:", error);
+      throw error;
     }
   },
 };

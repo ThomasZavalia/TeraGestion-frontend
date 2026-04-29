@@ -2,15 +2,7 @@ import  axiosInstance  from './axiosInstance';
 
 
 const formatTurnoForCalendar = (turno) => {
- /* let className = 'turno-pendiente'; 
-  if (turno.estado) {
-   const estadoLower = turno.estado.toLowerCase();
-   if (estadoLower === 'pagado') {
-     className = 'turno-pagado';
-   } else if (estadoLower === 'cancelado') {
-    className = 'turno-cancelado';
-    }
-  }*/
+ 
 
 
  const title = (turno.pacienteApellido 
@@ -132,6 +124,19 @@ getTurnosDeHoy: async () => {
     } catch (error) {
       console.error("Error al reprogramar:", error);
       throw error;
+    }
+  },
+ 
+  revertirTurno: async (id) => {
+    try {
+      const response = await axiosInstance.put(`/Turno/${id}/revertir`);
+      return { success: true, data: response.data };
+    } catch (error) {
+      console.error("Error al revertir turno:", error);
+      return { 
+        success: false, 
+        message: error.response?.data || "No se pudo revertir el turno" 
+      };
     }
   },
 
